@@ -19,9 +19,9 @@
 import pytest
 
 from pyrogram import filters
-from tests.unit.filters import Client, Message
+from tests.unit.filters import FakeClient, Message
 
-c = Client()
+c = FakeClient()
 
 
 @pytest.mark.asyncio

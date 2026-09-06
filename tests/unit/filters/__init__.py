@@ -19,7 +19,7 @@
 from typing import Optional
 
 
-class Client:
+class FakeClient:
     def __init__(self):
         self.me = User("username")
 

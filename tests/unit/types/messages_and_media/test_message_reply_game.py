@@ -25,7 +25,7 @@ class _Chat:
     id = 42
 
 
-class _Client:
+class FakeClient:
     def __init__(self) -> None:
         self.captured = "not-called"
 
@@ -39,7 +39,7 @@ class _Message:
     id = 1
     message_thread_id = None
 
-    def __init__(self, client: _Client) -> None:
+    def __init__(self, client: FakeClient) -> None:
         self._client = client
 
 
@@ -48,7 +48,7 @@ async def test_reply_game_default_effect_id_is_none() -> None:
     # `effect_id: int = Optional[None]` evaluated at runtime to the NoneType class
     #  itself, not to None (Optional[None] collapses to NoneType): every call that
     #  omitted effect_id silently forwarded that class object to send_game().
-    client = _Client()
+    client = FakeClient()
 
     await Message.reply_game(_Message(client), "lumberjack")
 
@@ -57,7 +57,7 @@ async def test_reply_game_default_effect_id_is_none() -> None:
 
 @pytest.mark.asyncio
 async def test_answer_game_default_effect_id_is_none() -> None:
-    client = _Client()
+    client = FakeClient()
 
     await Message.answer_game(_Message(client), "lumberjack")
 

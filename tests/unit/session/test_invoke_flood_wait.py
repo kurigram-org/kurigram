@@ -24,7 +24,7 @@ from pyrogram.errors import FloodWait
 from pyrogram.session.session import Session
 
 
-class _Client:
+class FakeClient:
     name = "test"
 
 
@@ -34,7 +34,7 @@ class _Session(Session):
     def __init__(self, seconds) -> None:
         self.is_started = asyncio.Event()
         self.is_started.set()
-        self.client = _Client()
+        self.client = FakeClient()
         self.seconds = seconds
         self.send_calls = 0
 
