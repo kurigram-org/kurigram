@@ -30,7 +30,7 @@ class PlaceGiftAuctionBid:
         star_count: int,
         user_id: Optional[Union[int, str]] = None,
         text: Optional[Union[str, "types.FormattedText"]] = None,
-        is_private: Optional[bool] = False,
+        is_private: bool = False,
     ) -> bool:
         """Places a bid on an auction gift.
 
