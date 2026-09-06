@@ -70,15 +70,15 @@ class SearchMessages:
     async def search_messages(
         self: "pyrogram.Client",
         chat_id: Union[int, str],
-        query: Optional[str] = "",
+        query: str = "",
         offset: int = 0,
-        offset_id: Optional[int] = 0,
-        min_date: Optional[datetime] = utils.zero_datetime(),
-        max_date: Optional[datetime] = utils.zero_datetime(),
-        min_id: Optional[int] = 0,
-        max_id: Optional[int] = 0,
-        filter: Optional["enums.MessagesFilter"] = enums.MessagesFilter.EMPTY,
-        limit: Optional[int] = 0,
+        offset_id: int = 0,
+        min_date: datetime = utils.zero_datetime(),
+        max_date: datetime = utils.zero_datetime(),
+        min_id: int = 0,
+        max_id: int = 0,
+        filter: "enums.MessagesFilter" = enums.MessagesFilter.EMPTY,
+        limit: int = 0,
         from_user: Optional[Union[int, str]] = None,
         message_thread_id: Optional[int] = None
     ) -> AsyncGenerator["types.Message", None]:

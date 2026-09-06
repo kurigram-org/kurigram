@@ -32,7 +32,12 @@ from types import ModuleType
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Set, Tuple
 
 import pyrogram
-from tests.unit.name_resolution import REPOSITORY_ROOT, attribute_chain, hand_written_files
+from tests.unit.name_resolution import (
+    REPOSITORY_ROOT,
+    attribute_chain,
+    hand_written_files,
+    subscript_of,
+)
 
 
 @dataclass(frozen=True)
@@ -96,18 +101,6 @@ def dotted_name(node: ast.expr) -> Optional[Tuple[str, ...]]:
 
     return tuple(reversed(parts))
 
-
-def subscript_of(node: ast.Subscript) -> ast.expr:
-    """What sits inside `X[...]`, whichever way this Python spells it.
-
-    Python 3.9 stopped wrapping a subscript in `ast.Index`, and 3.8 is still supported.
-    The wrapper is read by name rather than by `isinstance`, because `ast.Index` has been
-    deprecated since 3.9 and touching it raises a `DeprecationWarning`.
-    https://docs.python.org/3/whatsnew/3.9.html#deprecated
-    """
-    inner = node.slice
-
-    return getattr(inner, "value", inner) if inner.__class__.__name__ == "Index" else inner
 
 
 def names_in(node: ast.expr, *, line: int) -> Iterator[Tuple[Tuple[str, ...], int]]:
@@ -258,8 +251,7 @@ def test_a_subscript_is_read_through_the_wrapper_python_38_puts_around_it() -> N
     """
     inner = ast.parse('"types.Chat"', mode="eval").body
 
-    # TODO: Delete this test and the unwrapping in `subscript_of()` when the floor moves
-    #       off 3.8. Nothing else reads `ast.Index`, and 3.9 stopped emitting it.
+    # TODO: Delete this test with the 3.8 unwrapping in `subscript_of()` that it covers.
     index = ast.Index(value=inner)  # ty: ignore[deprecated] - the 3.8 node is what this test is for
     wrapped = ast.Subscript(value=ast.Name(id="Optional", ctx=ast.Load()), slice=index, ctx=ast.Load())
     ast.fix_missing_locations(wrapped)
