@@ -151,8 +151,8 @@ class SQLiteStorage(Storage):
         name: str,
         workdir: Path,
         session_string: Optional[str] = None,
-        in_memory: Optional[bool] = False,
-        use_wal: Optional[bool] = False,
+        in_memory: bool = False,
+        use_wal: bool = False,
     ):
         self.name = name
         self._conn: Optional[sqlite3.Connection] = None
