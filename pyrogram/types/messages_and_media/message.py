@@ -79,19 +79,24 @@ class Str(str):
 
     def __getitem__(self, item: SupportsIndex | slice) -> str:
         text = str(self)
-        # The position of the code point each UTF-16 unit belongs to, so a unit taken from
-        #  inside a surrogate pair still names the whole code point.
-        unit_owners = [
-            position
-            for position, character in enumerate(text)
-            for _ in range(2 if ord(character) > 0xFFFF else 1)
-        ]
+
+        # Telegram counts offsets in UTF-16 units, where a code point above `0xFFFF` takes
+        #  two, so "<emoji> 250" is 6 offsets long over 5 characters. This table says which
+        #  character each offset lands in: [0, 0, 1, 2, 3, 4]. The emoji owns offsets 0 and
+        #  1, so an index or a cut between the two still names the whole emoji.
+        character_index_at_offset: list[int] = []
+        for character_index, character in enumerate(text):
+            utf_16_units = 2 if ord(character) > 0xFFFF else 1
+            character_index_at_offset += [character_index] * utf_16_units
 
         if not isinstance(item, slice):
-            return text[unit_owners[item]]
+            return text[character_index_at_offset[item]]
 
-        # `groupby` collapses the two units of a pair back into the one code point.
-        return "".join(text[position] for position, _ in groupby(unit_owners[item]))
+        # A slice spanning both offsets of the emoji names its character twice, and
+        #  `groupby` drops the repeat.
+        selected = character_index_at_offset[item]
+
+        return "".join(text[character_index] for character_index, _ in groupby(selected))
 
 
 class Message(Object, Update):
