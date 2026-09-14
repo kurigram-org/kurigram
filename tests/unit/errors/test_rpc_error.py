@@ -145,13 +145,20 @@ def test_a_known_error_records_nothing(tmp_path: Path, monkeypatch: pytest.Monke
 @pytest.mark.parametrize(
     ("code", "message", "error_type", "parameter", "raw_error"),
     [
-        pytest.param(420, "FLOOD_WAIT_42", FloodWait, 42, None, id="a-known-id-with-a-number"),
+        pytest.param(
+            420,
+            "FLOOD_WAIT_42",
+            FloodWait,
+            42,
+            "[420 FLOOD_WAIT_42]",
+            id="a-known-id-with-a-number",
+        ),
         pytest.param(
             403,
             "RECAPTCHA_CHECK_signup",
             RecaptchaCheck,
             "signup",
-            None,
+            "[403 RECAPTCHA_CHECK_signup]",
             id="a-known-id-with-text",
         ),
         pytest.param(
@@ -159,7 +166,7 @@ def test_a_known_error_records_nothing(tmp_path: Path, monkeypatch: pytest.Monke
             "PEER_ID_INVALID",
             PeerIdInvalid,
             None,
-            None,
+            "[400 PEER_ID_INVALID]",
             id="a-known-id-with-nothing",
         ),
         pytest.param(
@@ -180,14 +187,14 @@ def test_a_known_error_records_nothing(tmp_path: Path, monkeypatch: pytest.Monke
         ),
     ],
 )
-def test_the_parameter_and_the_raw_error_never_hold_each_other(
+def test_every_error_keeps_the_raw_error_beside_its_parameter(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     code: int,
     message: str,
     error_type: type[RPCError],
     parameter: int | str | None,
-    raw_error: str | None,
+    raw_error: str,
 ) -> None:
     # Two of the rows are unknown errors, which append to `unknown_errors.txt` in the working
     #  directory.
@@ -198,7 +205,52 @@ def test_the_parameter_and_the_raw_error_never_hold_each_other(
 
     error = raised.value
 
+    # The raw error is what a known id blanks out: `FLOOD_WAIT_X` says nothing about the 42.
     assert (error.parameter, error.raw_error) == (parameter, raw_error)
+
+
+def test_the_raw_error_keeps_the_code_unsigned() -> None:
+    with pytest.raises(FloodWait) as raised:
+        raise_it(-420, message="FLOOD_WAIT_42")
+
+    # The sign is the transport's, not the error's, and `CODE` drops it too.
+    assert raised.value.raw_error == "[420 FLOOD_WAIT_42]"
+
+
+@pytest.mark.parametrize(
+    ("code", "message", "error_type", "is_unknown"),
+    [
+        pytest.param(420, "FLOOD_WAIT_42", FloodWait, False, id="a-known-id"),
+        pytest.param(
+            400,
+            "SOMETHING_THE_SCHEMA_DOES_NOT_KNOW",
+            BadRequest,
+            True,
+            id="a-known-code-with-an-unknown-id",
+        ),
+        pytest.param(
+            999,
+            "A_CODE_THAT_IS_NOT_IN_THE_SCHEMA",
+            UnknownError,
+            True,
+            id="an-unknown-code",
+        ),
+    ],
+)
+def test_an_error_says_whether_anything_could_name_it(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    code: int,
+    message: str,
+    error_type: type[RPCError],
+    is_unknown: bool,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+
+    with pytest.raises(error_type) as raised:
+        raise_it(code, message=message)
+
+    assert raised.value.is_unknown is is_unknown
 
 
 @pytest.mark.parametrize(
@@ -219,13 +271,23 @@ def test_value_keeps_whatever_is_not_a_number(
     assert type(error.value) is type(expected)
 
 
-def test_value_can_also_hold_the_raw_error_object() -> None:
+def test_value_can_also_hold_the_raw_error_object(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+
     rpc_error = raw.types.RpcError(error_code=400, error_message="PEER_ID_INVALID")
     error = RPCError(rpc_error)
 
-    # The whole error is no parameter of a message, so it is the raw side that carries it.
-    assert (error.parameter, error.raw_error) == (None, rpc_error)
+    # The whole error is no parameter of a message, so it is the raw side that carries it, and
+    #  `value` reads it there as it does for an error nothing could name.
+    assert (error.parameter, error.raw_error, error.is_unknown) == (None, rpc_error, True)
     assert error.value is rpc_error
+
+    # Only what `raise_it()` could not name is recorded; a caller handing the object over is
+    #  reporting no gap in the tables.
+    assert not (tmp_path / "unknown_errors.txt").exists()
 
 
 def test_value_cannot_be_written_to() -> None:
