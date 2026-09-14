@@ -16,10 +16,13 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import annotations as _annotations
+
 import asyncio
 import functools
 import inspect
-import threading
+from collections.abc import AsyncIterator, Generator
+from typing import Any
 
 from pyrogram import types, utils
 from pyrogram.methods import Methods
@@ -28,9 +31,12 @@ from pyrogram.methods.utilities import idle as idle_module, compose as compose_m
 
 def async_to_sync(obj, name):
     function = getattr(obj, name)
-    main_loop = utils.get_event_loop()
 
-    def async_to_sync_gen(agen, loop, is_main_thread):
+    def async_to_sync_gen(
+        agen: AsyncIterator[Any],
+        *,
+        loop: asyncio.AbstractEventLoop,
+    ) -> Generator[Any, None, None]:
         async def anext(agen):
             try:
                 return await agen.__anext__(), False
@@ -38,10 +44,10 @@ def async_to_sync(obj, name):
                 return None, True
 
         while True:
-            if is_main_thread:
-                item, done = loop.run_until_complete(anext(agen))
-            else:
+            if loop.is_running():
                 item, done = asyncio.run_coroutine_threadsafe(anext(agen), loop).result()
+            else:
+                item, done = loop.run_until_complete(anext(agen))
 
             if done:
                 break
@@ -52,35 +58,30 @@ def async_to_sync(obj, name):
     def async_to_sync_wrap(*args, **kwargs):
         coroutine = function(*args, **kwargs)
 
-        loop = utils.get_event_loop()
+        # Both loops are resolved here rather than in `async_to_sync`: `wrap()` below runs
+        #  during `import pyrogram`, when there is no loop to resolve them against yet.
+        target_loop = utils.get_event_loop()
+        caller_loop = utils.get_running_loop()
 
-        if threading.current_thread() is threading.main_thread() or not main_loop.is_running():
-            if loop.is_running():
+        # The caller is already on the loop the coroutine belongs to, so it awaits it itself.
+        if caller_loop is target_loop:
+            return coroutine
+
+        if inspect.isasyncgen(coroutine):
+            if caller_loop is not None:
                 return coroutine
-            else:
-                if inspect.iscoroutine(coroutine):
-                    return loop.run_until_complete(coroutine)
 
-                if inspect.isasyncgen(coroutine):
-                    return async_to_sync_gen(coroutine, loop, True)
-        else:
-            if inspect.iscoroutine(coroutine):
-                if loop.is_running():
+            return async_to_sync_gen(coroutine, loop=target_loop)
 
-                    async def coro_wrapper():
-                        return await asyncio.wrap_future(
-                            asyncio.run_coroutine_threadsafe(coroutine, main_loop)
-                        )
+        if caller_loop is not None:
+            return asyncio.wrap_future(asyncio.run_coroutine_threadsafe(coroutine, target_loop))
 
-                    return coro_wrapper()
-                else:
-                    return asyncio.run_coroutine_threadsafe(coroutine, main_loop).result()
+        # No loop in this thread: either the application is running one elsewhere - a handler
+        #  in `Client.executor` lands here - or nobody has started one and we drive it.
+        if target_loop.is_running():
+            return asyncio.run_coroutine_threadsafe(coroutine, target_loop).result()
 
-            if inspect.isasyncgen(coroutine):
-                if loop.is_running():
-                    return coroutine
-                else:
-                    return async_to_sync_gen(coroutine, main_loop, False)
+        return target_loop.run_until_complete(coroutine)
 
     setattr(obj, name, async_to_sync_wrap)
 

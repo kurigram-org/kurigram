@@ -20,7 +20,6 @@ import asyncio
 import logging
 import signal
 from signal import signal as signal_fn, SIGINT, SIGTERM, SIGABRT
-from pyrogram.utils import get_event_loop
 
 log = logging.getLogger(__name__)
 
@@ -69,11 +68,14 @@ async def idle():
 
             asyncio.run(main())
     """
+    # The handler runs on whatever thread the signal is delivered to, so the loop it has
+    #  to reach is captured here, where we are provably inside it.
+    loop = asyncio.get_running_loop()
     task = None
 
     def signal_handler(signum, __):
         log.info(f"Stop signal received ({signals[signum]}). Exiting...")
-        get_event_loop().call_soon_threadsafe(task.cancel)
+        loop.call_soon_threadsafe(task.cancel)
 
     for s in (SIGINT, SIGTERM, SIGABRT):
         signal_fn(s, signal_handler)

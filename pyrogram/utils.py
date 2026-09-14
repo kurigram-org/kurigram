@@ -38,14 +38,41 @@ from pyrogram.file_id import DOCUMENT_TYPES, PHOTO_TYPES, FileId, FileType
 from pyrogram.types.messages_and_media.message import Str
 
 
-def get_event_loop() -> asyncio.AbstractEventLoop:
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+class _RecordedLoop:
+    # The loop the library runs on. It cannot be resolved while `pyrogram` is being
+    #  imported - `pyrogram/sync.py` wraps every method there, before anything runs a
+    #  loop - so it is recorded the first time `get_event_loop()` below is asked from
+    #  inside one, which is `Client.loop` during `start()`. A class holds it because
+    #  rebinding a module global needs a `global` statement (`PLW0603`).
+    value: asyncio.AbstractEventLoop | None = None
 
-    return loop
+
+def get_running_loop() -> asyncio.AbstractEventLoop | None:
+    """Return the loop the calling thread is inside, or `None`. Never builds one."""
+    try:
+        return asyncio.get_running_loop()
+    except RuntimeError:
+        return None
+
+
+def get_event_loop() -> asyncio.AbstractEventLoop:
+    """Return the loop the library runs on, recording it when the caller is inside one."""
+    recorded = _RecordedLoop.value
+    running = get_running_loop()
+
+    # A recorded loop that is not running was either built below for a caller that had
+    #  none, or closed by whoever ran it. A loop running now is the one the application
+    #  drives, so it wins.
+    if running is not None and (recorded is None or not recorded.is_running()):
+        recorded = running
+
+    if recorded is None or recorded.is_closed():
+        recorded = asyncio.new_event_loop()
+        asyncio.set_event_loop(recorded)
+
+    _RecordedLoop.value = recorded
+
+    return recorded
 
 
 async def ainput(
