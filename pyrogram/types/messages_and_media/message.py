@@ -22,7 +22,8 @@ import contextlib
 import logging
 from datetime import datetime
 from functools import partial
-from typing import BinaryIO
+from itertools import groupby
+from typing import BinaryIO, SupportsIndex
 from re import Match
 from collections.abc import Callable
 
@@ -38,7 +39,6 @@ from pyrogram.errors import (
     PeerIdInvalid,
 )
 from pyrogram.parser import Parser
-from pyrogram.parser import utils as parser_utils
 
 from ..object import Object
 from ..update import Update
@@ -47,6 +47,16 @@ log = logging.getLogger(__name__)
 
 
 class Str(str):
+    """A message text or caption, indexed the way Telegram counts it.
+
+    Entity offsets and lengths are counted in UTF-16 units, so indexing and slicing count
+    them too: ``text[entity.offset:entity.offset + entity.length]`` is that entity's text.
+    An emoji, and any other code point outside the Basic Multilingual Plane, takes two of
+    those units, and a cut falling between them widens outward to the whole code point, so
+    a slice can come back one code point longer at either end than it asked for. Half a
+    code point is never returned.
+    """
+
     __slots__ = ("entities",)
 
     def __init__(self, *args):
@@ -67,8 +77,21 @@ class Str(str):
     def html(self) -> str:
         return Parser.unparse(self, self.entities, True)
 
-    def __getitem__(self, item) -> str:
-        return parser_utils.remove_surrogates(parser_utils.add_surrogates(self)[item])
+    def __getitem__(self, item: SupportsIndex | slice) -> str:
+        text = str(self)
+        # The position of the code point each UTF-16 unit belongs to, so a unit taken from
+        #  inside a surrogate pair still names the whole code point.
+        unit_owners = [
+            position
+            for position, character in enumerate(text)
+            for _ in range(2 if ord(character) > 0xFFFF else 1)
+        ]
+
+        if not isinstance(item, slice):
+            return text[unit_owners[item]]
+
+        # `groupby` collapses the two units of a pair back into the one code point.
+        return "".join(text[position] for position, _ in groupby(unit_owners[item]))
 
 
 class Message(Object, Update):
