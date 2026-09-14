@@ -104,6 +104,7 @@ class RichMessageButton(Object):
         self.switch_inline_query = switch_inline_query
         self.switch_inline_query_current_chat = switch_inline_query_current_chat
         self.switch_inline_query_chosen_chat = switch_inline_query_chosen_chat
+
         if isinstance(copy_text, str):
             copy_text = types.CopyTextButton(text=copy_text)
 
@@ -257,11 +258,7 @@ class RichMessageButton(Object):
 
         if self.copy_text is not None:
             button_type = raw.types.InlineButtonTypeCopy(
-                copy_text=(
-                    self.copy_text.text
-                    if isinstance(self.copy_text, types.CopyTextButton)
-                    else str(self.copy_text)
-                ),
+                copy_text=self.copy_text.text,
             )
 
         if self.disabled is not None:
