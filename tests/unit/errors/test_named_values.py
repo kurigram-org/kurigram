@@ -154,7 +154,8 @@ def test_every_named_value_is_the_value_under_another_name() -> None:
             error_type = getattr(errors, class_name)
 
             if error_type.VALUE_NAME == "value":
-                # `value` is the attribute itself, so nothing may sit on the class under that name.
+                # `value` is `RPCError`'s own property, so nothing may sit on a subclass under
+                #  that name.
                 assert "value" not in vars(error_type)
                 continue
 

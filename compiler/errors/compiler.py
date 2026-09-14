@@ -32,7 +32,8 @@ _DEST: Final[Path] = _HOME.parents[1] / "pyrogram" / "errors" / "exceptions"
 _NOTICE: Final[Path] = _HOME.parents[1] / "NOTICE"
 
 # The name an error carries its value under when its own message names none. `value` is the
-# attribute `RPCError` assigns, so a property of that name would shadow it and none is written.
+#  property `RPCError` itself defines, so a property of that name would shadow it and none
+#  is written.
 _PLAIN_VALUE_NAME: Final[str] = "value"
 
 # `pyrogram/errors/__init__.py` imports the hand-written errors after the generated ones, so a

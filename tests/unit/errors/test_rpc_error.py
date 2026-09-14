@@ -143,6 +143,65 @@ def test_a_known_error_records_nothing(tmp_path: Path, monkeypatch: pytest.Monke
 
 
 @pytest.mark.parametrize(
+    ("code", "message", "error_type", "parameter", "raw_error"),
+    [
+        pytest.param(420, "FLOOD_WAIT_42", FloodWait, 42, None, id="a-known-id-with-a-number"),
+        pytest.param(
+            403,
+            "RECAPTCHA_CHECK_signup",
+            RecaptchaCheck,
+            "signup",
+            None,
+            id="a-known-id-with-text",
+        ),
+        pytest.param(
+            400,
+            "PEER_ID_INVALID",
+            PeerIdInvalid,
+            None,
+            None,
+            id="a-known-id-with-nothing",
+        ),
+        pytest.param(
+            400,
+            "SOMETHING_THE_SCHEMA_DOES_NOT_KNOW",
+            BadRequest,
+            None,
+            "[400 SOMETHING_THE_SCHEMA_DOES_NOT_KNOW]",
+            id="a-known-code-with-an-unknown-id",
+        ),
+        pytest.param(
+            999,
+            "A_CODE_THAT_IS_NOT_IN_THE_SCHEMA",
+            UnknownError,
+            None,
+            "[999 A_CODE_THAT_IS_NOT_IN_THE_SCHEMA]",
+            id="an-unknown-code",
+        ),
+    ],
+)
+def test_the_parameter_and_the_raw_error_never_hold_each_other(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    code: int,
+    message: str,
+    error_type: type[RPCError],
+    parameter: int | str | None,
+    raw_error: str | None,
+) -> None:
+    # Two of the rows are unknown errors, which append to `unknown_errors.txt` in the working
+    #  directory.
+    monkeypatch.chdir(tmp_path)
+
+    with pytest.raises(error_type) as raised:
+        raise_it(code, message=message)
+
+    error = raised.value
+
+    assert (error.parameter, error.raw_error) == (parameter, raw_error)
+
+
+@pytest.mark.parametrize(
     ("value", "expected"),
     [
         pytest.param("42", 42, id="digits-become-a-number"),
@@ -162,8 +221,18 @@ def test_value_keeps_whatever_is_not_a_number(
 
 def test_value_can_also_hold_the_raw_error_object() -> None:
     rpc_error = raw.types.RpcError(error_code=400, error_message="PEER_ID_INVALID")
+    error = RPCError(rpc_error)
 
-    assert RPCError(rpc_error).value is rpc_error
+    # The whole error is no parameter of a message, so it is the raw side that carries it.
+    assert (error.parameter, error.raw_error) == (None, rpc_error)
+    assert error.value is rpc_error
+
+
+def test_value_cannot_be_written_to() -> None:
+    error = FloodWait(42)
+
+    with pytest.raises(AttributeError):
+        error.value = 43
 
 
 @pytest.mark.parametrize(

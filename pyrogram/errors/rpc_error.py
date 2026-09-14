@@ -91,6 +91,20 @@ class RPCError(Exception):
     MESSAGE: str = "{value}"
     VALUE_NAME: str = "value"
 
+    parameter: int | str | None
+    """
+    ``int`` | ``str`` | ``None``: What Telegram embedded in the message of a known error: the
+    number ``FLOOD_WAIT_42`` carries, or the text after one of the verification prefixes.
+    ``None`` when the message carries no parameter, and on every unknown error.
+    """
+
+    raw_error: str | raw.types.RpcError | None
+    """
+    ``str`` | :obj:`~pyrogram.raw.types.RpcError` | ``None``: The whole error nothing could
+    name: the ``[code message]`` text of an unknown code or message, or the object a caller
+    hands over itself. ``None`` on every known error.
+    """
+
     def __init__(
         self,
         value: int | str | raw.types.RpcError | None = None,
@@ -106,17 +120,32 @@ class RPCError(Exception):
 
         super().__init__(message)
 
-        self.value: int | str | raw.types.RpcError | None
+        self.parameter = None
+        self.raw_error = None
 
+        # A number is only ever a parameter; the raw side is an unknown error's text, or the whole
+        #  `RpcError` a caller hands over rather than a parameter read out of its message.
+        if isinstance(value, int):
+            self.parameter = value
+        elif is_unknown or isinstance(value, raw.types.RpcError):
+            self.raw_error = value
         # `isdecimal()`, not `isdigit()`: the latter is true for "²" too, and `int("²")` raises.
-        if isinstance(value, str) and value.isdecimal():
-            self.value = int(value)
+        elif isinstance(value, str) and value.isdecimal():
+            self.parameter = int(value)
         else:
-            self.value = value
+            self.parameter = value
 
         if is_unknown:
             with Path("unknown_errors.txt").open("a", encoding="utf-8") as f:
                 f.write(f"{datetime.now()}\t{value}\t{rpc_name}\n")
+
+    @property
+    def value(self) -> int | str | raw.types.RpcError | None:
+        """
+        ``int`` | ``str`` | :obj:`~pyrogram.raw.types.RpcError` | ``None``: Whichever of
+        ``parameter`` and ``raw_error`` this error carries.
+        """
+        return self.parameter if self.raw_error is None else self.raw_error
 
     @staticmethod
     def raise_it(rpc_error: raw.types.RpcError, rpc_type: type[TLObject]):
