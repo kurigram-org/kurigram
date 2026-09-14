@@ -120,14 +120,14 @@ async def test_an_unknown_button_index_names_the_index() -> None:
         await keyboard_message.click(9)
 
 
-_EMOJI_TEXT: Final[str] = "\U0001f600 250"
+_EMOJI_TEXT: Final[str] = "😀 250"
 
 
 @pytest.mark.parametrize(
     ("item", "expected"),
     [
-        pytest.param(0, "\U0001f600", id="leading-half"),
-        pytest.param(1, "\U0001f600", id="trailing-half"),
+        pytest.param(0, "😀", id="leading-half"),
+        pytest.param(1, "😀", id="trailing-half"),
         pytest.param(2, " ", id="after-the-pair"),
         pytest.param(-1, "0", id="from-the-end"),
     ],
@@ -143,12 +143,12 @@ def test_an_index_inside_a_surrogate_pair_gives_the_whole_code_point(
 @pytest.mark.parametrize(
     ("item", "expected"),
     [
-        pytest.param(slice(0, 1), "\U0001f600", id="leading-half-only"),
-        pytest.param(slice(1, 2), "\U0001f600", id="trailing-half-only"),
-        pytest.param(slice(0, 2), "\U0001f600", id="the-whole-pair"),
-        pytest.param(slice(1, 3), "\U0001f600 ", id="opening-inside-the-pair"),
+        pytest.param(slice(0, 1), "😀", id="leading-half-only"),
+        pytest.param(slice(1, 2), "😀", id="trailing-half-only"),
+        pytest.param(slice(0, 2), "😀", id="the-whole-pair"),
+        pytest.param(slice(1, 3), "😀 ", id="opening-inside-the-pair"),
         pytest.param(slice(2, None), " 250", id="past-the-pair"),
-        pytest.param(slice(None, None, -1), "052 \U0001f600", id="reversed"),
+        pytest.param(slice(None, None, -1), "052 😀", id="reversed"),
     ],
 )
 def test_a_slice_cutting_a_surrogate_pair_widens_to_the_whole_code_point(
@@ -165,6 +165,6 @@ def test_an_entity_offset_still_indexes_the_text_that_entity_marks() -> None:
         offset=3,
         length=4,
     )
-    text = Str("\U0001f600 bold").init([entity])
+    text = Str("😀 bold").init([entity])
 
     assert text[entity.offset : entity.offset + entity.length] == "bold"

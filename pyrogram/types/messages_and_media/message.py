@@ -81,7 +81,7 @@ class Str(str):
         text = str(self)
 
         # Telegram counts offsets in UTF-16 units, where a code point above `0xFFFF` takes
-        #  two, so "<emoji> 250" is 6 offsets long over 5 characters. This table says which
+        #  two, so "😀 250" is 6 offsets long over 5 characters. This table says which
         #  character each offset lands in: [0, 0, 1, 2, 3, 4]. The emoji owns offsets 0 and
         #  1, so an index or a cut between the two still names the whole emoji.
         character_index_at_offset: list[int] = []
