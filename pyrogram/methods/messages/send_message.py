@@ -298,7 +298,7 @@ class SendMessage:
                     force_small_media=link_preview_options.prefer_small_media,
                     optional=True,
                 ),
-                silent=disable_notification or None,
+                silent=disable_notification,
                 invert_media=link_preview_options.show_above_text,
                 reply_to=await utils.get_reply_to(
                     self, reply_parameters, message_thread_id, direct_messages_topic_id
@@ -320,8 +320,8 @@ class SendMessage:
         else:
             rpc = raw.functions.messages.SendMessage(
                 peer=peer,
-                no_webpage=getattr(link_preview_options, "is_disabled", None) or None,
-                silent=disable_notification or None,
+                no_webpage=getattr(link_preview_options, "is_disabled", None),
+                silent=disable_notification,
                 invert_media=getattr(link_preview_options, "show_above_text", None),
                 reply_to=await utils.get_reply_to(
                     self, reply_parameters, message_thread_id, direct_messages_topic_id

@@ -200,7 +200,7 @@ class InputMediaVideo(InputMedia):
                         nosound_video=self.no_sound,
                         attributes=[
                             raw.types.DocumentAttributeVideo(
-                                supports_streaming=self.supports_streaming or None,
+                                supports_streaming=self.supports_streaming,
                                 duration=self.duration,
                                 w=self.width,
                                 h=self.height,

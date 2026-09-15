@@ -92,8 +92,8 @@ class InputTextMessageContent(InputMessageContent):
             )
 
         return raw.types.InputBotInlineMessageText(
-            no_webpage=getattr(self.link_preview_options, "is_disabled", None) or None,
-            invert_media=getattr(self.link_preview_options, "show_above_text", None) or None,
+            no_webpage=getattr(self.link_preview_options, "is_disabled", None),
+            invert_media=getattr(self.link_preview_options, "show_above_text", None),
             reply_markup=await reply_markup.write(client) if reply_markup else None,
             message=message,
             entities=entities,

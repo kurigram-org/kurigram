@@ -50,4 +50,4 @@ class ReplyKeyboardRemove(Object):
         return ReplyKeyboardRemove(selective=b.selective)
 
     async def write(self, _: pyrogram.Client):
-        return raw.types.ReplyKeyboardHide(selective=self.selective or None)
+        return raw.types.ReplyKeyboardHide(selective=self.selective)

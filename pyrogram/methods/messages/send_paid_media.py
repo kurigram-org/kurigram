@@ -282,7 +282,7 @@ class SendPaidMedia:
                                     video_timestamp=i.video_start_timestamp,
                                     attributes=[
                                         raw.types.DocumentAttributeVideo(
-                                            supports_streaming=i.supports_streaming or None,
+                                            supports_streaming=i.supports_streaming,
                                             duration=i.duration,
                                             w=i.width,
                                             h=i.height,
@@ -343,7 +343,7 @@ class SendPaidMedia:
                                 video_timestamp=i.video_start_timestamp,
                                 attributes=[
                                     raw.types.DocumentAttributeVideo(
-                                        supports_streaming=i.supports_streaming or None,
+                                        supports_streaming=i.supports_streaming,
                                         duration=i.duration,
                                         w=i.width,
                                         h=i.height,
@@ -379,7 +379,7 @@ class SendPaidMedia:
                 media=raw.types.InputMediaPaidMedia(
                     stars_amount=stars_amount, extended_media=multi_media, payload=payload
                 ),
-                silent=disable_notification or None,
+                silent=disable_notification,
                 reply_to=await utils.get_reply_to(self, reply_parameters, direct_messages_topic_id),
                 random_id=self.rnd_id(),
                 schedule_date=utils.datetime_to_timestamp(schedule_date),

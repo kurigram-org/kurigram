@@ -81,8 +81,8 @@ class SetGameScore:
                 score=score,
                 id=message_id,
                 user_id=await self.resolve_peer(user_id),
-                force=force or None,
-                edit_message=not disable_edit_message or None,
+                force=force,
+                edit_message=not disable_edit_message,
             )
         )
 

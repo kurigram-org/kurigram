@@ -96,19 +96,18 @@ def _in_memory_document() -> BytesIO:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ("force_document", "expected_force_file"),
+    "force_document",
     [
-        pytest.param(True, True, id="forced"),
-        # `force_file=force_document or None` collapses both falsy values, and the field is
-        #  optional in the schema, so an unforced upload must not carry it at all.
-        pytest.param(None, None, id="unset"),
-        pytest.param(False, None, id="explicitly-off"),
+        pytest.param(True, id="forced"),
+        # `force_file` is `flags.4?true`: the flag bit is the whole value, so `False` and
+        #  `None` both leave it unset and the method passes `force_document` through as is.
+        pytest.param(None, id="unset"),
+        pytest.param(False, id="explicitly-off"),
     ],
 )
 async def test_force_document_reaches_the_media_built_from_a_bytesio(
     *,
     force_document: bool | None,
-    expected_force_file: bool | None,
 ) -> None:
     client = FakeClient()
 
@@ -121,7 +120,7 @@ async def test_force_document_reaches_the_media_built_from_a_bytesio(
     assert client.captured == raw.types.InputMediaUploadedDocument(
         mime_type="image/webp",
         file=_UPLOADED_FILE,
-        force_file=expected_force_file,
+        force_file=force_document,
         attributes=[raw.types.DocumentAttributeFilename(file_name=_FILE_NAME)],
     )
 

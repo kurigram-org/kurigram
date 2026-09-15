@@ -238,7 +238,7 @@ class SendInvoice:
         rpc = raw.functions.messages.SendMedia(
             peer=await self.resolve_peer(chat_id),
             media=media,
-            silent=disable_notification or None,
+            silent=disable_notification,
             reply_to=await utils.get_reply_to(
                 self,
                 reply_parameters,

@@ -272,7 +272,7 @@ class SendMediaGroup:
                                     nosound_video=True,
                                     attributes=[
                                         raw.types.DocumentAttributeVideo(
-                                            supports_streaming=i.supports_streaming or None,
+                                            supports_streaming=i.supports_streaming,
                                             duration=i.duration,
                                             w=i.width,
                                             h=i.height,
@@ -334,7 +334,7 @@ class SendMediaGroup:
                                 nosound_video=True,
                                 attributes=[
                                     raw.types.DocumentAttributeVideo(
-                                        supports_streaming=i.supports_streaming or None,
+                                        supports_streaming=i.supports_streaming,
                                         duration=i.duration,
                                         w=i.width,
                                         h=i.height,
@@ -534,7 +534,7 @@ class SendMediaGroup:
             raw.functions.messages.SendMultiMedia(
                 peer=await self.resolve_peer(chat_id),
                 multi_media=multi_media,
-                silent=disable_notification or None,
+                silent=disable_notification,
                 reply_to=await utils.get_reply_to(
                     self, reply_parameters, message_thread_id, direct_messages_topic_id
                 ),

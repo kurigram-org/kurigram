@@ -55,5 +55,7 @@ class ForceReply(Object):
 
     async def write(self, _: pyrogram.Client):
         return raw.types.ReplyKeyboardForceReply(
-            single_use=True, selective=self.selective or None, placeholder=self.placeholder or None
+            single_use=True,
+            selective=self.selective,
+            placeholder=self.placeholder or None,
         )

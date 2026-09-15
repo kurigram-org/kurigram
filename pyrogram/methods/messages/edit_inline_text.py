@@ -124,7 +124,7 @@ class EditInlineText:
         return await session.invoke(
             raw.functions.messages.EditInlineBotMessage(
                 id=unpacked,
-                no_webpage=getattr(link_preview_options, "is_disabled", None) or None,
+                no_webpage=getattr(link_preview_options, "is_disabled", None),
                 reply_markup=await reply_markup.write(self) if reply_markup else None,
                 message=message,
                 entities=_entities,

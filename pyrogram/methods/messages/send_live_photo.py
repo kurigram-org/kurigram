@@ -252,7 +252,7 @@ class SendLivePhoto:
                                 progress=progress,
                                 progress_args=progress_args,
                             ),
-                            silent=disable_notification or None,
+                            silent=disable_notification,
                             invert_media=show_caption_above_media,
                             reply_to=await utils.get_reply_to(
                                 self, reply_parameters, message_thread_id, direct_messages_topic_id

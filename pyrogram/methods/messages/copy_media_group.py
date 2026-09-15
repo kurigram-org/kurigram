@@ -226,7 +226,7 @@ class CopyMediaGroup:
             raw.functions.messages.SendMultiMedia(
                 peer=await self.resolve_peer(chat_id),
                 multi_media=multi_media,
-                silent=disable_notification or None,
+                silent=disable_notification,
                 reply_to=await utils.get_reply_to(self, reply_parameters, message_thread_id),
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
                 noforwards=protect_content,

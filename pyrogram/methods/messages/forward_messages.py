@@ -160,7 +160,7 @@ class ForwardMessages:
                 to_peer=await self.resolve_peer(chat_id),
                 from_peer=await self.resolve_peer(from_chat_id),
                 id=message_ids,
-                silent=disable_notification or None,
+                silent=disable_notification,
                 random_id=[self.rnd_id() for _ in message_ids],
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
                 schedule_repeat_period=repeat_period,
