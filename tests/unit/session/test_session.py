@@ -21,6 +21,7 @@ from __future__ import annotations as _annotations
 import asyncio
 from concurrent.futures import Executor
 from hashlib import sha1, sha256
+from io import BytesIO
 from os import urandom
 from typing import Final
 
@@ -29,7 +30,7 @@ import pytest
 import pyrogram
 from pyrogram import raw
 from pyrogram.crypto import aes, mtproto
-from pyrogram.raw.core import Long, Message
+from pyrogram.raw.core import FutureSalt, FutureSalts, Long, Message, TLObject
 from pyrogram.session.session import Result, Session, SessionState
 
 _DC_ID: Final[int] = 2
@@ -40,6 +41,14 @@ _PACKET: Final[bytes] = b"one packet"
 # The salt the session holds before the server offers a new one, and the one it offers.
 _STALE_SALT: Final[int] = 111
 _NEW_SALT: Final[int] = 999
+
+# The two salts of a pool: the one in use, and the one that takes over from it.
+_CURRENT_SALT: Final[int] = 222
+_NEXT_SALT: Final[int] = 333
+
+# How long the server gives a salt, and how much of it is left when a test starts.
+_SALT_LIFETIME: Final[int] = 30 * 60
+_SALT_LEFT: Final[int] = 30
 
 # `bad_server_salt` error code: "incorrect server salt".
 #  https://core.telegram.org/mtproto/service_messages_about_messages#notice-of-ignored-error-message
@@ -64,7 +73,11 @@ class StubConnection:
     def __init__(self) -> None:
         self.closed = asyncio.Event()
         self.packets = [_PACKET]
+        self.sent: list[bytes] = []
         self.protocol = StubProtocol()
+
+    async def send(self, payload: bytes) -> None:
+        self.sent.append(payload)
 
     async def recv(self) -> bytes | None:
         if self.packets:
@@ -105,14 +118,8 @@ def _pack_as_server(message: Message, *, session_id: bytes, auth_key: bytes) -> 
     )
 
 
-async def _bad_server_salt_packet(*, session: Session, bad_msg_id: int) -> bytes:
-    body = raw.types.BadServerSalt(
-        bad_msg_id=bad_msg_id,
-        bad_msg_seqno=0,
-        error_code=_INCORRECT_SERVER_SALT,
-        new_server_salt=_NEW_SALT,
-    )
-
+async def _server_packet(*, session: Session, body: TLObject) -> bytes:
+    """Pack a body into the packet a server would have written"""
     # A server message identity is odd, and the factory allocates client ones.
     message = Message(
         body,
@@ -126,6 +133,130 @@ async def _bad_server_salt_packet(*, session: Session, bad_msg_id: int) -> bytes
         session_id=session.session_id,
         auth_key=session.auth_key,
     )
+
+
+async def _bad_server_salt_packet(*, session: Session, bad_msg_id: int) -> bytes:
+    body = raw.types.BadServerSalt(
+        bad_msg_id=bad_msg_id,
+        bad_msg_seqno=0,
+        error_code=_INCORRECT_SERVER_SALT,
+        new_server_salt=_NEW_SALT,
+    )
+
+    return await _server_packet(
+        session=session,
+        body=body,
+    )
+
+
+def _last_sent_salt(session: Session) -> int:
+    """Read back the salt the session packed its last outgoing message with"""
+    connection = session.connection
+    assert isinstance(connection, StubConnection)
+
+    # `mtproto.pack` writes `auth_key_id` (8 bytes) and `msg_key` (16), then the
+    #  encrypted block, which opens on the salt.
+    payload = connection.sent[-1]
+    aes_key, aes_iv = mtproto.kdf(session.auth_key, payload[8:24], True)
+
+    return Long.read(BytesIO(aes.ige256_decrypt(payload[24:], aes_key, aes_iv)))
+
+
+async def _future_salts_packet(
+    *,
+    session: Session,
+    req_msg_id: int,
+    salts: list[FutureSalt],
+) -> bytes:
+    body = FutureSalts(
+        req_msg_id=req_msg_id,
+        now=int(session.client.server_time),
+        salts=salts,
+    )
+
+    return await _server_packet(
+        session=session,
+        body=body,
+    )
+
+
+async def _take_future_salts(*, session: Session, salts: list[FutureSalt]) -> None:
+    """Answer the `GetFutureSalts` the session sends, the way the server would"""
+    requesting = asyncio.ensure_future(session._update_future_salts())
+
+    while not session.results and not requesting.done():
+        await asyncio.sleep(0)
+
+    assert session.results, "the session asked for no future salts"
+
+    await session.handle_packet(
+        await _future_salts_packet(
+            session=session,
+            req_msg_id=next(iter(session.results)),
+            salts=salts,
+        ),
+    )
+
+    await requesting
+
+
+def _pool_expiring_now(session: Session) -> list[FutureSalt]:
+    """A pool of two: a salt with seconds left, and the one that succeeds it"""
+    now = int(session.client.server_time)
+
+    return [
+        FutureSalt(
+            valid_since=now - _SALT_LIFETIME,
+            valid_until=now + _SALT_LEFT,
+            salt=_CURRENT_SALT,
+        ),
+        FutureSalt(
+            valid_since=now + _SALT_LEFT,
+            valid_until=now + _SALT_LEFT + _SALT_LIFETIME,
+            salt=_NEXT_SALT,
+        ),
+    ]
+
+
+def _recorded_future_salts_requests(session: Session, *, valid_for: int) -> list[TLObject]:
+    """Answer every `GetFutureSalts` where it is sent, and collect what was asked"""
+    requests: list[TLObject] = []
+
+    async def send(
+        data: TLObject,
+        *,
+        wait_response: bool = True,
+        timeout: float = Session.WAIT_TIMEOUT,
+    ) -> FutureSalts:
+        requests.append(data)
+
+        # The second entry is what keeps the pool from emptying as the first is
+        #  promoted, so the threshold is what decides the next request rather than
+        #  the pool being empty.
+        now = int(session.client.server_time)
+        expires_at: int = now + valid_for
+        salts = [
+            FutureSalt(
+                valid_since=now - _SALT_LIFETIME,
+                valid_until=expires_at,
+                salt=_CURRENT_SALT,
+            ),
+            FutureSalt(
+                valid_since=expires_at,
+                valid_until=expires_at + _SALT_LIFETIME,
+                salt=_NEXT_SALT,
+            ),
+        ]
+
+        return FutureSalts(
+            req_msg_id=0,
+            now=now,
+            salts=salts,
+        )
+
+    session.send = send
+
+    return requests
 
 
 async def test_stop_waits_for_the_packet_it_is_still_handling() -> None:
@@ -278,3 +409,56 @@ async def test_a_bad_server_salt_still_resolves_the_call_that_waits_for_it() -> 
 
     assert session.results[awaited_msg_id].event.is_set()
     assert session.salt == _NEW_SALT
+
+
+async def test_the_session_packs_with_the_pooled_salt_once_the_current_one_expires() -> None:
+    session = _started_session()
+
+    await _take_future_salts(
+        session=session,
+        salts=_pool_expiring_now(session),
+    )
+
+    await session.send(raw.functions.Ping(ping_id=0), wait_response=False)
+
+    assert _last_sent_salt(session) == _CURRENT_SALT
+
+    # Past the first salt's `valid_until`, and nothing has sent a `BadServerSalt`.
+    session.client._server_time_offset += _SALT_LEFT + 1
+
+    await session.send(raw.functions.Ping(ping_id=0), wait_response=False)
+
+    assert _last_sent_salt(session) == _NEXT_SALT
+    assert session.results == {}
+
+
+async def test_future_salts_are_not_asked_for_twice_within_the_minute() -> None:
+    session = _started_session()
+
+    # A salt already inside the threshold, so the interval is the one thing left
+    #  that can stop the second request.
+    requests = _recorded_future_salts_requests(session, valid_for=_SALT_LEFT)
+
+    await session._update_future_salts()
+    await session._update_future_salts()
+
+    assert len(requests) == 1
+
+
+async def test_future_salts_are_asked_for_before_the_current_salt_expires() -> None:
+    session = _started_session()
+
+    # A salt that outlives the interval below, but not by the whole threshold.
+    requests = _recorded_future_salts_requests(
+        session,
+        valid_for=Session.FUTURE_SALTS_INTERVAL + _SALT_LEFT,
+    )
+
+    await session._update_future_salts()
+
+    session.client._server_time_offset += Session.FUTURE_SALTS_INTERVAL + 1
+
+    await session._update_future_salts()
+
+    assert len(requests) == 2
+    assert session.salt_valid_until > session.client.server_time

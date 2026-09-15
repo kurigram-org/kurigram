@@ -45,7 +45,7 @@ from pyrogram.errors import (
     Unauthorized,
 )
 from pyrogram.raw.all import layer
-from pyrogram.raw.core import FutureSalts, Int, MsgContainer, TLObject
+from pyrogram.raw.core import FutureSalt, FutureSalts, Int, MsgContainer, TLObject
 
 from .internals import MsgFactory
 
@@ -96,6 +96,15 @@ class Session:
     CRYPTO_EXECUTOR_WORKERS = 1
     MAX_CONSECUTIVE_IGNORED = 30
 
+    # TDLib asks for a new pool when the pool is empty or the current salt has under a
+    #  minute left, and never more often than once a minute. Both thresholds and the
+    #  count are TDLib's:
+    #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/AuthData.h#L233-L245
+    #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/SessionConnection.cpp#L949-L954
+    FUTURE_SALTS_COUNT = 64
+    FUTURE_SALTS_THRESHOLD = 60
+    FUTURE_SALTS_INTERVAL = 60
+
     def __init__(
         self,
         client: pyrogram.Client,
@@ -127,6 +136,13 @@ class Session:
         self.msg_factory = MsgFactory(self.client)
 
         self.salt = 0
+        self.salt_valid_until: float = 0.0
+
+        # A salt changes every 30 minutes and the old one is accepted for a further 1800
+        #  seconds, so a session holding a single one is wrong within the hour:
+        #  https://core.telegram.org/mtproto/description (Terminology, "Server Salt").
+        self.future_salts: list[FutureSalt] = []
+        self._future_salts_requested_at: float = 0.0
 
         self.ignore_count = 0
 
@@ -467,6 +483,40 @@ class Session:
             else:
                 self.pending_acks.clear()
 
+    def _current_salt(self, server_time: float) -> int:
+        """Get the salt valid at `server_time`, dropping the ones it has passed"""
+        while self.future_salts and self.future_salts[0].valid_since <= server_time:
+            salt = self.future_salts.pop(0)
+
+            self.salt = salt.salt
+            self.salt_valid_until = salt.valid_until
+
+        return self.salt
+
+    async def _update_future_salts(self) -> None:
+        server_time = self.client.server_time
+
+        if server_time - self._future_salts_requested_at < self.FUTURE_SALTS_INTERVAL:
+            return
+
+        # Promote first, so `salt_valid_until` is the one actually in use right now.
+        self._current_salt(server_time)
+
+        if self.future_salts and self.salt_valid_until - server_time > self.FUTURE_SALTS_THRESHOLD:
+            return
+
+        self._future_salts_requested_at = server_time
+
+        # The same budget `start()` gives its own round trips, rather than the whole
+        #  `WAIT_TIMEOUT`: `stop()` waits on this task, and the request is pre-emptive,
+        #  so an answer that does not arrive is asked for again a minute later.
+        future_salts = await self.send(
+            raw.functions.GetFutureSalts(num=self.FUTURE_SALTS_COUNT),
+            timeout=self.START_TIMEOUT,
+        )
+
+        self.future_salts = sorted(future_salts.salts, key=lambda salt: salt.valid_since)
+
     async def ping_worker(self):
         log.info("PingTask started")
 
@@ -492,6 +542,15 @@ class Session:
                 break
             except RPCError:
                 pass
+
+            try:
+                await self._update_future_salts()
+
+            # Only logged: the current salt still has a minute of life, and a
+            #  `BadServerSalt` recovers the session anyway. `send` reports an answer
+            #  that never came as `TimeoutError`, which is an `OSError`.
+            except (OSError, RPCError) as e:
+                log.info("Could not get future salts - %s - %s", e.__class__.__name__, e)
 
         log.info("PingTask stopped")
 
@@ -550,7 +609,7 @@ class Session:
             self.connection.protocol.crypto_executor,
             mtproto.pack,
             message,
-            self.salt,
+            self._current_salt(self.client.server_time),
             self.session_id,
             self.auth_key,
             self.auth_key_id,
