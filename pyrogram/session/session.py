@@ -187,7 +187,7 @@ class Session:
         # The set is what `stop()` waits on, and it is also the strong reference the
         #  loop does not hold: an unreferenced task can be collected mid-execution.
         #  https://docs.python.org/3/library/asyncio-task.html#creating-tasks
-        task = self.client.loop.create_task(coroutine)
+        task = asyncio.create_task(coroutine)
 
         self.pending_tasks.add(task)
         task.add_done_callback(self.pending_tasks.discard)
@@ -233,7 +233,7 @@ class Session:
         try:
             await self.connection.connect()
 
-            self.recv_task = self.client.loop.create_task(self.recv_worker())
+            self.recv_task = asyncio.create_task(self.recv_worker())
 
             await self.send(raw.functions.Ping(ping_id=0), timeout=self.START_TIMEOUT)
 
@@ -272,7 +272,7 @@ class Session:
                     timeout=self.START_TIMEOUT,
                 )
 
-            self.ping_task = self.client.loop.create_task(self.ping_worker())
+            self.ping_task = asyncio.create_task(self.ping_worker())
 
             log.info("Session initialized: Pyrogram v%s (Layer %s)", pyrogram.__version__, layer)
             log.info("Device: %s - %s", self.client.device_model, self.client.app_version)
@@ -282,7 +282,7 @@ class Session:
             raise e
         except (OSError, RPCError) as e:
             log.info("Restarting session due to - %s - %s", e.__class__.__name__, e)
-            self.client.loop.create_task(self.restart())
+            asyncio.create_task(self.restart())
             return
         except Exception as e:
             await self.stop()
@@ -378,7 +378,7 @@ class Session:
 
     async def handle_packet(self, packet):
         try:
-            data = await self.client.loop.run_in_executor(
+            data = await asyncio.get_running_loop().run_in_executor(
                 self.connection.protocol.crypto_executor,
                 mtproto.unpack,
                 BytesIO(packet),
@@ -389,7 +389,7 @@ class Session:
         except ValueError as e:
             log.debug(e)
             log.info("Restarting session due to - %s - %s", e.__class__.__name__, e)
-            self.client.loop.create_task(self.restart())
+            asyncio.create_task(self.restart())
             return
 
         messages = data.body.messages if isinstance(data.body, MsgContainer) else [data]
@@ -451,7 +451,7 @@ class Session:
 
                 if self.ignore_count >= self.MAX_CONSECUTIVE_IGNORED:
                     log.info("Restarting session due to - %s - %s", e.__class__.__name__, e)
-                    self.client.loop.create_task(self.restart())
+                    asyncio.create_task(self.restart())
 
                 return
             else:
@@ -554,7 +554,7 @@ class Session:
                 )
             except OSError as e:
                 log.info("Restarting session due to - %s - %s", e.__class__.__name__, e)
-                self.client.loop.create_task(self.restart())
+                asyncio.create_task(self.restart())
                 break
             except RPCError:
                 pass
@@ -604,7 +604,7 @@ class Session:
                         error = "Server sent a null packet."
 
                     log.info("Restarting session due to - %s", error)
-                    self.client.loop.create_task(self.restart())
+                    asyncio.create_task(self.restart())
 
                 break
 
@@ -626,7 +626,7 @@ class Session:
 
         log.debug("Sent: %s", message)
 
-        payload = await self.client.loop.run_in_executor(
+        payload = await asyncio.get_running_loop().run_in_executor(
             self.connection.protocol.crypto_executor,
             mtproto.pack,
             message,

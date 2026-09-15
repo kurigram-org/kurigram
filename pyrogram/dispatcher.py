@@ -367,7 +367,7 @@ class Dispatcher:
                 self.locks_list.append(asyncio.Lock())
 
                 self.handler_worker_tasks.append(
-                    self.client.loop.create_task(self.handler_worker(self.locks_list[-1]))
+                    asyncio.create_task(self.handler_worker(self.locks_list[-1]))
                 )
 
             log.info("Started %s HandlerTasks", self.client.workers)
@@ -477,7 +477,7 @@ class Dispatcher:
                                 if inspect.iscoroutinefunction(handler.callback):
                                     await handler.callback(self.client, *args)
                                 else:
-                                    await self.client.loop.run_in_executor(
+                                    await asyncio.get_running_loop().run_in_executor(
                                         self.client.executor, handler.callback, self.client, *args
                                     )
                             except pyrogram.StopPropagation:
@@ -519,7 +519,7 @@ class Dispatcher:
                                 self.client, exc, update_handler, update, users, chats
                             )
                         else:
-                            await self.client.loop.run_in_executor(
+                            await asyncio.get_running_loop().run_in_executor(
                                 self.client.executor,
                                 handler.callback,
                                 self.client,

@@ -1379,7 +1379,8 @@ class Client(Methods):
                             if inspect.iscoroutinefunction(progress):
                                 await func()
                             else:
-                                await self.loop.run_in_executor(self.executor, func)
+                                loop = asyncio.get_running_loop()
+                                await loop.run_in_executor(self.executor, func)
 
                         if len(chunk) < chunk_size or current >= total:
                             break
@@ -1417,7 +1418,7 @@ class Client(Methods):
                             chunk = r2.bytes
 
                             # https://core.telegram.org/cdn#decrypting-files
-                            decrypted_chunk = await self.loop.run_in_executor(
+                            decrypted_chunk = await asyncio.get_running_loop().run_in_executor(
                                 self.executor,
                                 aes.ctr256_decrypt,
                                 chunk,
@@ -1445,7 +1446,7 @@ class Client(Methods):
                                         "h.hash == sha256(cdn_chunk).digest()",
                                     )
 
-                            await self.loop.run_in_executor(
+                            await asyncio.get_running_loop().run_in_executor(
                                 self.executor,
                                 _check_all_hashes,
                                 hashes,
@@ -1470,7 +1471,8 @@ class Client(Methods):
                                 if inspect.iscoroutinefunction(progress):
                                     await func()
                                 else:
-                                    await self.loop.run_in_executor(self.executor, func)
+                                    loop = asyncio.get_running_loop()
+                                    await loop.run_in_executor(self.executor, func)
 
                             if len(chunk) < chunk_size or current >= total:
                                 break

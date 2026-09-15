@@ -71,7 +71,7 @@ class TCPAbridgedO(TCP):
 
         length = len(data) // 4
         data = (bytes([length]) if length <= 126 else b"\x7f" + length.to_bytes(3, "little")) + data
-        payload = await self.loop.run_in_executor(
+        payload = await asyncio.get_running_loop().run_in_executor(
             self.crypto_executor, aes.ctr256_encrypt, data, *self.encrypt
         )
 
@@ -102,6 +102,6 @@ class TCPAbridgedO(TCP):
         if data is None:
             return None
 
-        return await self.loop.run_in_executor(
+        return await asyncio.get_running_loop().run_in_executor(
             self.crypto_executor, aes.ctr256_decrypt, data, *self.decrypt
         )

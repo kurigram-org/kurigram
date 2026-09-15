@@ -18,6 +18,7 @@
 
 from __future__ import annotations as _annotations
 
+import asyncio
 import inspect
 import re
 from typing import TYPE_CHECKING, Any, Final
@@ -79,7 +80,8 @@ class InvertFilter(Filter):
         if inspect.iscoroutinefunction(self.base.__call__):
             x = await self.base(client, update)
         else:
-            x = await client.loop.run_in_executor(client.executor, self.base, client, update)
+            loop = asyncio.get_running_loop()
+            x = await loop.run_in_executor(client.executor, self.base, client, update)
 
         return not x
 
@@ -93,7 +95,8 @@ class AndFilter(Filter):
         if inspect.iscoroutinefunction(self.base.__call__):
             x = await self.base(client, update)
         else:
-            x = await client.loop.run_in_executor(client.executor, self.base, client, update)
+            loop = asyncio.get_running_loop()
+            x = await loop.run_in_executor(client.executor, self.base, client, update)
 
         # short circuit
         if not x:
@@ -102,7 +105,8 @@ class AndFilter(Filter):
         if inspect.iscoroutinefunction(self.other.__call__):
             y = await self.other(client, update)
         else:
-            y = await client.loop.run_in_executor(client.executor, self.other, client, update)
+            loop = asyncio.get_running_loop()
+            y = await loop.run_in_executor(client.executor, self.other, client, update)
 
         return x and y
 
@@ -116,7 +120,8 @@ class OrFilter(Filter):
         if inspect.iscoroutinefunction(self.base.__call__):
             x = await self.base(client, update)
         else:
-            x = await client.loop.run_in_executor(client.executor, self.base, client, update)
+            loop = asyncio.get_running_loop()
+            x = await loop.run_in_executor(client.executor, self.base, client, update)
 
         # short circuit
         if x:
@@ -125,7 +130,8 @@ class OrFilter(Filter):
         if inspect.iscoroutinefunction(self.other.__call__):
             y = await self.other(client, update)
         else:
-            y = await client.loop.run_in_executor(client.executor, self.other, client, update)
+            loop = asyncio.get_running_loop()
+            y = await loop.run_in_executor(client.executor, self.other, client, update)
 
         return x or y
 
