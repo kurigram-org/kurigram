@@ -24,7 +24,6 @@ functions: a database handle, a client object, a lazily built proxy.
 
 from __future__ import annotations as _annotations
 
-import asyncio
 import logging
 from pathlib import Path
 from typing import Final, Protocol
@@ -95,18 +94,19 @@ def write_plugin(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PluginWrite
 
 
 def _plugin_client(root: str) -> Client:
-    client = Client(name="plugin_probe", in_memory=True)
-    client.loop = asyncio.get_event_loop()
+    client = Client(
+        name="plugin_probe",
+        in_memory=True,
+    )
     client.plugins = {"root": root, "enabled": True}
 
     return client
 
 
-async def test_load_plugins_reads_past_an_attribute_proxy(write_plugin: PluginWriter) -> None:
+def test_load_plugins_reads_past_an_attribute_proxy(write_plugin: PluginWriter) -> None:
     client = _plugin_client(write_plugin("proxy_plugins", source=_PLUGIN_SOURCE))
 
     client.load_plugins()
-    await asyncio.sleep(0)
 
     registered = [
         handler
@@ -136,13 +136,12 @@ def test_plugin_handlers_ignores_what_is_not_a_pair_list() -> None:
     assert _plugin_handlers(decorated) == decorated.handlers
 
 
-async def test_load_plugins_registers_a_handler_declared_by_keyword(
+def test_load_plugins_registers_a_handler_declared_by_keyword(
     write_plugin: PluginWriter,
 ) -> None:
     client = _plugin_client(write_plugin("keyword_plugins", source=_KEYWORD_PLUGIN_SOURCE))
 
     client.load_plugins()
-    await asyncio.sleep(0)
 
     (handler,) = client.dispatcher.groups[1]
 
@@ -150,7 +149,7 @@ async def test_load_plugins_registers_a_handler_declared_by_keyword(
     assert handler.filters is filters.text
 
 
-async def test_load_plugins_reports_the_pair_it_refuses(
+def test_load_plugins_reports_the_pair_it_refuses(
     write_plugin: PluginWriter,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
@@ -158,7 +157,6 @@ async def test_load_plugins_reports_the_pair_it_refuses(
 
     with caplog.at_level(logging.WARNING, logger="pyrogram.client"):
         client.load_plugins()
-        await asyncio.sleep(0)
 
     assert client.dispatcher.groups == {}
     assert "greet" in caplog.text
