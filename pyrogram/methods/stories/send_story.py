@@ -177,6 +177,7 @@ class SendStory:
                             thumb=thumb,
                             attributes=[
                                 raw.types.DocumentAttributeVideo(
+                                    supports_streaming=supports_streaming or None,
                                     duration=duration,
                                     w=width,
                                     h=height,
