@@ -21,14 +21,18 @@ from __future__ import annotations as _annotations
 from typing import TYPE_CHECKING, Any
 from collections.abc import Callable
 
+from pyrogram import types
+from pyrogram.filters import Filter
+
 from .handler import Handler
 
 if TYPE_CHECKING:
     import pyrogram
-    from pyrogram import types
+
+UserStatusCallbackType = Callable[["pyrogram.Client", types.User], Any]
 
 
-class UserStatusHandler(Handler):
+class UserStatusHandler(Handler[UserStatusCallbackType]):
     """The UserStatus handler class. Used to handle user status updates (user going online or offline).
     It is intended to be used with :meth:`~pyrogram.Client.add_handler`.
 
@@ -50,5 +54,5 @@ class UserStatusHandler(Handler):
             The user containing the updated status.
     """
 
-    def __init__(self, callback: Callable[[pyrogram.Client, types.User], Any], filters=None):
+    def __init__(self, callback: UserStatusCallbackType, filters: Filter | None = None) -> None:
         super().__init__(callback, filters)

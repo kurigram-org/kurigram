@@ -21,16 +21,29 @@ from __future__ import annotations as _annotations
 from typing import TYPE_CHECKING, Any
 from collections.abc import Callable, Sequence
 
+from pyrogram import raw
 from pyrogram.filters import Filter
 
 from .handler import Handler
 
 if TYPE_CHECKING:
     import pyrogram
-    from pyrogram import raw
 
 
-class ErrorHandler(Handler):
+ErrorCallbackType = Callable[
+    [
+        "pyrogram.Client",
+        Exception,
+        Handler[Any],
+        raw.base.Update,
+        dict[int, raw.base.User],
+        dict[int, raw.base.Chat],
+    ],
+    Any,
+]
+
+
+class ErrorHandler(Handler[ErrorCallbackType]):
     """The Error handler class. Used to handle unexpected errors.
 
     It is intended to be used with :meth:`~pyrogram.Client.add_handler`.
@@ -80,20 +93,10 @@ class ErrorHandler(Handler):
 
     def __init__(
         self,
-        callback: Callable[
-            [
-                pyrogram.Client,
-                Exception,
-                Handler,
-                raw.base.Update,
-                dict[int, raw.base.User],
-                dict[int, raw.base.Chat],
-            ],
-            Any,
-        ],
+        callback: ErrorCallbackType,
         exceptions: Exception | Sequence[Exception] | None = None,
         filters: Filter | None = None,
-    ):
+    ) -> None:
         super().__init__(callback, filters)
 
         if exceptions is None:

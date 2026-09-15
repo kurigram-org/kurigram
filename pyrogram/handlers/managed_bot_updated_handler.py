@@ -21,14 +21,18 @@ from __future__ import annotations as _annotations
 from typing import TYPE_CHECKING, Any
 from collections.abc import Callable
 
+from pyrogram import types
+from pyrogram.filters import Filter
+
 from .handler import Handler
 
 if TYPE_CHECKING:
     import pyrogram
-    from pyrogram import types
+
+ManagedBotUpdatedCallbackType = Callable[["pyrogram.Client", types.ManagedBotUpdated], Any]
 
 
-class ManagedBotUpdatedHandler(Handler):
+class ManagedBotUpdatedHandler(Handler[ManagedBotUpdatedCallbackType]):
     """The ManagedBotUpdated handler class. Used to handle new managed bot creation updates.
     It is intended to be used with :meth:`~pyrogram.Client.add_handler`.
 
@@ -51,6 +55,8 @@ class ManagedBotUpdatedHandler(Handler):
     """
 
     def __init__(
-        self, callback: Callable[[pyrogram.Client, types.ManagedBotUpdated], Any], filters=None
-    ):
+        self,
+        callback: ManagedBotUpdatedCallbackType,
+        filters: Filter | None = None,
+    ) -> None:
         super().__init__(callback, filters)

@@ -21,14 +21,18 @@ from __future__ import annotations as _annotations
 from typing import TYPE_CHECKING, Any
 from collections.abc import Callable
 
+from pyrogram import types
+from pyrogram.filters import Filter
+
 from .handler import Handler
 
 if TYPE_CHECKING:
     import pyrogram
-    from pyrogram import types
+
+BusinessMessageCallbackType = Callable[["pyrogram.Client", types.Message], Any]
 
 
-class BusinessMessageHandler(Handler):
+class BusinessMessageHandler(Handler[BusinessMessageCallbackType]):
     """The BusinessMessage handler class. Used to handle new business messages.
 
     It is intended to be used with :meth:`~pyrogram.Client.add_handler`
@@ -53,5 +57,9 @@ class BusinessMessageHandler(Handler):
             The received message.
     """
 
-    def __init__(self, callback: Callable[[pyrogram.Client, types.Message], Any], filters=None):
+    def __init__(
+        self,
+        callback: BusinessMessageCallbackType,
+        filters: Filter | None = None,
+    ) -> None:
         super().__init__(callback, filters)

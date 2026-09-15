@@ -21,14 +21,18 @@ from __future__ import annotations as _annotations
 from typing import TYPE_CHECKING, Any
 from collections.abc import Callable
 
+from pyrogram import types
+from pyrogram.filters import Filter
+
 from .handler import Handler
 
 if TYPE_CHECKING:
     import pyrogram
-    from pyrogram import types
+
+PreCheckoutQueryCallbackType = Callable[["pyrogram.Client", types.PreCheckoutQuery], Any]
 
 
-class PreCheckoutQueryHandler(Handler):
+class PreCheckoutQueryHandler(Handler[PreCheckoutQueryCallbackType]):
     """The PreCheckoutQueryHandler handler class. Used to handle pre-checkout queries coming from buy buttons.
     It is intended to be used with :meth:`~pyrogram.Client.add_handler`
 
@@ -53,6 +57,8 @@ class PreCheckoutQueryHandler(Handler):
     """
 
     def __init__(
-        self, callback: Callable[[pyrogram.Client, types.PreCheckoutQuery], Any], filters=None
-    ):
+        self,
+        callback: PreCheckoutQueryCallbackType,
+        filters: Filter | None = None,
+    ) -> None:
         super().__init__(callback, filters)

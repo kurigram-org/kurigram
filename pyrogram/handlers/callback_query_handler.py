@@ -21,14 +21,18 @@ from __future__ import annotations as _annotations
 from typing import TYPE_CHECKING, Any
 from collections.abc import Callable
 
+from pyrogram import types
+from pyrogram.filters import Filter
+
 from .handler import Handler
 
 if TYPE_CHECKING:
     import pyrogram
-    from pyrogram import types
+
+CallbackQueryCallbackType = Callable[["pyrogram.Client", types.CallbackQuery], Any]
 
 
-class CallbackQueryHandler(Handler):
+class CallbackQueryHandler(Handler[CallbackQueryCallbackType]):
     """The CallbackQuery handler class. Used to handle callback queries coming from inline buttons.
     It is intended to be used with :meth:`~pyrogram.Client.add_handler`
 
@@ -52,7 +56,5 @@ class CallbackQueryHandler(Handler):
             The received callback query.
     """
 
-    def __init__(
-        self, callback: Callable[[pyrogram.Client, types.CallbackQuery], Any], filters=None
-    ):
+    def __init__(self, callback: CallbackQueryCallbackType, filters: Filter | None = None) -> None:
         super().__init__(callback, filters)

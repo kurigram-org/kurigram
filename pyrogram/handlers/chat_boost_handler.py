@@ -21,14 +21,18 @@ from __future__ import annotations as _annotations
 from typing import TYPE_CHECKING, Any
 from collections.abc import Callable
 
+from pyrogram import types
+from pyrogram.filters import Filter
+
 from .handler import Handler
 
 if TYPE_CHECKING:
     import pyrogram
-    from pyrogram import types
+
+ChatBoostCallbackType = Callable[["pyrogram.Client", types.ChatBoostUpdated], Any]
 
 
-class ChatBoostHandler(Handler):
+class ChatBoostHandler(Handler[ChatBoostCallbackType]):
     """The ChatBoost handler class. Used to handle applied chat boosts.
     It is intended to be used with :meth:`~pyrogram.Client.add_handler`
 
@@ -52,7 +56,5 @@ class ChatBoostHandler(Handler):
             The applied chat boost.
     """
 
-    def __init__(
-        self, callback: Callable[[pyrogram.Client, types.ChatBoostUpdated], Any], filters=None
-    ):
+    def __init__(self, callback: ChatBoostCallbackType, filters: Filter | None = None) -> None:
         super().__init__(callback, filters)

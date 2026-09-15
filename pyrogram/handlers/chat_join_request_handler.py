@@ -21,14 +21,18 @@ from __future__ import annotations as _annotations
 from typing import TYPE_CHECKING, Any
 from collections.abc import Callable
 
+from pyrogram import types
+from pyrogram.filters import Filter
+
 from .handler import Handler
 
 if TYPE_CHECKING:
     import pyrogram
-    from pyrogram import types
+
+ChatJoinRequestCallbackType = Callable[["pyrogram.Client", types.ChatJoinRequest], Any]
 
 
-class ChatJoinRequestHandler(Handler):
+class ChatJoinRequestHandler(Handler[ChatJoinRequestCallbackType]):
     """The ChatJoinRequest handler class. Used to handle join chat requests.
     It is intended to be used with :meth:`~pyrogram.Client.add_handler`.
 
@@ -53,6 +57,8 @@ class ChatJoinRequestHandler(Handler):
     """
 
     def __init__(
-        self, callback: Callable[[pyrogram.Client, types.ChatJoinRequest], Any], filters=None
-    ):
+        self,
+        callback: ChatJoinRequestCallbackType,
+        filters: Filter | None = None,
+    ) -> None:
         super().__init__(callback, filters)

@@ -21,16 +21,18 @@ from __future__ import annotations as _annotations
 from typing import TYPE_CHECKING, Any
 from collections.abc import Callable
 
+from pyrogram import types
 from pyrogram.filters import Filter
 
 from .handler import Handler
 
 if TYPE_CHECKING:
     import pyrogram
-    from pyrogram import types
+
+DeletedMessagesCallbackType = Callable[["pyrogram.Client", list[types.Message]], Any]
 
 
-class DeletedMessagesHandler(Handler):
+class DeletedMessagesHandler(Handler[DeletedMessagesCallbackType]):
     """The deleted messages handler class. Used to handle deleted messages coming from any chat
     (private, group, channel). It is intended to be used with :meth:`~pyrogram.Client.add_handler`
 
@@ -56,12 +58,12 @@ class DeletedMessagesHandler(Handler):
 
     def __init__(
         self,
-        callback: Callable[[pyrogram.Client, list[types.Message]], Any],
+        callback: DeletedMessagesCallbackType,
         filters: Filter | None = None,
-    ):
+    ) -> None:
         super().__init__(callback, filters)
 
-    async def check(self, client: pyrogram.Client, messages: list[types.Message]):
+    async def check(self, client: pyrogram.Client, messages: list[types.Message]) -> bool:
         # Every message should be checked, if at least one matches the filter True is returned
         # otherwise, or if the list is empty, False is returned
         for message in messages:

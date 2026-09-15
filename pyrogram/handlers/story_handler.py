@@ -21,14 +21,18 @@ from __future__ import annotations as _annotations
 from typing import TYPE_CHECKING, Any
 from collections.abc import Callable
 
+from pyrogram import types
+from pyrogram.filters import Filter
+
 from .handler import Handler
 
 if TYPE_CHECKING:
     import pyrogram
-    from pyrogram import types
+
+StoryCallbackType = Callable[["pyrogram.Client", types.Story], Any]
 
 
-class StoryHandler(Handler):
+class StoryHandler(Handler[StoryCallbackType]):
     """The Story handler class. Used to handle new stories.
     It is intended to be used with :meth:`~pyrogram.Client.add_handler`
 
@@ -52,5 +56,5 @@ class StoryHandler(Handler):
             The received story.
     """
 
-    def __init__(self, callback: Callable[[pyrogram.Client, types.Story], Any], filters=None):
+    def __init__(self, callback: StoryCallbackType, filters: Filter | None = None) -> None:
         super().__init__(callback, filters)

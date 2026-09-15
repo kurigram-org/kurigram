@@ -21,14 +21,18 @@ from __future__ import annotations as _annotations
 from typing import TYPE_CHECKING, Any
 from collections.abc import Callable
 
+from pyrogram import types
+from pyrogram.filters import Filter
+
 from .handler import Handler
 
 if TYPE_CHECKING:
     import pyrogram
-    from pyrogram import types
+
+PollCallbackType = Callable[["pyrogram.Client", types.Poll], Any]
 
 
-class PollHandler(Handler):
+class PollHandler(Handler[PollCallbackType]):
     """The Poll handler class. Used to handle polls updates.
 
     It is intended to be used with :meth:`~pyrogram.Client.add_handler`
@@ -53,5 +57,5 @@ class PollHandler(Handler):
             The received poll.
     """
 
-    def __init__(self, callback: Callable[[pyrogram.Client, types.Poll], Any], filters=None):
+    def __init__(self, callback: PollCallbackType, filters: Filter | None = None) -> None:
         super().__init__(callback, filters)

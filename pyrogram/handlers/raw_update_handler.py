@@ -21,14 +21,26 @@ from __future__ import annotations as _annotations
 from typing import TYPE_CHECKING, Any
 from collections.abc import Callable
 
+from pyrogram import raw
+from pyrogram.filters import Filter
+
 from .handler import Handler
 
 if TYPE_CHECKING:
     import pyrogram
-    from pyrogram import raw
+
+RawUpdateCallbackType = Callable[
+    [
+        "pyrogram.Client",
+        raw.base.Update,
+        dict[int, raw.base.User],
+        dict[int, raw.base.Chat],
+    ],
+    Any,
+]
 
 
-class RawUpdateHandler(Handler):
+class RawUpdateHandler(Handler[RawUpdateCallbackType]):
     """The Raw Update handler class. Used to handle raw updates. It is intended to be used with
     :meth:`~pyrogram.Client.add_handler`
 
@@ -74,17 +86,5 @@ class RawUpdateHandler(Handler):
         - :obj:`~pyrogram.raw.types.ChannelForbidden`
     """
 
-    def __init__(
-        self,
-        callback: Callable[
-            [
-                pyrogram.Client,
-                raw.base.Update,
-                dict[int, raw.base.User],
-                dict[int, raw.base.Chat],
-            ],
-            Any,
-        ],
-        filters=None,
-    ):
+    def __init__(self, callback: RawUpdateCallbackType, filters: Filter | None = None) -> None:
         super().__init__(callback, filters)

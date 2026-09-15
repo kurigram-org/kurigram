@@ -21,14 +21,18 @@ from __future__ import annotations as _annotations
 from typing import TYPE_CHECKING, Any
 from collections.abc import Callable
 
+from pyrogram import types
+from pyrogram.filters import Filter
+
 from .handler import Handler
 
 if TYPE_CHECKING:
     import pyrogram
-    from pyrogram import types
+
+MessageReactionCallbackType = Callable[["pyrogram.Client", types.MessageReactionUpdated], Any]
 
 
-class MessageReactionHandler(Handler):
+class MessageReactionHandler(Handler[MessageReactionCallbackType]):
     """The MessageReaction handler class.
     Used to handle changes in the reaction of a message.
 
@@ -56,7 +60,7 @@ class MessageReactionHandler(Handler):
 
     def __init__(
         self,
-        callback: Callable[[pyrogram.Client, types.MessageReactionUpdated], Any],
-        filters=None,
-    ):
+        callback: MessageReactionCallbackType,
+        filters: Filter | None = None,
+    ) -> None:
         super().__init__(callback, filters)

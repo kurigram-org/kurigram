@@ -21,14 +21,18 @@ from __future__ import annotations as _annotations
 from typing import TYPE_CHECKING, Any
 from collections.abc import Callable
 
+from pyrogram import types
+from pyrogram.filters import Filter
+
 from .handler import Handler
 
 if TYPE_CHECKING:
     import pyrogram
-    from pyrogram import types
+
+ChosenInlineResultCallbackType = Callable[["pyrogram.Client", types.ChosenInlineResult], Any]
 
 
-class ChosenInlineResultHandler(Handler):
+class ChosenInlineResultHandler(Handler[ChosenInlineResultCallbackType]):
     """The ChosenInlineResultHandler handler class. Used to handle chosen inline results coming from inline queries.
     It is intended to be used with :meth:`~pyrogram.Client.add_handler`
 
@@ -55,7 +59,7 @@ class ChosenInlineResultHandler(Handler):
 
     def __init__(
         self,
-        callback: Callable[[pyrogram.Client, types.ChosenInlineResult], Any],
-        filters=None,
-    ):
+        callback: ChosenInlineResultCallbackType,
+        filters: Filter | None = None,
+    ) -> None:
         super().__init__(callback, filters)

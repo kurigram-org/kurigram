@@ -26,8 +26,10 @@ from .handler import Handler
 if TYPE_CHECKING:
     import pyrogram
 
+StopCallbackType = Callable[["pyrogram.Client"], Any]
 
-class StopHandler(Handler):
+
+class StopHandler(Handler[StopCallbackType]):
     """The Stop handler class. Used to handle client stop. It is intended to be used with
     :meth:`~pyrogram.Client.add_handler`
 
@@ -45,5 +47,5 @@ class StopHandler(Handler):
             is established.
     """
 
-    def __init__(self, callback: Callable[[pyrogram.Client], Any]):
+    def __init__(self, callback: StopCallbackType) -> None:
         super().__init__(callback)
