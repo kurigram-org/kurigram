@@ -24,6 +24,7 @@ from .amounts import (
     get_premium_duration_month_count,
     to_nano,
 )
+from .console import ainput
 from .crypto import btoi, compute_password_check, compute_password_hash, itob, sha256, xor
 from .datetimes import datetime_to_timestamp, max_datetime, timestamp_to_datetime, zero_datetime
 from .file_ids import (
@@ -35,7 +36,7 @@ from .file_ids import (
 from .gifts import get_input_stargift
 from .inline import pack_inline_message_id, unpack_inline_message_id
 from .json_values import jsonvalue_to_obj, obj_to_jsonvalue
-from .loop import ainput, get_event_loop, get_running_loop
+from .loop import get_event_loop, get_running_loop
 from .messages import get_reply_to, parse_deleted_messages, parse_messages
 from .peers import (
     MAX_CHANNEL_ID,

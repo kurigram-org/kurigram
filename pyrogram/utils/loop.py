@@ -19,9 +19,6 @@
 from __future__ import annotations as _annotations
 
 import asyncio
-import functools
-from concurrent.futures.thread import ThreadPoolExecutor
-from getpass import getpass
 
 
 # The loop the library runs on, recorded by `get_event_loop()` below the first time it is
@@ -60,15 +57,3 @@ def get_event_loop() -> asyncio.AbstractEventLoop:
     _loop = recorded
 
     return recorded
-
-
-async def ainput(
-    prompt: str = "", *, hide: bool = False, loop: asyncio.AbstractEventLoop | None = None
-):
-    """Just like the built-in input, but async"""
-    if not isinstance(loop, asyncio.AbstractEventLoop):
-        loop = get_event_loop()
-
-    with ThreadPoolExecutor(1) as executor:
-        func = functools.partial(getpass if hide else input, prompt)
-        return await loop.run_in_executor(executor, func)
