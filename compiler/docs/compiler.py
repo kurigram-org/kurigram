@@ -111,7 +111,7 @@ def parse_node_info(node: ast.AST) -> NodeInfo | None:
     return None
 
 
-def generate(source_path, base):
+def generate(source_path: str, *, base: str, page_template: str, toctree: str) -> None:
     all_entities = {}
 
     def build(path, level=0):
@@ -132,7 +132,9 @@ def generate(source_path, base):
                 else:
                     continue
 
-                full_path = os.path.basename(path) + "/" + snek(node_info.name).replace("_", "-") + ".rst"
+                full_path: str = (
+                    os.path.basename(path) + "/" + snek(node_info.name).replace("_", "-") + ".rst"
+                )
 
                 if level:
                     full_path = base + "/" + full_path
@@ -160,7 +162,10 @@ def generate(source_path, base):
                         directive_suffix = ""
                         directive_option = "annotation"
                     else:
-                        raise ValueError(f"Unknown node type: `{node_info.type}`")
+                        # The `NotADirectoryError` this block handles is directory-walk
+                        #  control flow, not the cause of a bad node type: drop it from
+                        #  the exception chain.
+                        raise ValueError(f"Unknown node type: `{node_info.type}`") from None
 
                     f.write(
                         page_template.format(
@@ -181,34 +186,35 @@ def generate(source_path, base):
     build(source_path)
 
     for k, v in sorted(all_entities.items()):
-        v = sorted(v)
         entities = []
 
-        for i in v:
-            entities.append(f'{i} <{snek(i).replace("_", "-")}>')
+        for i in sorted(v):
+            entities.append(f"{i} <{snek(i).replace('_', '-')}>")
 
         if k != base:
             inner_path = base + "/" + k + "/index" + ".rst"
-            module = "pyrogram.raw.{}.{}".format(base, k)
+            module = f"pyrogram.raw.{base}.{k}"
         else:
-            for i in sorted(list(all_entities), reverse=True):
+            for i in sorted(all_entities, reverse=True):
                 if i != base:
-                    entities.insert(0, "{0}/index".format(i))
+                    entities.insert(0, f"{i}/index")
 
             inner_path = base + "/index" + ".rst"
-            module = "pyrogram.raw.{}".format(base)
+            module = f"pyrogram.raw.{base}"
 
         with open(DESTINATION + "/" + inner_path, "w", encoding="utf-8") as f:
+            title = k
+
             if k == base:
                 f.write(":tocdepth: 1\n\n")
-                k = "Raw " + k
+                title = "Raw " + k
 
             f.write(
                 toctree.format(
-                    title=k.title(),
-                    title_markup="=" * len(k),
+                    title=title.title(),
+                    title_markup="=" * len(title),
                     module=module,
-                    entities="\n    ".join(entities)
+                    entities="\n    ".join(entities),
                 )
             )
 
@@ -221,8 +227,8 @@ def pyrogram_api():
 
     # Methods
 
-    categories = dict(  # noqa: C408
-        utilities="""
+    categories = {
+        "utilities": """
         Utilities
             start
             stop
@@ -238,7 +244,7 @@ def pyrogram_api():
             get_session
             get_file
         """,
-        messages="""
+        "messages": """
         Messages
             send_message
             forward_media_group
@@ -329,11 +335,11 @@ def pyrogram_api():
             delete_poll_option
             summarize_message
         """,
-        folders="""
+        "folders": """
         Folders
             check_chat_folder_invite_link
         """,
-        chats="""
+        "chats": """
         Chats
             join_chat
             leave_chat
@@ -416,7 +422,7 @@ def pyrogram_api():
             set_chat_member_tag
             set_main_profile_tab
         """,
-        users="""
+        "users": """
         Users
             get_me
             get_users
@@ -438,7 +444,7 @@ def pyrogram_api():
             check_username
             update_birthday
         """,
-        invite_links="""
+        "invite_links": """
         Invite Links
             get_chat_invite_link
             export_chat_invite_link
@@ -458,7 +464,7 @@ def pyrogram_api():
             decline_chat_join_request
             decline_all_chat_join_requests
         """,
-        contacts="""
+        "contacts": """
         Contacts
             add_contact
             delete_contacts
@@ -469,7 +475,7 @@ def pyrogram_api():
             search_contacts
             set_contact_note
         """,
-        payments="""
+        "payments": """
         Payments
             apply_gift_code
             buy_gift_upgrade
@@ -516,17 +522,17 @@ def pyrogram_api():
             process_gift_purchase_offer
             send_gift_purchase_offer
         """,
-        phone="""
+        "phone": """
         Phone
             get_call_members
         """,
-        password="""
+        "password": """
         Password
             enable_cloud_password
             change_cloud_password
             remove_cloud_password
         """,
-        bots="""
+        "bots": """
         Bots
             get_inline_bot_results
             send_inline_bot_result
@@ -572,7 +578,7 @@ def pyrogram_api():
             edit_ephemeral_message_caption
             edit_ephemeral_message_reply_markup
         """,
-        business="""
+        "business": """
         Business
             delete_business_messages
             get_business_account_gifts
@@ -580,7 +586,7 @@ def pyrogram_api():
             get_business_connection
             transfer_business_account_stars
         """,
-        authorization="""
+        "authorization": """
         Authorization
             connect
             disconnect
@@ -602,14 +608,14 @@ def pyrogram_api():
             reset_session
             reset_sessions
         """,
-        advanced="""
+        "advanced": """
         Advanced
             invoke
             recover_gaps
             resolve_peer
             save_file
         """,
-        stories="""
+        "stories": """
         Stories
             can_post_stories
             copy_story
@@ -633,13 +639,13 @@ def pyrogram_api():
             enable_stealth_mode
             get_story_views
         """,
-        premium="""
+        "premium": """
         Premium
             apply_boost
             get_boosts
             get_boosts_status
         """,
-        account="""
+        "account": """
         Account
             add_profile_audio
             remove_profile_audio
@@ -651,8 +657,8 @@ def pyrogram_api():
             set_global_privacy_settings
             set_inactive_session_ttl
             get_global_privacy_settings
-        """
-    )
+        """,
+    }
 
     root = PYROGRAM_API_DEST + "/methods"
 
@@ -667,30 +673,30 @@ def pyrogram_api():
 
         for k, v in categories.items():
             name, *methods = get_title_list(v)
-            fmt_keys.update({k: "\n    ".join("{0} <{0}>".format(m) for m in methods)})
+            fmt_keys.update({k: "\n    ".join(f"{m} <{m}>" for m in methods)})
 
             for method in methods:
-                with open(root + "/{}.rst".format(method), "w") as f2:
-                    title = "{}()".format(method)
+                with open(root + f"/{method}.rst", "w") as f2:
+                    title = f"{method}()"
 
                     f2.write(title + "\n" + "=" * len(title) + "\n\n")
-                    f2.write(".. automethod:: pyrogram.Client.{}()".format(method))
+                    f2.write(f".. automethod:: pyrogram.Client.{method}()")
 
             functions = ["idle", "compose"]
 
             for func in functions:
-                with open(root + "/{}.rst".format(func), "w") as f2:
-                    title = "{}()".format(func)
+                with open(root + f"/{func}.rst", "w") as f2:
+                    title = f"{func}()"
 
                     f2.write(title + "\n" + "=" * len(title) + "\n\n")
-                    f2.write(".. autofunction:: pyrogram.{}()".format(func))
+                    f2.write(f".. autofunction:: pyrogram.{func}()")
 
         f.write(template.format(**fmt_keys))
 
     # Types
 
-    categories = dict(
-        users_chats="""
+    categories = {
+        "users_chats": """
         Users & Chats
             AcceptedGiftTypes
             Birthday
@@ -747,7 +753,7 @@ def pyrogram_api():
             CommunityMemberStatusBanned
             CommunityPermissions
         """,
-        messages_media="""
+        "messages_media": """
         Messages & Media
             BusinessMessage
             Message
@@ -964,7 +970,7 @@ def pyrogram_api():
             GiftAuctionState
             GiftAuction
         """,
-        bot_keyboards="""
+        "bot_keyboards": """
         Bot keyboards
             ReplyKeyboardMarkup
             KeyboardButton
@@ -1004,7 +1010,7 @@ def pyrogram_api():
             CopyTextButton
             UsersShared
         """,
-        bot_commands="""
+        "bot_commands": """
         Bot commands
             BotAccessSettings
             BotCommand
@@ -1017,7 +1023,7 @@ def pyrogram_api():
             BotCommandScopeChatAdministrators
             BotCommandScopeChatMember
         """,
-        input_content="""
+        "input_content": """
         Input Content
             InputChecklist
             InputContactMessageContent
@@ -1093,7 +1099,7 @@ def pyrogram_api():
             InputRichMessageContent
             InputVenueMessageContent
         """,
-        inline_mode="""
+        "inline_mode": """
         Inline Mode
             InlineQuery
             InlineQueryResult
@@ -1116,7 +1122,7 @@ def pyrogram_api():
             InlineQueryResultVoice
             ChosenInlineResult
         """,
-        authorization="""
+        "authorization": """
         Authorization
             ActiveSession
             ActiveSessions
@@ -1126,8 +1132,8 @@ def pyrogram_api():
             PhoneNumberAuthenticationSettings
             SentCode
             TermsOfService
-        """
-    )
+        """,
+    }
 
     root = PYROGRAM_API_DEST + "/types"
 
@@ -1147,18 +1153,18 @@ def pyrogram_api():
 
             # noinspection PyShadowingBuiltins
             for type in types:
-                with open(root + "/{}.rst".format(type), "w") as f2:
-                    title = "{}".format(type)
+                with open(root + f"/{type}.rst", "w") as f2:
+                    title = type
 
                     f2.write(title + "\n" + "=" * len(title) + "\n\n")
-                    f2.write(".. autoclass:: pyrogram.types.{}()\n".format(type))
+                    f2.write(f".. autoclass:: pyrogram.types.{type}()\n")
 
         f.write(template.format(**fmt_keys))
 
     # Bound Methods
 
-    categories = dict(
-        message="""
+    categories = {
+        "message": """
         Message
             Message.reply_animation
             Message.answer_animation
@@ -1235,7 +1241,7 @@ def pyrogram_api():
             Message.reject_gift_purchase_offer
             Message.summarize
         """,
-        chat="""
+        "chat": """
         Chat
             Chat.archive
             Chat.unarchive
@@ -1259,7 +1265,7 @@ def pyrogram_api():
             Chat.mute
             Chat.unmute
         """,
-        user="""
+        "user": """
         User
             User.archive
             User.unarchive
@@ -1267,7 +1273,7 @@ def pyrogram_api():
             User.unblock
             User.get_common_chats
         """,
-        callback_query="""
+        "callback_query": """
         Callback Query
             CallbackQuery.answer
             CallbackQuery.edit_message_text
@@ -1275,24 +1281,24 @@ def pyrogram_api():
             CallbackQuery.edit_message_media
             CallbackQuery.edit_message_reply_markup
         """,
-        inline_query="""
+        "inline_query": """
         InlineQuery
             InlineQuery.answer
         """,
-        pre_checkout_query="""
+        "pre_checkout_query": """
         PreCheckoutQuery
             PreCheckoutQuery.answer
         """,
-        shipping_query="""
+        "shipping_query": """
         ShippingQuery
             ShippingQuery.answer
         """,
-        chat_join_request="""
+        "chat_join_request": """
         ChatJoinRequest
             ChatJoinRequest.approve
             ChatJoinRequest.decline
         """,
-        story="""
+        "story": """
         Story
             Story.reply
             Story.reply_text
@@ -1316,7 +1322,7 @@ def pyrogram_api():
             Story.read
             Story.view
         """,
-        folder="""
+        "folder": """
         Folder
             Folder.delete
             Folder.edit
@@ -1327,11 +1333,11 @@ def pyrogram_api():
             Folder.remove_chat
             Folder.create_invite_link
         """,
-        active_session="""
+        "active_session": """
         ActiveSession
             ActiveSession.reset
         """,
-        gift="""
+        "gift": """
         Gift
             Gift.show
             Gift.hide
@@ -1344,11 +1350,11 @@ def pyrogram_api():
             Gift.get_auction_state
             Gift.send_purchase_offer
         """,
-        animation="""
+        "animation": """
         Animation
             Animation.add_to_gifs
-        """
-    )
+        """,
+    }
 
     root = PYROGRAM_API_DEST + "/bound-methods"
 
@@ -1364,26 +1370,32 @@ def pyrogram_api():
         for k, v in categories.items():
             name, *bound_methods = get_title_list(v)
 
-            fmt_keys.update({"{}_hlist".format(k): "\n    ".join("- :meth:`~{}`".format(bm) for bm in bound_methods)})
+            fmt_keys.update(
+                {f"{k}_hlist": "\n    ".join(f"- :meth:`~{bm}`" for bm in bound_methods)}
+            )
 
             fmt_keys.update(
-                {"{}_toctree".format(k): "\n    ".join("{} <{}>".format(bm.split(".")[1], bm) for bm in bound_methods)})
+                {
+                    f"{k}_toctree": "\n    ".join(
+                        "{} <{}>".format(bm.split(".")[1], bm) for bm in bound_methods
+                    )
+                }
+            )
 
             # noinspection PyShadowingBuiltins
             for bm in bound_methods:
-                with open(root + "/{}.rst".format(bm), "w") as f2:
-                    title = "{}()".format(bm)
+                with open(root + f"/{bm}.rst", "w") as f2:
+                    title = f"{bm}()"
 
                     f2.write(title + "\n" + "=" * len(title) + "\n\n")
-                    f2.write(".. automethod:: pyrogram.types.{}()".format(bm))
+                    f2.write(f".. automethod:: pyrogram.types.{bm}()")
 
         f.write(template.format(**fmt_keys))
 
-
     # Enumerations
 
-    categories = dict(
-        enums="""
+    categories = {
+        "enums": """
         Enumerations
             BlockList
             BusinessSchedule
@@ -1427,7 +1439,7 @@ def pyrogram_api():
             SuggestedPostState
             TopChatCategory
         """,
-    )
+    }
 
     root = PYROGRAM_API_DEST + "/enums"
 
@@ -1454,18 +1466,17 @@ def pyrogram_api():
         for k, v in categories.items():
             name, *enums = get_title_list(v)
 
-            fmt_keys.update({"{}_hlist".format(k): "\n    ".join("{}".format(enum) for enum in enums)})
+            fmt_keys.update({f"{k}_hlist": "\n    ".join(enums)})
 
-            fmt_keys.update(
-                {"{}_toctree".format(k): "\n    ".join("{}".format(enum) for enum in enums)})
+            fmt_keys.update({f"{k}_toctree": "\n    ".join(enums)})
 
             # noinspection PyShadowingBuiltins
             for enum in enums:
-                with open(root + "/{}.rst".format(enum), "w") as f2:
-                    title = "{}".format(enum)
+                with open(root + f"/{enum}.rst", "w") as f2:
+                    title = enum
 
                     f2.write(title + "\n" + "=" * len(title) + "\n\n")
-                    f2.write(".. autoclass:: pyrogram.enums.{}()".format(enum))
+                    f2.write(f".. autoclass:: pyrogram.enums.{enum}()")
                     f2.write("\n    :members:\n")
 
                     f2.write("\n.. raw:: html\n    :file: ./cleanup.html\n")
@@ -1474,9 +1485,6 @@ def pyrogram_api():
 
 
 def start():
-    global page_template
-    global toctree
-
     shutil.rmtree(DESTINATION, ignore_errors=True)
 
     with open(HOME + "/template/page.txt", encoding="utf-8") as f:
@@ -1485,9 +1493,24 @@ def start():
     with open(HOME + "/template/toctree.txt", encoding="utf-8") as f:
         toctree = f.read()
 
-    generate(TYPES_PATH, TYPES_BASE)
-    generate(FUNCTIONS_PATH, FUNCTIONS_BASE)
-    generate(BASE_PATH, BASE_BASE)
+    generate(
+        TYPES_PATH,
+        base=TYPES_BASE,
+        page_template=page_template,
+        toctree=toctree,
+    )
+    generate(
+        FUNCTIONS_PATH,
+        base=FUNCTIONS_BASE,
+        page_template=page_template,
+        toctree=toctree,
+    )
+    generate(
+        BASE_PATH,
+        base=BASE_BASE,
+        page_template=page_template,
+        toctree=toctree,
+    )
     pyrogram_api()
 
 
