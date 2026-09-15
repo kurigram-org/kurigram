@@ -69,6 +69,10 @@ class RecoverGaps:
             local_date = local_state.date
             local_seq = local_state.seq
 
+            # Kurigram does not support recovering gaps for secret chats, so we skip them for now.
+            if local_pts is None:
+                continue
+
             state_deleted = False
 
             while True:

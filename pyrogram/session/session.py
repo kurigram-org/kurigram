@@ -198,9 +198,9 @@ class Session:
             round_tasks = set(self.pending_tasks)
             _, running = await asyncio.wait(round_tasks, timeout=self.STOP_TIMEOUT)
 
-            # `invoke` first waits `WAIT_TIMEOUT` for `is_started`, which stopping has
-            #  just cleared, and then another one for an answer that is not coming, so
-            #  a task caught mid-request would hold the shutdown for half a minute.
+            # Both waits inside `invoke` run for `WAIT_TIMEOUT`: for `is_started`, which
+            #  stopping has just cleared, and for an answer that is not coming. So a task
+            #  caught mid-request would hold the shutdown that long.
             for task in running:
                 task.cancel()
 
@@ -659,17 +659,23 @@ class Session:
         sleep_threshold: float = SLEEP_THRESHOLD,
         retry_delay: float = RETRY_DELAY,
     ):
-        try:
-            await asyncio.wait_for(self.is_started.wait(), self.WAIT_TIMEOUT)
-        except asyncio.TimeoutError:
-            pass
-
         if isinstance(query, (raw.functions.InvokeWithoutUpdates, raw.functions.InvokeWithTakeout)):
             inner_query = query.query
         else:
             inner_query = query
 
         query_name = ".".join(inner_query.QUALNAME.split(".")[1:])
+
+        try:
+            await asyncio.wait_for(self.is_started.wait(), self.WAIT_TIMEOUT)
+
+        # Carrying on instead reaches `send()`, which reads `self.connection.protocol` on a
+        #  session whose `connection` is still `None`: `AttributeError: 'NoneType' object has
+        #  no attribute 'protocol'`, naming neither the session nor the query.
+        except asyncio.TimeoutError as e:
+            raise TimeoutError(
+                f'Waited {self.WAIT_TIMEOUT}s to invoke "{query_name}", and {self} is not started'
+            ) from e
 
         for attempt in range(1, retries + 1):
             try:
