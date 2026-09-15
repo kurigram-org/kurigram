@@ -76,8 +76,8 @@ def async_to_sync(obj, name):
         if caller_loop is not None:
             return asyncio.wrap_future(asyncio.run_coroutine_threadsafe(coroutine, target_loop))
 
-        # No loop in this thread: either the application is running one elsewhere - a handler
-        #  in `Client.executor` lands here - or nobody has started one and we drive it.
+        # No loop in this thread: either the application is running one elsewhere (a handler
+        #  in `Client.executor` lands here), or nobody has started one and we drive it.
         if target_loop.is_running():
             return asyncio.run_coroutine_threadsafe(coroutine, target_loop).result()
 

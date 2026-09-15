@@ -38,13 +38,10 @@ from pyrogram.file_id import DOCUMENT_TYPES, PHOTO_TYPES, FileId, FileType
 from pyrogram.types.messages_and_media.message import Str
 
 
-class _RecordedLoop:
-    # The loop the library runs on. It cannot be resolved while `pyrogram` is being
-    #  imported - `pyrogram/sync.py` wraps every method there, before anything runs a
-    #  loop - so it is recorded the first time `get_event_loop()` below is asked from
-    #  inside one, which is `Client.loop` during `start()`. A class holds it because
-    #  rebinding a module global needs a `global` statement (`PLW0603`).
-    value: asyncio.AbstractEventLoop | None = None
+# The loop the library runs on, recorded by `get_event_loop()` below the first time it is
+#  asked from inside one, which is `Client.loop` during `start()`. It cannot be resolved at
+#  import: `pyrogram/sync.py` wraps every method before anything is running one.
+_loop: asyncio.AbstractEventLoop | None = None
 
 
 def get_running_loop() -> asyncio.AbstractEventLoop | None:
@@ -57,7 +54,11 @@ def get_running_loop() -> asyncio.AbstractEventLoop | None:
 
 def get_event_loop() -> asyncio.AbstractEventLoop:
     """Return the loop the library runs on, recording it when the caller is inside one."""
-    recorded = _RecordedLoop.value
+    # Rebinding it is the point: a thread with no loop of its own cannot reach the one
+    #  the client runs on any other way.
+    global _loop  # noqa: PLW0603
+
+    recorded = _loop
     running = get_running_loop()
 
     # A recorded loop that is not running was either built below for a caller that had
@@ -70,7 +71,7 @@ def get_event_loop() -> asyncio.AbstractEventLoop:
         recorded = asyncio.new_event_loop()
         asyncio.set_event_loop(recorded)
 
-    _RecordedLoop.value = recorded
+    _loop = recorded
 
     return recorded
 
