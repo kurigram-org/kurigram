@@ -41,7 +41,8 @@ class ErrorHandler(Handler):
     Parameters:
         callback (``Callable``):
             A function that will be called whenever an unexpected error is raised.
-            It takes the following positional arguments: *(exception, handler, client, *args)*.
+            It takes *(client, exception, handler, update, users, chats)* as positional arguments
+            (look at the section below for a detailed description).
 
         exceptions (``Exception`` | List of ``Exception``, *optional*):
             An exception type or a sequence of exception types that this handler should handle.
@@ -82,6 +83,8 @@ class ErrorHandler(Handler):
         callback: Callable[
             [
                 pyrogram.Client,
+                Exception,
+                Handler,
                 raw.base.Update,
                 dict[int, raw.base.User],
                 dict[int, raw.base.Chat],
