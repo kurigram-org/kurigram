@@ -90,9 +90,14 @@ class StubConnection:
         self.closed.set()
 
 
-def _started_session() -> Session:
+def _session() -> Session:
     client = pyrogram.Client("test", api_id=1, api_hash="0" * 32, in_memory=True)
-    session = Session(client, _DC_ID, "127.0.0.1", _PORT, _AUTH_KEY, test_mode=True)
+
+    return Session(client, _DC_ID, "127.0.0.1", _PORT, _AUTH_KEY, test_mode=True)
+
+
+def _started_session() -> Session:
+    session = _session()
 
     session.connection = StubConnection()
     session._state = SessionState.STARTED
@@ -462,3 +467,32 @@ async def test_future_salts_are_asked_for_before_the_current_salt_expires() -> N
 
     assert len(requests) == 2
     assert session.salt_valid_until > session.client.server_time
+
+
+@pytest.mark.parametrize(
+    "state",
+    [
+        pytest.param(SessionState.STOPPED, id="never-started"),
+        pytest.param(SessionState.STARTING, id="left-starting-by-a-failed-start"),
+    ],
+)
+async def test_invoke_on_a_session_that_is_not_running_raises(
+    state: SessionState,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Short enough to keep the suite quick, and `invoke()` waits it out in full
+    #  before it gives up on a session that is not running.
+    monkeypatch.setattr(Session, "WAIT_TIMEOUT", 0.05)
+
+    session = _session()
+    session._state = state
+
+    with pytest.raises(TimeoutError) as raised:
+        await session.invoke(raw.functions.help.GetConfig())
+
+    message = str(raised.value)
+
+    assert 'invoke "help.GetConfig"' in message
+
+    # `Session.__str__` carries the state, so this pins the message on both parameters.
+    assert str(session) in message
