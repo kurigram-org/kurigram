@@ -20,7 +20,7 @@ from __future__ import annotations as _annotations
 
 import inspect
 import re
-from typing import Final
+from typing import TYPE_CHECKING, Any, Final
 from re import Pattern
 from collections.abc import Callable
 
@@ -50,26 +50,32 @@ from pyrogram.types import (
     User,
 )
 
+if TYPE_CHECKING:
+    from pyrogram.raw.base import Update as RawUpdate
 
+
+# A filter is handed a raw update as well as a parsed one: `Dispatcher.handler_worker`
+#  checks a `RawUpdateHandler` against the `raw.base.Update` it was dispatched on, never
+#  against a `pyrogram.types` one.
 class Filter:
-    async def __call__(self, client: pyrogram.Client, update: Update):
+    async def __call__(self, client: pyrogram.Client, update: Update | RawUpdate) -> bool:
         raise NotImplementedError
 
-    def __invert__(self):
+    def __invert__(self) -> InvertFilter:
         return InvertFilter(self)
 
-    def __and__(self, other):
+    def __and__(self, other: Filter) -> AndFilter:
         return AndFilter(self, other)
 
-    def __or__(self, other):
+    def __or__(self, other: Filter) -> OrFilter:
         return OrFilter(self, other)
 
 
 class InvertFilter(Filter):
-    def __init__(self, base):
+    def __init__(self, base: Filter) -> None:
         self.base = base
 
-    async def __call__(self, client: pyrogram.Client, update: Update):
+    async def __call__(self, client: pyrogram.Client, update: Update | RawUpdate) -> bool:
         if inspect.iscoroutinefunction(self.base.__call__):
             x = await self.base(client, update)
         else:
@@ -79,11 +85,11 @@ class InvertFilter(Filter):
 
 
 class AndFilter(Filter):
-    def __init__(self, base, other):
+    def __init__(self, base: Filter, other: Filter) -> None:
         self.base = base
         self.other = other
 
-    async def __call__(self, client: pyrogram.Client, update: Update):
+    async def __call__(self, client: pyrogram.Client, update: Update | RawUpdate) -> bool:
         if inspect.iscoroutinefunction(self.base.__call__):
             x = await self.base(client, update)
         else:
@@ -102,11 +108,11 @@ class AndFilter(Filter):
 
 
 class OrFilter(Filter):
-    def __init__(self, base, other):
+    def __init__(self, base: Filter, other: Filter) -> None:
         self.base = base
         self.other = other
 
-    async def __call__(self, client: pyrogram.Client, update: Update):
+    async def __call__(self, client: pyrogram.Client, update: Update | RawUpdate) -> bool:
         if inspect.iscoroutinefunction(self.base.__call__):
             x = await self.base(client, update)
         else:
@@ -237,7 +243,10 @@ def _message_of(update: Update) -> Message | None:
     return update.message if isinstance(update, _WITH_A_MESSAGE) else None
 
 
-def create(func: Callable, name: str | None = None, **kwargs) -> Filter:
+# `func` becomes the generated class's `__call__`, and every filter narrows its third
+#  parameter to the update it handles (`Message` for `text_filter`, `Update` for
+#  `private_filter`), so no one signature describes them all.
+def create(func: Callable[..., Any], name: str | None = None, **kwargs: Any) -> Filter:
     """Easily create a custom filter.
 
     Custom filters give you extra control over which updates are allowed or not to be processed by your handlers.
@@ -1195,7 +1204,7 @@ ephemeral = create(lambda _, __, message: message.ephemeral_message_id is not No
 # region command_filter
 def command(
     commands: str | list[str], prefixes: str | list[str] | None = "/", case_sensitive: bool = False
-):
+) -> Filter:
     """Filter commands, i.e.: text messages starting with "/" or any other custom prefix.
 
     Parameters:
@@ -1276,7 +1285,7 @@ def command(
 # endregion
 
 
-def regex(pattern: str | Pattern, flags: int = 0):
+def regex(pattern: str | Pattern, flags: int = 0) -> Filter:
     """Filter updates that match a given regular expression pattern.
 
     Can be applied to handlers that receive one of the following updates:
@@ -1336,7 +1345,7 @@ class user(Filter, set):
             Defaults to None (no users).
     """
 
-    def __init__(self, users: int | str | list[int | str] | None = None):
+    def __init__(self, users: int | str | list[int | str] | None = None) -> None:
         users = [] if users is None else users if isinstance(users, list) else [users]
 
         super().__init__(
@@ -1344,7 +1353,7 @@ class user(Filter, set):
             for u in users
         )
 
-    async def __call__(self, _, update: Update):
+    async def __call__(self, _: pyrogram.Client, update: Update) -> bool:
         sender = _sender_of(update)
         if not sender:
             return False
@@ -1367,7 +1376,7 @@ class chat(Filter, set):
             Defaults to None (no chats).
     """
 
-    def __init__(self, chats: int | str | list[int | str] | None = None):
+    def __init__(self, chats: int | str | list[int | str] | None = None) -> None:
         chats = [] if chats is None else chats if isinstance(chats, list) else [chats]
 
         super().__init__(
@@ -1375,7 +1384,7 @@ class chat(Filter, set):
             for c in chats
         )
 
-    async def __call__(self, _, update: Update):
+    async def __call__(self, _: pyrogram.Client, update: Update) -> bool:
         chat_of_update = _chat_of(update)
         if not chat_of_update:
             return False
@@ -1408,12 +1417,12 @@ class topic(Filter, set):
             Defaults to None (no topics).
     """
 
-    def __init__(self, topics: int | list[int] | None = None):
+    def __init__(self, topics: int | list[int] | None = None) -> None:
         topics = [] if topics is None else topics if isinstance(topics, list) else [topics]
 
         super().__init__(t for t in topics)
 
-    async def __call__(self, _, update: Update):
+    async def __call__(self, _: pyrogram.Client, update: Update) -> bool:
         message = _message_of(update)
 
         return bool(message and message.topic and message.topic.id in self)
