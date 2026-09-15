@@ -22,6 +22,7 @@ import asyncio
 import inspect
 import logging
 from collections import OrderedDict
+from typing import Any
 
 import pyrogram
 from pyrogram import raw, utils
@@ -147,7 +148,7 @@ class Dispatcher:
         self.updates_queue: asyncio.Queue[
             tuple[raw.base.Update, dict[int, raw.base.User], dict[int, raw.base.Chat]] | None
         ] = asyncio.Queue()
-        self.groups = OrderedDict()
+        self.groups: OrderedDict[int, list[Handler[Any]]] = OrderedDict()
 
         async def message_parser(update, users, chats):
             return (
@@ -394,7 +395,7 @@ class Dispatcher:
 
             log.info("Stopped %s HandlerTasks", self.client.workers)
 
-    def add_handler(self, handler: Handler, group: int):
+    def add_handler(self, handler: Handler[Any], group: int) -> None:
         async def fn():
             for lock in self.locks_list:
                 await lock.acquire()
@@ -411,7 +412,7 @@ class Dispatcher:
 
         self.client.loop.create_task(fn())
 
-    def remove_handler(self, handler: Handler, group: int):
+    def remove_handler(self, handler: Handler[Any], group: int) -> None:
         async def fn():
             for lock in self.locks_list:
                 await lock.acquire()
@@ -497,7 +498,7 @@ class Dispatcher:
     async def handle_update_handler_exception(
         self,
         exc: Exception,
-        update_handler: Handler,
+        update_handler: Handler[Any],
         update: pyrogram.raw.base.Update,
         users: dict[int, pyrogram.raw.base.User],
         chats: dict[int, pyrogram.raw.base.Chat],
