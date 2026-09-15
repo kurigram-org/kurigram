@@ -84,6 +84,11 @@ def _split_error_message(error_message: str) -> _MessageParts:
     return _MessageParts(error_id=PARAMETER.sub("_X", error_message), value=match.group(1))
 
 
+def _wire_text(rpc_error: raw.types.RpcError) -> str:
+    # The sign belongs to the transport, so the lookup in `raise_it` drops it and the text does too.
+    return f"[{abs(rpc_error.error_code)} {rpc_error.error_message}]"
+
+
 class RPCError(Exception):
     ID: str | None = None
     CODE: int | None = None
@@ -98,20 +103,19 @@ class RPCError(Exception):
     ``None`` when the message carries no parameter, and on every unknown error.
     """
 
-    raw_error: str | raw.types.RpcError | None
+    raw: raw.types.RpcError | None
     """
-    ``str`` | :obj:`~pyrogram.raw.types.RpcError` | ``None``: The whole error as it came off the
-    wire, ``[code message]`` with the code unsigned, kept for every error :meth:`raise_it` raises.
-    On a known error it is the only record of the message Telegram sent, since ``ID`` blanks the
-    parameter out and ``FLOOD_WAIT_42`` is nowhere else. ``None`` on an error built by hand, unless
-    the value handed over was an :obj:`~pyrogram.raw.types.RpcError` itself.
+    :obj:`~pyrogram.raw.types.RpcError` | ``None``: The error exactly as it came off the wire, kept
+    for every error :meth:`raise_it` raises. On a known error it is the only record of the message
+    Telegram sent, since ``ID`` blanks the parameter out and ``FLOOD_WAIT_42`` is nowhere else.
+    ``None`` on an error built by hand without one.
     """
 
     is_unknown: bool
     """
     ``bool``: Whether nothing could name this error, because its code or its message is not in the
     tables this version was generated from. Such an error carries no ``parameter``, so ``value``
-    reads ``raw_error`` instead.
+    reads ``raw_text`` instead.
     """
 
     def __init__(
@@ -120,7 +124,7 @@ class RPCError(Exception):
         rpc_name: str | None = None,
         is_unknown: bool = False,
         is_signed: bool = False,
-        raw_error: str | raw.types.RpcError | None = None,
+        raw_error: raw.types.RpcError | None = None,
     ):
         code = f"-{self.CODE}" if is_signed else self.CODE
         name = self.ID or self.NAME
@@ -134,10 +138,14 @@ class RPCError(Exception):
             with Path("unknown_errors.txt").open("a", encoding="utf-8") as unknown_errors:
                 unknown_errors.write(f"{datetime.now()}\t{value}\t{rpc_name}\n")
 
-        # A caller handing over the whole `RpcError` has named it no better than an unknown code
-        #  does, so it reads as unknown too. Only what `raise_it()` could not name is recorded.
-        self.is_unknown = is_unknown or isinstance(value, raw.types.RpcError)
-        self.raw_error = value if isinstance(value, raw.types.RpcError) else raw_error
+        # Handing the whole `RpcError` over as `value` is how `raw_error` was passed before it
+        #  existed, and it names the error no better than an unknown code does.
+        if isinstance(value, raw.types.RpcError):
+            self.raw = value
+            self.is_unknown = True
+        else:
+            self.raw = raw_error
+            self.is_unknown = is_unknown
 
         if self.is_unknown:
             self.parameter = None
@@ -148,12 +156,20 @@ class RPCError(Exception):
             self.parameter = value
 
     @property
-    def value(self) -> int | str | raw.types.RpcError | None:
+    def raw_text(self) -> str | None:
         """
-        ``int`` | ``str`` | :obj:`~pyrogram.raw.types.RpcError` | ``None``: The ``parameter`` of a
-        known error, and the ``raw_error`` of one nothing could name.
+        ``str`` | ``None``: The ``raw`` error written the way it travels, ``[code message]`` with
+        the code unsigned. ``None`` when there is no ``raw`` error to write.
         """
-        return self.raw_error if self.is_unknown else self.parameter
+        return None if self.raw is None else _wire_text(self.raw)
+
+    @property
+    def value(self) -> int | str | None:
+        """
+        ``int`` | ``str`` | ``None``: The ``parameter`` of a known error, and the ``raw_text`` of one
+        nothing could name.
+        """
+        return self.raw_text if self.is_unknown else self.parameter
 
     @staticmethod
     def raise_it(rpc_error: raw.types.RpcError, rpc_type: type[TLObject]):
@@ -165,17 +181,16 @@ class RPCError(Exception):
         if is_signed:
             error_code = -error_code
 
-        # Both sides of the split need this: an unknown error renders it as its own message, and a
-        #  known one keeps it as the only record of what Telegram sent.
-        raw_error_text = f"[{error_code} {error_message}]"
+        # An unknown error has no parameter to render, so its message is the whole wire text.
+        raw_text = _wire_text(rpc_error)
 
         if error_code not in exceptions:
             raise UnknownError(
-                value=raw_error_text,
+                value=raw_text,
                 rpc_name=rpc_name,
                 is_unknown=True,
                 is_signed=is_signed,
-                raw_error=raw_error_text,
+                raw_error=rpc_error,
             )
 
         errors = import_module("pyrogram.errors")
@@ -185,11 +200,11 @@ class RPCError(Exception):
             error_type = getattr(errors, exceptions[error_code][CATEGORY])
 
             raise error_type(
-                value=raw_error_text,
+                value=raw_text,
                 rpc_name=rpc_name,
                 is_unknown=True,
                 is_signed=is_signed,
-                raw_error=raw_error_text,
+                raw_error=rpc_error,
             )
 
         error_type = getattr(errors, exceptions[error_code][parts.error_id])
@@ -199,7 +214,7 @@ class RPCError(Exception):
             rpc_name=rpc_name,
             is_unknown=False,
             is_signed=is_signed,
-            raw_error=raw_error_text,
+            raw_error=rpc_error,
         )
 
 

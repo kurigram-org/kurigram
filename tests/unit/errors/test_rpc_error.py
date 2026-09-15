@@ -143,7 +143,7 @@ def test_a_known_error_records_nothing(tmp_path: Path, monkeypatch: pytest.Monke
 
 
 @pytest.mark.parametrize(
-    ("code", "message", "error_type", "parameter", "raw_error"),
+    ("code", "message", "error_type", "expected_parameter", "expected_raw_text"),
     [
         pytest.param(
             420,
@@ -193,8 +193,8 @@ def test_every_error_keeps_the_raw_error_beside_its_parameter(
     code: int,
     message: str,
     error_type: type[RPCError],
-    parameter: int | str | None,
-    raw_error: str,
+    expected_parameter: int | str | None,
+    expected_raw_text: str,
 ) -> None:
     # Two of the rows are unknown errors, which append to `unknown_errors.txt` in the working
     #  directory.
@@ -206,15 +206,27 @@ def test_every_error_keeps_the_raw_error_beside_its_parameter(
     error = raised.value
 
     # The raw error is what a known id blanks out: `FLOOD_WAIT_X` says nothing about the 42.
-    assert (error.parameter, error.raw_error) == (parameter, raw_error)
+    assert error.parameter == expected_parameter
+    assert (error.raw.error_code, error.raw.error_message) == (code, message)
+    assert error.raw_text == expected_raw_text
 
 
-def test_the_raw_error_keeps_the_code_unsigned() -> None:
+def test_the_raw_error_keeps_the_sign_and_its_text_drops_it() -> None:
     with pytest.raises(FloodWait) as raised:
         raise_it(-420, message="FLOOD_WAIT_42")
 
-    # The sign is the transport's, not the error's, and `CODE` drops it too.
-    assert raised.value.raw_error == "[420 FLOOD_WAIT_42]"
+    error = raised.value
+
+    # The sign is the transport's, not the error's, and `CODE` drops it too. The object is what
+    #  came off the wire, so it is the one place the sign survives.
+    assert error.raw.error_code == -420
+    assert error.raw_text == "[420 FLOOD_WAIT_42]"
+
+
+def test_an_error_built_by_hand_has_no_raw_error() -> None:
+    error = FloodWait(42)
+
+    assert (error.raw, error.raw_text) == (None, None)
 
 
 @pytest.mark.parametrize(
@@ -271,7 +283,7 @@ def test_value_keeps_whatever_is_not_a_number(
     assert type(error.value) is type(expected)
 
 
-def test_value_can_also_hold_the_raw_error_object(
+def test_the_raw_error_can_also_arrive_as_the_value(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -280,10 +292,10 @@ def test_value_can_also_hold_the_raw_error_object(
     rpc_error = raw.types.RpcError(error_code=400, error_message="PEER_ID_INVALID")
     error = RPCError(rpc_error)
 
-    # The whole error is no parameter of a message, so it is the raw side that carries it, and
-    #  `value` reads it there as it does for an error nothing could name.
-    assert (error.parameter, error.raw_error, error.is_unknown) == (None, rpc_error, True)
-    assert error.value is rpc_error
+    # The whole error is no parameter of a message, so it lands on the raw side wherever it was
+    #  passed, and `value` reads it there as it does for an error nothing could name.
+    assert (error.parameter, error.raw, error.is_unknown) == (None, rpc_error, True)
+    assert error.value == "[400 PEER_ID_INVALID]"
 
     # Only what `raise_it()` could not name is recorded; a caller handing the object over is
     #  reporting no gap in the tables.
