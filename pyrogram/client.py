@@ -28,6 +28,7 @@ import re
 import shutil
 import sys
 import time
+import warnings
 from collections import OrderedDict
 from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import datetime, timedelta
@@ -267,7 +268,9 @@ class Client(Methods):
             Defaults to True.
 
         loop (:py:class:`asyncio.AbstractEventLoop`, *optional*):
-            Event loop.
+            Deprecated and ignored. The client runs on whichever loop runs it, and
+            :attr:`~pyrogram.Client.loop` reports that loop once :meth:`~pyrogram.Client.start`
+            has recorded it.
 
         init_connection_params (``dict`` | :obj:`~pyrogram.raw.base.JSONValue`, *optional*):
             Additional initConnection parameters.
@@ -455,22 +458,24 @@ class Client(Methods):
         self.updates_watchdog_event = asyncio.Event()
         self.last_update_time = datetime.now()
 
-        if isinstance(loop, asyncio.AbstractEventLoop):
-            self.loop = loop
-        else:
-            self.loop = None
+        if loop is not None:
+            warnings.warn(
+                "Client(loop=...) is ignored: the client runs on the loop that runs it.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        # `start()` records the loop it is running on, and `pyrogram/sync.py` is the one
+        #  reader: a call arriving from a thread with no loop of its own reaches this one
+        #  through `run_coroutine_threadsafe`, which takes the loop as an argument.
+        self._loop: asyncio.AbstractEventLoop | None = None
 
         self.__config: raw.types.Config = None
 
     @property
-    def loop(self) -> asyncio.AbstractEventLoop:
-        if not self._loop:
-            self._loop = utils.get_event_loop()
+    def loop(self) -> asyncio.AbstractEventLoop | None:
+        """The loop the client was started on, or `None` while it has never been started."""
         return self._loop
-
-    @loop.setter
-    def loop(self, value: asyncio.AbstractEventLoop):
-        self._loop = value
 
     def __enter__(self):
         return self.start()

@@ -170,15 +170,15 @@ def loop_in_another_thread() -> Iterator[LoopInAnotherThread]:
         loop.close()
 
 
-async def _loop_the_client_pins(
-    client: Client,
-    *,
-    driven_by: asyncio.AbstractEventLoop,
-) -> asyncio.AbstractEventLoop:
-    async def read() -> asyncio.AbstractEventLoop:
-        return client.loop
+def _client_started_on(loop: asyncio.AbstractEventLoop, *, name: str) -> Client:
+    """A client as `start()` leaves it: the loop it ran on, recorded on the client."""
+    client = Client(
+        name=name,
+        in_memory=True,
+    )
+    client._loop = loop
 
-    return await asyncio.wrap_future(asyncio.run_coroutine_threadsafe(read(), driven_by))
+    return client
 
 
 def test_importing_pyrogram_resolves_no_loop() -> None:
@@ -218,11 +218,7 @@ def test_the_bridge_takes_its_loop_from_the_object_the_call_is_made_on(
     idle_loop: asyncio.AbstractEventLoop,
     sync_only_loop: asyncio.AbstractEventLoop,
 ) -> None:
-    client = Client(
-        name="bridge_loop_probe",
-        in_memory=True,
-        loop=idle_loop,
-    )
+    client = _client_started_on(idle_loop, name="bridge_loop_probe")
 
     assert _bridge_loop((client,)) is idle_loop
     user = types.User(
@@ -342,36 +338,28 @@ def test_an_async_generator_made_from_sync_code_with_no_loop_yields_its_items(
     assert list(api.spell("ab")) == ["A", "B"]
 
 
-def test_a_client_keeps_the_loop_it_was_given(
-    sync_only_loop: asyncio.AbstractEventLoop,
-) -> None:
+def test_a_client_reports_no_loop_until_it_is_started() -> None:
     client = Client(
         name="loop_probe",
         in_memory=True,
-        loop=sync_only_loop,
     )
 
-    assert client.loop is sync_only_loop
+    # Reading it used to build a loop, which pinned the client to one nobody runs.
+    assert client.loop is None
+    assert utils.loop._loop is None
 
 
-async def test_a_second_client_started_on_its_own_loop_is_not_given_the_first_ones(
+def test_a_second_client_started_on_its_own_loop_is_not_given_the_first_ones(
     loop_in_another_thread: LoopInAnotherThread,
 ) -> None:
     first_loop = loop_in_another_thread(name="FirstClientLoop")
     second_loop = loop_in_another_thread(name="SecondClientLoop")
 
-    first = Client(
-        name="first_client_probe",
-        in_memory=True,
-    )
-    second = Client(
-        name="second_client_probe",
-        in_memory=True,
-    )
+    first = _client_started_on(first_loop, name="first_client_probe")
+    second = _client_started_on(second_loop, name="second_client_probe")
 
-    # `Client.loop` is read from inside the loop during `start()`, and that read pins it.
-    assert await _loop_the_client_pins(first, driven_by=first_loop) is first_loop
-    assert await _loop_the_client_pins(second, driven_by=second_loop) is second_loop
+    assert _bridge_loop((first,)) is first_loop
+    assert _bridge_loop((second,)) is second_loop
 
 
 def test_a_client_running_in_another_thread_is_reached_from_the_thread_without_a_loop(

@@ -51,8 +51,8 @@ class _BridgedAsyncGenerator:
 
 def _bridge_loop(args: tuple[Any, ...]) -> asyncio.AbstractEventLoop:
     """The loop the object being called runs on, or the one kept for callers that have none."""
-    # `Client._loop` and not `Client.loop`: the property builds a loop when it finds none, so
-    #  whichever thread reads it first would pin the client to a loop nobody ever runs.
+    # A bound method of a type carries its client on `_client`. `start()` is what records
+    #  the loop, so a client that has never been started carries none and falls through.
     owner = args[0] if args else None
     client = getattr(owner, "_client", owner)
     loop = getattr(client, "_loop", None)

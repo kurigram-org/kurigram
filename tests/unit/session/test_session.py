@@ -277,7 +277,7 @@ async def test_stop_waits_for_the_packet_it_is_still_handling() -> None:
         handled = True
 
     session.handle_packet = handle_packet
-    session.recv_task = session.client.loop.create_task(session.recv_worker())
+    session.recv_task = asyncio.create_task(session.recv_worker())
 
     await asyncio.sleep(0)
 
@@ -306,7 +306,7 @@ async def test_stop_cancels_a_packet_that_will_not_finish(
         await asyncio.Event().wait()
 
     session.handle_packet = handle_packet
-    session.recv_task = session.client.loop.create_task(session.recv_worker())
+    session.recv_task = asyncio.create_task(session.recv_worker())
 
     await asyncio.sleep(0)
 
@@ -345,7 +345,7 @@ async def test_a_restart_queued_before_stop_does_not_reconnect() -> None:
 
     # The task is only scheduled here: it runs once the loop is yielded to, which is
     #  after the stop below, and that is the order the client shuts down in.
-    restarting = session.client.loop.create_task(session.restart())
+    restarting = asyncio.create_task(session.restart())
 
     await session.stop()
     await restarting
@@ -368,7 +368,7 @@ async def test_a_restart_already_starting_is_stopped_again() -> None:
         session.is_started.set()
 
     session.start = start
-    restarting = session.client.loop.create_task(session.restart())
+    restarting = asyncio.create_task(session.restart())
 
     await starting.wait()
     await session.stop()
