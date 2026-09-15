@@ -81,7 +81,7 @@ def _bridged(loop: asyncio.AbstractEventLoop) -> Api:
 def forget_the_recorded_loop(monkeypatch: pytest.MonkeyPatch) -> None:
     # `get_event_loop()` records the first loop it is asked from, and that record would
     #  otherwise outlive the test that made it and answer for the next one.
-    monkeypatch.setattr(utils, "_loop", None)
+    monkeypatch.setattr(utils.loop, "_loop", None)
 
 
 @pytest.fixture
@@ -96,7 +96,7 @@ def sync_only_loop() -> Iterator[asyncio.AbstractEventLoop]:
 
 
 def test_importing_pyrogram_resolves_no_loop() -> None:
-    probe: str = "import pyrogram; from pyrogram import utils; print(utils._loop)"
+    probe: str = "import pyrogram; from pyrogram import utils; print(utils.loop._loop)"
     recorded = subprocess.run(
         [sys.executable, "-c", probe],
         capture_output=True,
@@ -110,7 +110,7 @@ def test_importing_pyrogram_resolves_no_loop() -> None:
 
 def test_get_running_loop_answers_none_outside_a_loop_and_records_nothing() -> None:
     assert utils.get_running_loop() is None
-    assert utils._loop is None
+    assert utils.loop._loop is None
 
 
 async def test_get_running_loop_answers_the_loop_the_caller_is_inside() -> None:
@@ -121,7 +121,7 @@ async def test_get_event_loop_records_the_loop_it_is_first_asked_from() -> None:
     running = asyncio.get_running_loop()
 
     assert utils.get_event_loop() is running
-    assert utils._loop is running
+    assert utils.loop._loop is running
 
 
 def test_get_event_loop_keeps_answering_the_loop_it_recorded(
