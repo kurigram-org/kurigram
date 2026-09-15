@@ -10,7 +10,7 @@ body:
           required: true
         - label: I have searched in the issue tracker for similar bug reports, including closed ones
           required: true
-        - label: I ran `pip3 install -U https://github.com/KurimuzonAkuma/pyrogram/archive/dev.zip` and reproduced the issue using the latest development version
+        - label: I ran `pip3 install -U https://github.com/kurigram-org/kurigram/archive/dev.zip` and reproduced the issue using the latest development version
           required: true
 
   - type: textarea

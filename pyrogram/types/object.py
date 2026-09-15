@@ -27,6 +27,14 @@ from json import dumps
 import pyrogram
 
 
+def _public_attributes(instance: Object) -> dict[str, typing.Any]:
+    return {
+        attribute: value
+        for attribute, value in instance.__dict__.items()
+        if not attribute.startswith("_")
+    }
+
+
 class Object:
     def __init__(self, client: pyrogram.Client | None = None):
         self._client = client
@@ -93,17 +101,12 @@ class Object:
         )
 
     def __eq__(self, other: object) -> bool:
-        for attr in self.__dict__:
-            try:
-                if attr.startswith("_"):
-                    continue
+        # Comparing attribute values alone makes an attribute-less type equal to anything,
+        #  `None` and `42` included; `NotImplemented` leaves the verdict to the other operand.
+        if type(other) is not type(self):
+            return NotImplemented
 
-                if getattr(self, attr) != getattr(other, attr):
-                    return False
-            except AttributeError:
-                return False
-
-        return True
+        return _public_attributes(self) == _public_attributes(other)
 
     # Equality is by mutable attribute value (see `__eq__` above), so a stable hash across
     #  the object's lifetime cannot be guaranteed. Declared explicitly rather than relying on

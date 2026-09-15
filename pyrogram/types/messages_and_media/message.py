@@ -22,7 +22,8 @@ import contextlib
 import logging
 from datetime import datetime
 from functools import partial
-from typing import BinaryIO
+from itertools import groupby
+from typing import BinaryIO, SupportsIndex
 from re import Match
 from collections.abc import Callable
 
@@ -38,7 +39,6 @@ from pyrogram.errors import (
     PeerIdInvalid,
 )
 from pyrogram.parser import Parser
-from pyrogram.parser import utils as parser_utils
 
 from ..object import Object
 from ..update import Update
@@ -47,6 +47,16 @@ log = logging.getLogger(__name__)
 
 
 class Str(str):
+    """A message text or caption, indexed the way Telegram counts it.
+
+    Entity offsets and lengths are counted in UTF-16 units, so indexing and slicing count
+    them too: ``text[entity.offset:entity.offset + entity.length]`` is that entity's text.
+    An emoji, and any other code point outside the Basic Multilingual Plane, takes two of
+    those units, and a cut falling between them widens outward to the whole code point, so
+    a slice can come back one code point longer at either end than it asked for. Half a
+    code point is never returned.
+    """
+
     __slots__ = ("entities",)
 
     def __init__(self, *args):
@@ -67,8 +77,26 @@ class Str(str):
     def html(self) -> str:
         return Parser.unparse(self, self.entities, True)
 
-    def __getitem__(self, item) -> str:
-        return parser_utils.remove_surrogates(parser_utils.add_surrogates(self)[item])
+    def __getitem__(self, item: SupportsIndex | slice) -> str:
+        text = str(self)
+
+        # Telegram counts offsets in UTF-16 units, where a code point above `0xFFFF` takes
+        #  two, so "😀 250" is 6 offsets long over 5 characters. This table says which
+        #  character each offset lands in: [0, 0, 1, 2, 3, 4]. The emoji owns offsets 0 and
+        #  1, so an index or a cut between the two still names the whole emoji.
+        character_index_at_offset: list[int] = []
+        for character_index, character in enumerate(text):
+            utf_16_units = 2 if ord(character) > 0xFFFF else 1
+            character_index_at_offset += [character_index] * utf_16_units
+
+        if not isinstance(item, slice):
+            return text[character_index_at_offset[item]]
+
+        # A slice spanning both offsets of the emoji names its character twice, and
+        #  `groupby` drops the repeat.
+        selected = character_index_at_offset[item]
+
+        return "".join(text[character_index] for character_index, _ in groupby(selected))
 
 
 class Message(Object, Update):

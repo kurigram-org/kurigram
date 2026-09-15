@@ -65,8 +65,8 @@ keywords = [
 [project.urls]
 Homepage = "https://kurigram.icu"
 Documentation = "https://docs.kurigram.icu"
-Source = "https://github.com/KurimuzonAkuma/pyrogram"
-Issues = "https://github.com/KurimuzonAkuma/pyrogram/issues"
+Source = "https://github.com/kurigram-org/kurigram"
+Issues = "https://github.com/kurigram-org/kurigram/issues"
 Community = "https://t.me/kurigram_chat"
 
 [project.optional-dependencies]

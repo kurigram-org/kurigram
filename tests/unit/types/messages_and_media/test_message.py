@@ -24,6 +24,7 @@ import pytest
 
 import pyrogram
 from pyrogram import enums, raw, types
+from pyrogram.types.messages_and_media.message import Str
 
 CHANNEL_ID = 1000000000
 USER_ID = 777000
@@ -117,3 +118,53 @@ async def test_an_unknown_button_index_names_the_index() -> None:
 
     with pytest.raises(ValueError, match="The button at index 9 doesn't exist"):
         await keyboard_message.click(9)
+
+
+_EMOJI_TEXT: Final[str] = "😀 250"
+
+
+@pytest.mark.parametrize(
+    ("item", "expected"),
+    [
+        pytest.param(0, "😀", id="leading-half"),
+        pytest.param(1, "😀", id="trailing-half"),
+        pytest.param(2, " ", id="after-the-pair"),
+        pytest.param(-1, "0", id="from-the-end"),
+    ],
+)
+def test_an_index_inside_a_surrogate_pair_gives_the_whole_code_point(
+    item: int,
+    *,
+    expected: str,
+) -> None:
+    assert Str(_EMOJI_TEXT)[item] == expected
+
+
+@pytest.mark.parametrize(
+    ("item", "expected"),
+    [
+        pytest.param(slice(0, 1), "😀", id="leading-half-only"),
+        pytest.param(slice(1, 2), "😀", id="trailing-half-only"),
+        pytest.param(slice(0, 2), "😀", id="the-whole-pair"),
+        pytest.param(slice(1, 3), "😀 ", id="opening-inside-the-pair"),
+        pytest.param(slice(2, None), " 250", id="past-the-pair"),
+        pytest.param(slice(None, None, -1), "052 😀", id="reversed"),
+    ],
+)
+def test_a_slice_cutting_a_surrogate_pair_widens_to_the_whole_code_point(
+    item: slice,
+    *,
+    expected: str,
+) -> None:
+    assert Str(_EMOJI_TEXT)[item] == expected
+
+
+def test_an_entity_offset_still_indexes_the_text_that_entity_marks() -> None:
+    entity = types.MessageEntity(
+        type=enums.MessageEntityType.BOLD,
+        offset=3,
+        length=4,
+    )
+    text = Str("😀 bold").init([entity])
+
+    assert text[entity.offset : entity.offset + entity.length] == "bold"

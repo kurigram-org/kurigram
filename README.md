@@ -1,6 +1,6 @@
 <p align="center">
-    <a href="https://github.com/KurimuzonAkuma/kurigram">
-        <img src="https://raw.githubusercontent.com/KurimuzonAkuma/kurigramartwork/master/kurigram-logo.png" alt="Kurigram" width="128">
+    <a href="https://github.com/kurigram-org/kurigram">
+        <img src="https://raw.githubusercontent.com/kurigram-org/artwork/master/kurigram_logo.png" alt="Kurigram" width="128">
     </a>
     <br>
     <b>Telegram MTProto API Framework for Python</b>
@@ -87,7 +87,7 @@ pip install kurigram
 Dev version
 
 ``` bash
-pip install https://github.com/KurimuzonAkuma/kurigram/archive/dev.zip --force-reinstall
+pip install https://github.com/kurigram-org/kurigram/archive/dev.zip --force-reinstall
 ```
 
 Optional dependencies
