@@ -18,7 +18,6 @@
 
 from __future__ import annotations as _annotations
 
-import asyncio
 import logging
 import os
 from struct import pack, unpack
@@ -38,10 +37,9 @@ class TCPIntermediateO(TCP):
         ipv6: bool,
         proxy: Proxy | None = None,
         crypto_executor_workers: int = 1,
-        loop: asyncio.AbstractEventLoop | None = None,
         dc_id: int | None = None,
     ) -> None:
-        super().__init__(ipv6, proxy, crypto_executor_workers, loop, dc_id=dc_id)
+        super().__init__(ipv6, proxy, crypto_executor_workers, dc_id=dc_id)
 
         self.encrypt = None
         self.decrypt = None

@@ -227,7 +227,6 @@ class Session:
             media=self.is_media,
             protocol_factory=self.client.protocol_factory,
             crypto_executor_workers=self.CRYPTO_EXECUTOR_WORKERS,
-            loop=self.client.loop,
         )
 
         try:

@@ -526,12 +526,12 @@ class Client(Methods):
             try:
                 if not self.phone_number:
                     while True:
-                        value = await ainput("Enter phone number or bot token: ", loop=self.loop)
+                        value = await ainput("Enter phone number or bot token: ")
 
                         if not value:
                             continue
 
-                        confirm = await ainput(f'Is "{value}" correct? (y/N): ', loop=self.loop)
+                        confirm = await ainput(f'Is "{value}" correct? (y/N): ')
 
                         if confirm.lower() == "y":
                             break
@@ -556,12 +556,12 @@ class Client(Methods):
             while True:
                 try:
                     while True:
-                        email = await ainput("Enter email: ", loop=self.loop)
+                        email = await ainput("Enter email: ")
 
                         if not email:
                             continue
 
-                        confirm = await ainput(f'Is "{email}" correct? (y/N): ', loop=self.loop)
+                        confirm = await ainput(f'Is "{email}" correct? (y/N): ')
 
                         if confirm.lower() == "y":
                             break
@@ -576,7 +576,7 @@ class Client(Methods):
                         )
                     )
 
-                    email_code = await ainput("Enter confirmation code: ", loop=self.loop)
+                    email_code = await ainput("Enter confirmation code: ")
 
                     email_sent_code = await self.invoke(
                         raw.functions.account.VerifyEmail(
@@ -617,7 +617,7 @@ class Client(Methods):
 
         while True:
             if not self.phone_code:
-                self.phone_code = await ainput("Enter confirmation code: ", loop=self.loop)
+                self.phone_code = await ainput("Enter confirmation code: ")
 
             try:
                 signed_in = await self.sign_in(
@@ -636,23 +636,18 @@ class Client(Methods):
                         self.password = await ainput(
                             "Enter 2FA password (empty to recover): ",
                             hide=self.hide_password,
-                            loop=self.loop,
                         )
 
                     try:
                         if not self.password:
-                            confirm = await ainput(
-                                "Confirm password recovery (y/N): ", loop=self.loop
-                            )
+                            confirm = await ainput("Confirm password recovery (y/N): ")
 
                             if confirm.lower() == "y":
                                 email_pattern = await self.send_recovery_code()
                                 print(f"The recovery code has been sent to {email_pattern}")
 
                                 while True:
-                                    recovery_code = await ainput(
-                                        "Enter recovery code: ", loop=self.loop
-                                    )
+                                    recovery_code = await ainput("Enter recovery code: ")
 
                                     try:
                                         return await self.recover_password(recovery_code)
@@ -675,8 +670,8 @@ class Client(Methods):
             return signed_in
 
         while True:
-            first_name = await ainput("Enter first name: ", loop=self.loop)
-            last_name = await ainput("Enter last name (empty to skip): ", loop=self.loop)
+            first_name = await ainput("Enter first name: ")
+            last_name = await ainput("Enter last name (empty to skip): ")
 
             try:
                 signed_up = await self.sign_up(
@@ -746,23 +741,18 @@ class Client(Methods):
                         self.password = await ainput(
                             "Enter 2FA password (empty to recover): ",
                             hide=self.hide_password,
-                            loop=self.loop,
                         )
 
                     try:
                         if not self.password:
-                            confirm = await ainput(
-                                "Confirm password recovery (y/N): ", loop=self.loop
-                            )
+                            confirm = await ainput("Confirm password recovery (y/N): ")
 
                             if confirm.lower() == "y":
                                 email_pattern = await self.send_recovery_code()
                                 print(f"The recovery code has been sent to {email_pattern}")
 
                                 while True:
-                                    recovery_code = await ainput(
-                                        "Enter recovery code: ", loop=self.loop
-                                    )
+                                    recovery_code = await ainput("Enter recovery code: ")
 
                                     try:
                                         return await self.recover_password(recovery_code)
@@ -1050,17 +1040,13 @@ class Client(Methods):
                 else:
                     while True:
                         try:
-                            value = int(
-                                await ainput(
-                                    "Enter the api_id part of the API key: ", loop=self.loop
-                                )
-                            )
+                            value = int(await ainput("Enter the api_id part of the API key: "))
 
                             if value <= 0:
                                 print("Invalid value")
                                 continue
 
-                            confirm = await ainput(f'Is "{value}" correct? (y/N): ', loop=self.loop)
+                            confirm = await ainput(f'Is "{value}" correct? (y/N): ')
 
                             if confirm.lower() == "y":
                                 await self.storage.api_id(value)
