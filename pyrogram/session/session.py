@@ -76,11 +76,14 @@ class InvalidDC(TransportError):
 
 
 class Result:
-    __slots__ = ("value", "event")
+    __slots__ = ("value", "event", "failure")
 
     def __init__(self):
         self.value: Any = None
         self.event: asyncio.Event = asyncio.Event()
+
+        # Set instead of `value` when no answer can arrive; `send()` re-raises it.
+        self.failure: Exception | None = None
 
 
 class Session:
@@ -316,6 +319,19 @@ class Session:
         self.is_started.clear()
 
         self.stored_msg_ids.clear()
+
+        # The unsent acks name msg ids of the connection this stop closes, which the
+        #  server cannot match after a reconnect.
+        self.pending_acks.clear()
+
+        # A pending waiter's msg id also dies with the connection and nothing re-sends
+        #  the request, so no answer can arrive: failing each waiter here turns a
+        #  silent `WAIT_TIMEOUT` into an immediate, accurate error.
+        for result in self.results.values():
+            result.failure = TimeoutError("Session stopped before an answer arrived")
+            result.event.set()
+
+        self.results.clear()
 
         self.ping_task_event.set()
 
@@ -600,8 +616,13 @@ class Session:
         message = await self.msg_factory.create(data)
         msg_id = message.msg_id
 
+        # Held locally as well: `_stop()` empties `self.results` when it fails the
+        #  pending waiters, so the dict entry may be gone by the time the wait ends.
+        pending_result: Result | None = None
+
         if wait_response:
-            self.results[msg_id] = Result()
+            pending_result = Result()
+            self.results[msg_id] = pending_result
 
         log.debug("Sent: %s", message)
 
@@ -621,13 +642,18 @@ class Session:
             self.results.pop(msg_id, None)
             raise e
 
-        if wait_response:
+        if pending_result is not None:
             try:
-                await asyncio.wait_for(self.results[msg_id].event.wait(), timeout)
+                await asyncio.wait_for(pending_result.event.wait(), timeout)
             except asyncio.TimeoutError:
                 pass
 
-            result = self.results.pop(msg_id).value
+            self.results.pop(msg_id, None)
+
+            if pending_result.failure is not None:
+                raise pending_result.failure
+
+            result = pending_result.value
 
             if result is None:
                 raise TimeoutError("Request timed out")
