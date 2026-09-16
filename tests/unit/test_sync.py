@@ -28,6 +28,7 @@ in `RuntimeError: ... got Future ... attached to a different loop`.
 from __future__ import annotations as _annotations
 
 import asyncio
+import inspect
 import os
 import signal
 import subprocess
@@ -42,7 +43,7 @@ from typing import Final, Protocol
 import pytest
 
 import pyrogram
-from pyrogram import Client, types, utils
+from pyrogram import Client, sync, types
 from pyrogram.sync import _bridge_loop, async_to_sync
 
 _HANDLED_SIGNALS: Final[tuple[signal.Signals, ...]] = (
@@ -55,15 +56,11 @@ _REPOSITORY_ROOT: Final[Path] = Path(__file__).parents[2]
 
 
 class Api:
-    """A client stand-in: a `_loop` behind a `loop` property, the shape `Client` has."""
+    """A client stand-in: a private `_loop`, the shape `start()` leaves `Client` in."""
 
     def __init__(self, loop: asyncio.AbstractEventLoop) -> None:
         self._loop = loop
         self.executor = ThreadPoolExecutor(1, thread_name_prefix="Handler")
-
-    @property
-    def loop(self) -> asyncio.AbstractEventLoop:
-        return self._loop
 
     async def running_loop(self) -> asyncio.AbstractEventLoop:
         return asyncio.get_running_loop()
@@ -75,11 +72,11 @@ class Api:
     # `shout` and `spell` reach their own loop the way `Session.send` does
     #  (`pyrogram/session/session.py:349`), so running them anywhere else raises.
     async def shout(self, text: str) -> str:
-        return await self.loop.run_in_executor(self.executor, str.upper, text)
+        return await self._loop.run_in_executor(self.executor, str.upper, text)
 
     async def spell(self, text: str) -> AsyncGenerator[str]:
         for letter in text:
-            yield await self.loop.run_in_executor(self.executor, str.upper, letter)
+            yield await self._loop.run_in_executor(self.executor, str.upper, letter)
 
 
 class Bound:
@@ -89,7 +86,7 @@ class Bound:
         self._client = client
 
     async def shout(self, text: str) -> str:
-        return await self._client.loop.run_in_executor(
+        return await self._client._loop.run_in_executor(
             self._client.executor,
             str.upper,
             text,
@@ -110,16 +107,16 @@ class LoopInAnotherThread(Protocol):
 
 
 @pytest.fixture(autouse=True)
-def forget_the_loop_built_for_sync_callers(monkeypatch: pytest.MonkeyPatch) -> None:
-    # `get_event_loop()` keeps the loop it built for a caller that was inside none, and that
-    #  loop would otherwise outlive the test that asked for it and answer for the next one.
-    monkeypatch.setattr(utils.loop, "_loop", None)
+def forget_the_sync_caller_loop(monkeypatch: pytest.MonkeyPatch) -> None:
+    # The bridge keeps the loop it built for a caller that was inside none, and that loop
+    #  would otherwise outlive the test that asked for it and answer for the next one.
+    monkeypatch.setattr(sync, "_sync_caller_loop", None)
 
 
 @pytest.fixture
 def sync_only_loop() -> Iterator[asyncio.AbstractEventLoop]:
-    """The loop `get_event_loop()` builds for a caller that is not inside one."""
-    loop = utils.get_event_loop()
+    """The loop the bridge builds for a caller that is not inside one."""
+    loop = sync._loop_for_sync_callers()
 
     yield loop
 
@@ -171,7 +168,7 @@ def loop_in_another_thread() -> Iterator[LoopInAnotherThread]:
 
 
 def _client_started_on(loop: asyncio.AbstractEventLoop, *, name: str) -> Client:
-    """A client as `start()` leaves it: the loop it ran on, recorded on the client."""
+    """A client as starting it leaves it: carrying the loop it ran on."""
     client = Client(
         name=name,
         in_memory=True,
@@ -182,7 +179,7 @@ def _client_started_on(loop: asyncio.AbstractEventLoop, *, name: str) -> Client:
 
 
 def test_importing_pyrogram_resolves_no_loop() -> None:
-    probe: str = "import pyrogram; from pyrogram import utils; print(utils.loop._loop)"
+    probe: str = "import pyrogram; print(pyrogram.sync._sync_caller_loop)"
     recorded = subprocess.run(
         [sys.executable, "-c", probe],
         capture_output=True,
@@ -194,24 +191,19 @@ def test_importing_pyrogram_resolves_no_loop() -> None:
     assert recorded.stdout.strip() == "None"
 
 
-def test_get_running_loop_answers_none_outside_a_loop_and_builds_nothing() -> None:
-    assert utils.get_running_loop() is None
-    assert utils.loop._loop is None
+def test_the_running_loop_helper_answers_none_outside_a_loop_and_builds_nothing() -> None:
+    assert sync._running_loop() is None
+    assert sync._sync_caller_loop is None
 
 
-async def test_get_running_loop_answers_the_loop_the_caller_is_inside() -> None:
-    assert utils.get_running_loop() is asyncio.get_running_loop()
+async def test_the_running_loop_helper_answers_the_loop_the_caller_is_inside() -> None:
+    assert sync._running_loop() is asyncio.get_running_loop()
 
 
-async def test_get_event_loop_answers_the_caller_loop_and_keeps_no_record_of_it() -> None:
-    assert utils.get_event_loop() is asyncio.get_running_loop()
-    assert utils.loop._loop is None
-
-
-def test_get_event_loop_keeps_answering_the_loop_it_built(
+def test_the_loop_built_for_a_caller_inside_none_is_kept_and_handed_back(
     sync_only_loop: asyncio.AbstractEventLoop,
 ) -> None:
-    assert utils.get_event_loop() is sync_only_loop
+    assert sync._loop_for_sync_callers() is sync_only_loop
 
 
 def test_the_bridge_takes_its_loop_from_the_object_the_call_is_made_on(
@@ -338,15 +330,18 @@ def test_an_async_generator_made_from_sync_code_with_no_loop_yields_its_items(
     assert list(api.spell("ab")) == ["A", "B"]
 
 
-def test_a_client_reports_no_loop_until_it_is_started() -> None:
+def test_a_client_offers_no_loop_in_its_public_api() -> None:
     client = Client(
         name="loop_probe",
         in_memory=True,
     )
 
-    # Reading it used to build a loop, which pinned the client to one nobody runs.
-    assert client.loop is None
-    assert utils.loop._loop is None
+    # The record the sync bridge reads is private, and nothing hands one in: the client
+    #  runs on the loop that runs it.
+    assert client._loop is None
+    assert not hasattr(client, "loop")
+    assert "loop" not in inspect.signature(Client.__init__).parameters
+    assert sync._sync_caller_loop is None
 
 
 def test_a_second_client_started_on_its_own_loop_is_not_given_the_first_ones(

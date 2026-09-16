@@ -34,11 +34,11 @@ from pyrogram import Client
 
 
 def stop_before_the_network() -> typing.NoReturn:
-    """`start()` records the loop and rebuilds the primitives before it loads a plugin."""
+    """`start()` rebuilds the loop-bound primitives before it loads a plugin."""
     raise RuntimeError("far enough")
 
 
-async def test_start_records_the_loop_it_is_running_on(
+async def test_starting_a_client_records_the_loop_for_the_sync_bridge(
     client: Client,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -47,7 +47,8 @@ async def test_start_records_the_loop_it_is_running_on(
     with pytest.raises(RuntimeError, match="far enough"):
         await client.start()
 
-    assert client.loop is asyncio.get_running_loop()
+    # The record is private and `pyrogram/sync.py` is its only reader.
+    assert client._loop is asyncio.get_running_loop()
 
 
 async def test_start_rebuilds_everything_that_binds_to_a_loop(
@@ -82,18 +83,18 @@ async def test_start_rebuilds_everything_that_binds_to_a_loop(
     )
 
 
-def test_a_loop_handed_to_the_constructor_is_refused() -> None:
+def test_the_constructor_takes_no_loop() -> None:
     handed_loop = asyncio.new_event_loop()
 
     try:
-        with pytest.warns(DeprecationWarning, match=r"Client\(loop=\.\.\.\) is ignored"):
-            client = Client(
+        with pytest.raises(TypeError, match="unexpected keyword argument 'loop'"):
+            Client(
                 name="handed_loop_probe",
                 in_memory=True,
-                loop=handed_loop,
+                # The parameter being gone is the subject of this test, so `ty` reporting it
+                #  as unknown is the same claim made statically.
+                loop=handed_loop,  # ty: ignore[unknown-argument]
             )
-
-        assert client.loop is None
 
     finally:
         handed_loop.close()

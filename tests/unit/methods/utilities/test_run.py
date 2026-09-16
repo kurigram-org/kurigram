@@ -46,7 +46,7 @@ def test_run_drives_start_idle_and_stop_on_one_loop_of_its_own(
 
     async def record_the_loops() -> None:
         idle_loops.append(asyncio.get_running_loop())
-        loops_start_recorded.append(offline_client.loop)
+        loops_start_recorded.append(offline_client._loop)
 
     monkeypatch.setattr(run_module, "idle", record_the_loops)
 

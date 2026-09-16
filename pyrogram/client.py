@@ -28,7 +28,6 @@ import re
 import shutil
 import sys
 import time
-import warnings
 from collections import OrderedDict
 from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import datetime, timedelta
@@ -267,11 +266,6 @@ class Client(Methods):
             Pass True to automatically fetch names of sticker sets.
             Defaults to True.
 
-        loop (:py:class:`asyncio.AbstractEventLoop`, *optional*):
-            Deprecated and ignored. The client runs on whichever loop runs it, and
-            :attr:`~pyrogram.Client.loop` reports that loop once :meth:`~pyrogram.Client.start`
-            has recorded it.
-
         init_connection_params (``dict`` | :obj:`~pyrogram.raw.base.JSONValue`, *optional*):
             Additional initConnection parameters.
             For now, only the tz_offset field is supported, for specifying timezone offset in seconds.
@@ -357,7 +351,6 @@ class Client(Methods):
         init_connection_params: dict | raw.base.JSONValue | None = None,
         connection_factory: type[Connection] = Connection,
         protocol_factory: type[TCP] = TCPAbridged,
-        loop: asyncio.AbstractEventLoop | None = None,
     ):
         super().__init__()
 
@@ -458,24 +451,12 @@ class Client(Methods):
         self.updates_watchdog_event = asyncio.Event()
         self.last_update_time = datetime.now()
 
-        if loop is not None:
-            warnings.warn(
-                "Client(loop=...) is ignored: the client runs on the loop that runs it.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-
         # `start()` records the loop it is running on, and `pyrogram/sync.py` is the one
         #  reader: a call arriving from a thread with no loop of its own reaches this one
         #  through `run_coroutine_threadsafe`, which takes the loop as an argument.
         self._loop: asyncio.AbstractEventLoop | None = None
 
         self.__config: raw.types.Config = None
-
-    @property
-    def loop(self) -> asyncio.AbstractEventLoop | None:
-        """The loop the client was started on, or `None` while it has never been started."""
-        return self._loop
 
     def __enter__(self):
         return self.start()
