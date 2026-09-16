@@ -498,6 +498,22 @@ class Client(Methods):
         except ConnectionError:
             pass
 
+    # An `asyncio` primitive binds to the first loop that awaits it and refuses every other
+    #  one, and each of these is built in `__init__`, where there is no loop yet. A second
+    #  `run()` on one client died with `<asyncio.locks.Event object at 0x...> is bound to a
+    #  different event loop`.
+    #  https://github.com/python/cpython/blob/323c59a5e348347be2ce2b7ea55fcb30bf68b2d3/Lib/asyncio/mixins.py#L19
+    def _rebuild_loop_bound_state(self) -> None:
+        self.sessions_lock = asyncio.Lock()
+
+        self.save_file_semaphore = asyncio.Semaphore(self.max_concurrent_transmissions)
+        self.get_file_semaphore = asyncio.Semaphore(self.max_concurrent_transmissions)
+
+        self.updates_watchdog_event = asyncio.Event()
+
+        self.message_cache.reset_lock()
+        self.topic_cache.reset_lock()
+
     async def updates_watchdog(self):
         while True:
             try:
@@ -1715,6 +1731,11 @@ class Cache:
 
         self.capacity = capacity
         self._cache: OrderedDict[Any, Any] = OrderedDict()
+        self._lock = asyncio.Lock()
+
+    # Rebuilds the lock and keeps what is cached. Why it has to be rebuilt at all is on
+    #  `Client._rebuild_loop_bound_state`.
+    def reset_lock(self) -> None:
         self._lock = asyncio.Lock()
 
     def __len__(self) -> int:

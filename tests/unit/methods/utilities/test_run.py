@@ -16,10 +16,15 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+
 """`Client.run()` drives `start`, `idle` and `stop` on one loop of its own.
 
 It used to call `run_until_complete` three times on a loop the client kept, so the three
 steps could land on a loop the application had never started.
+
+The first test runs the real `start()` and `stop()` against a client with no socket, rather
+than patching them out. Patched out, nothing touches `updates_queue` or
+`updates_watchdog_event`, and those are exactly what a second `run()` used to die on.
 """
 
 from __future__ import annotations as _annotations
@@ -32,43 +37,33 @@ from pyrogram import Client
 from pyrogram.methods.utilities import run as run_module
 
 
-@pytest.fixture
-def client() -> Client:
-    return Client(
-        name="run_probe",
-        in_memory=True,
-    )
-
-
 def test_run_drives_start_idle_and_stop_on_one_loop_of_its_own(
-    client: Client,
+    offline_client: Client,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    seen: list[asyncio.AbstractEventLoop] = []
+    idle_loops: list[asyncio.AbstractEventLoop] = []
+    loops_start_recorded: list[asyncio.AbstractEventLoop | None] = []
 
-    async def record(*, use_qr: bool = False, except_ids: list[int] | None = None) -> None:
-        del use_qr, except_ids
+    async def record_the_loops() -> None:
+        idle_loops.append(asyncio.get_running_loop())
+        loops_start_recorded.append(offline_client.loop)
 
-        seen.append(asyncio.get_running_loop())
+    monkeypatch.setattr(run_module, "idle", record_the_loops)
 
-    monkeypatch.setattr(client, "start", record)
-    monkeypatch.setattr(client, "stop", record)
-    monkeypatch.setattr(run_module, "idle", record)
+    offline_client.run()
+    offline_client.run()
 
-    client.run()
-    client.run()
+    first_loop, second_loop = idle_loops
 
-    assert len(seen) == 6
-
-    first_run, second_run = seen[:3], seen[3:]
-
-    assert set(map(id, first_run)) == {id(first_run[0])}
-    assert set(map(id, second_run)) == {id(second_run[0])}
+    assert idle_loops == loops_start_recorded
 
     # `asyncio.run` owns the loop it made and closes it, so the second call cannot be
     #  handed the first one back.
-    assert first_run[0].is_closed()
-    assert second_run[0] is not first_run[0]
+    assert first_loop.is_closed()
+    assert second_loop is not first_loop
+
+    assert offline_client.is_initialized is False
+    assert offline_client.is_connected is False
 
 
 def test_run_hands_its_arguments_to_start(

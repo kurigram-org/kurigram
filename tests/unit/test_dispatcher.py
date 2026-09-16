@@ -48,6 +48,16 @@ def client() -> Client:
     )
 
 
+@pytest.fixture
+def client_without_updates() -> Client:
+    """`no_updates` keeps `Dispatcher.start()` off the network: no workers, no gap recovery."""
+    return Client(
+        name="dispatcher_probe",
+        in_memory=True,
+        no_updates=True,
+    )
+
+
 def test_a_handler_registered_outside_a_loop_survives_into_one(client: Client) -> None:
     handler = MessageHandler(greet)
 
@@ -97,3 +107,14 @@ def test_registering_leaves_a_mapping_already_being_read_alone(client: Client) -
 
     assert list(groups) == []
     assert handlers == [dispatching]
+
+
+async def test_start_rebuilds_the_queue_for_the_loop_about_to_read_it(
+    client_without_updates: Client,
+) -> None:
+    dispatcher = client_without_updates.dispatcher
+    built_by_the_constructor = dispatcher.updates_queue
+
+    await dispatcher.start()
+
+    assert dispatcher.updates_queue is not built_by_the_constructor

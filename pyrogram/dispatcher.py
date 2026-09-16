@@ -354,7 +354,14 @@ class Dispatcher:
             key: value for key_tuple, value in self.update_parsers.items() for key in key_tuple
         }
 
+    # Rebuilds the queue for the loop about to run it. Why, on
+    #  `Client._rebuild_loop_bound_state`.
+    def _rebuild_loop_bound_state(self) -> None:
+        self.updates_queue = asyncio.Queue()
+
     async def start(self):
+        self._rebuild_loop_bound_state()
+
         if callable(self.client.start_handler):
             try:
                 await self.client.start_handler(self.client)

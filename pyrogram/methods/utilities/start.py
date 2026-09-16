@@ -80,6 +80,7 @@ class Start:
         # The one loop reference the library keeps: `pyrogram/sync.py` bridges a call made
         #  from a thread with no loop of its own onto this one.
         self._loop = asyncio.get_running_loop()
+        self._rebuild_loop_bound_state()
 
         self.load_plugins()
 
