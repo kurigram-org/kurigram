@@ -76,14 +76,14 @@ class InvalidDC(TransportError):
 
 
 class Result:
-    __slots__ = ("value", "event", "failure")
+    __slots__ = ("value", "event", "exception")
 
     def __init__(self):
         self.value: Any = None
         self.event: asyncio.Event = asyncio.Event()
 
         # Set instead of `value` when no answer can arrive; `send()` re-raises it.
-        self.failure: Exception | None = None
+        self.exception: Exception | None = None
 
 
 class Session:
@@ -328,7 +328,7 @@ class Session:
         #  the request, so no answer can arrive: failing each waiter here turns a
         #  silent `WAIT_TIMEOUT` into an immediate, accurate error.
         for result in self.results.values():
-            result.failure = TimeoutError("Session stopped before an answer arrived")
+            result.exception = TimeoutError("Session stopped before an answer arrived")
             result.event.set()
 
         self.results.clear()
@@ -650,8 +650,8 @@ class Session:
 
             self.results.pop(msg_id, None)
 
-            if pending_result.failure is not None:
-                raise pending_result.failure
+            if pending_result.exception is not None:
+                raise pending_result.exception
 
             result = pending_result.value
 
