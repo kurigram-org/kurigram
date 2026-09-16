@@ -20,19 +20,27 @@
 
 `add_handler` and `remove_handler` are ordinary synchronous methods, so the caller
 decides when they happen. They used to schedule the work on a loop instead, which lost
-every handler registered before the application started one.
+every handler registered before the application started one. Being synchronous, they are
+also called from whatever thread the caller is on, which is what the last test here covers.
 """
 
 from __future__ import annotations as _annotations
 
 import asyncio
+import sys
+import threading
 from collections import OrderedDict
+from collections.abc import Iterator
+from typing import Final
 
 import pytest
 
 from pyrogram import Client
 from pyrogram.handlers import MessageHandler
 from pyrogram.types import Message
+
+_REGISTERING_THREADS: Final[int] = 2
+_HANDLERS_PER_THREAD: Final[int] = 500
 
 
 # The dispatcher calls a handler callback positionally.
@@ -118,3 +126,39 @@ async def test_start_rebuilds_the_queue_for_the_loop_about_to_read_it(
     await dispatcher.start()
 
     assert dispatcher.updates_queue is not built_by_the_constructor
+
+
+@pytest.fixture
+def frequent_thread_switches() -> Iterator[None]:
+    """Switch threads inside the copy-and-rebind rather than around it.
+
+    The default interval is 5ms, which is far longer than a registration takes, so two
+    threads interleave inside one only by luck.
+    """
+    previous = sys.getswitchinterval()
+    sys.setswitchinterval(1e-6)
+
+    try:
+        yield
+
+    finally:
+        sys.setswitchinterval(previous)
+
+
+@pytest.mark.usefixtures("frequent_thread_switches")
+def test_handlers_registered_from_two_threads_at_once_all_survive(client: Client) -> None:
+    def register() -> None:
+        for _ in range(_HANDLERS_PER_THREAD):
+            client.add_handler(MessageHandler(greet))
+
+    threads = [threading.Thread(target=register) for _ in range(_REGISTERING_THREADS)]
+
+    for thread in threads:
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+
+    registered = sum(len(handlers) for handlers in client.dispatcher.groups.values())
+
+    assert registered == _HANDLERS_PER_THREAD * _REGISTERING_THREADS
