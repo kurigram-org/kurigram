@@ -30,11 +30,24 @@ than patching them out. Patched out, nothing touches `updates_queue` or
 from __future__ import annotations as _annotations
 
 import asyncio
+from typing import Final
 
 import pytest
 
 from pyrogram import Client
 from pyrogram.methods.utilities import run as run_module
+
+_OTHER_DC_ID: Final[int] = 4
+
+
+class _CachedSession:
+    """What `get_session()` leaves in `Client.sessions` for a DC that is not the current one."""
+
+    def __init__(self) -> None:
+        self.stopped: bool = False
+
+    async def stop(self) -> None:
+        self.stopped = True
 
 
 def test_run_drives_start_idle_and_stop_on_one_loop_of_its_own(
@@ -64,6 +77,26 @@ def test_run_drives_start_idle_and_stop_on_one_loop_of_its_own(
 
     assert offline_client.is_initialized is False
     assert offline_client.is_connected is False
+
+
+def test_run_stops_the_sessions_it_cached_before_the_loop_goes(
+    offline_client: Client,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cached_session = _CachedSession()
+
+    async def cache_a_session() -> None:
+        offline_client.sessions[_OTHER_DC_ID] = cached_session
+
+    monkeypatch.setattr(run_module, "idle", cache_a_session)
+
+    offline_client.run()
+
+    # `terminate()` used to stop `media_sessions` and leave these running: a session
+    #  bound to the loop `run()` has just closed cannot serve the next `run()`, and its
+    #  `recv` and `ping` tasks hold a socket until something stops them.
+    assert cached_session.stopped is True
+    assert offline_client.sessions == {}
 
 
 def test_run_hands_its_arguments_to_start(
