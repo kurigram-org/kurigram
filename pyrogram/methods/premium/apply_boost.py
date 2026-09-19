@@ -27,7 +27,7 @@ class ApplyBoost:
     async def apply_boost(
         self: pyrogram.Client,
         chat_id: int | str,
-    ) -> bool:
+    ) -> types.MyBoost:
         """Apply boost
 
         .. include:: /_includes/usable-by/users.rst
