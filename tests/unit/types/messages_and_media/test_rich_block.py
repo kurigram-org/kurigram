@@ -34,7 +34,7 @@ _EMPTY_CAPTION: Final[raw.types.PageCaption] = raw.types.PageCaption(
 
 
 async def _parse(block: raw.base.PageBlock) -> types.RichBlock:
-    return await types.RichBlock._parse(None, block, {}, {}, None, {}, {})
+    return await types.RichBlock._parse(None, block, {}, {}, {}, {})
 
 
 @pytest.mark.parametrize(
@@ -355,7 +355,6 @@ async def test_a_document_block_parses_the_document_it_points_at() -> None:
         ),
         {},
         {555: document},
-        None,
         {},
         {},
     )
@@ -402,7 +401,7 @@ async def test_a_media_block_without_a_usable_document_is_unsupported(
     *,
     documents: dict[int, raw.base.Document],
 ) -> None:
-    parsed = await types.RichBlock._parse(None, block, {}, documents, None, {}, {})
+    parsed = await types.RichBlock._parse(None, block, {}, documents, {}, {})
 
     # `type()` rather than `==`: `Object.__eq__` iterates `self.__dict__`, so an attribute-less
     #  object compares equal to everything, `None` included.
@@ -437,9 +436,40 @@ async def test_a_media_block_inside_a_list_item_still_finds_its_document() -> No
         ),
         {},
         {555: document},
-        None,
         {},
         {},
     )
 
     assert parsed.items[0].blocks[0].document.file_name == "a.pdf"
+
+
+@pytest.mark.parametrize(
+    ("part", "expected"),
+    [
+        pytest.param(True, True, id="partial"),
+        pytest.param(None, None, id="not-partial"),
+    ],
+)
+async def test_a_rich_message_keeps_the_part_flag_the_schema_carries(
+    part: bool | None,
+    *,
+    expected: bool | None,
+) -> None:
+    parsed = await types.RichMessage._parse(
+        None,
+        raw.types.RichMessage(
+            blocks=[
+                raw.types.PageBlockList(
+                    items=[
+                        raw.types.PageListItemText(text=raw.types.TextPlain(text="chunk")),
+                    ]
+                )
+            ],
+            photos=[],
+            documents=[],
+            part=part,
+        ),
+    )
+
+    assert parsed.is_partial is expected
+    assert parsed.blocks[0].items[0].blocks[0].text == "chunk"

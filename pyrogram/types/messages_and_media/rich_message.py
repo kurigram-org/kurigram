@@ -33,13 +33,23 @@ class RichMessage(Object):
 
         is_rtl (``bool``, *optional*):
             True, if the rich message must be shown right-to-left.
+
+        is_partial (``bool``, *optional*):
+            True, if the rich message is one part of a larger one.
     """
 
-    def __init__(self, *, blocks: list[types.RichBlock], is_rtl: bool | None = None):
+    def __init__(
+        self,
+        *,
+        blocks: list[types.RichBlock],
+        is_rtl: bool | None = None,
+        is_partial: bool | None = None,
+    ) -> None:
         super().__init__()
 
         self.blocks = blocks
         self.is_rtl = is_rtl
+        self.is_partial = is_partial
 
     @staticmethod
     async def _parse(
@@ -63,7 +73,6 @@ class RichMessage(Object):
                             block,
                             photos,
                             documents,
-                            rich_message.part,
                             users,
                             chats,
                         )
@@ -71,4 +80,5 @@ class RichMessage(Object):
                     ]
                 ),
                 is_rtl=rich_message.rtl,
+                is_partial=rich_message.part,
             )
