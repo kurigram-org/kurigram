@@ -16,9 +16,12 @@ make sync
 ```
 
 Development tools live in the `dev` dependency group and are installed by default; the
-documentation build has its own `docs` group, which `make docs` selects on its own. Neither is an
-extra, so `pip install kurigram[dev]` is not a thing. After changing a dependency in
+documentation build has its own `docs` group, which the docs recipes select on their own. Neither
+is an extra, so `pip install kurigram[dev]` is not a thing. After changing a dependency in
 `pyproject.toml`, run `uv lock` and commit `uv.lock` with the change.
+
+`make docs` builds the documentation once; `make docs-serve` serves it locally and refreshes the
+page while you edit.
 
 ### Generated code
 
