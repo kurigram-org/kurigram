@@ -141,6 +141,46 @@ class SendMessage:
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
 
+            show_caption_above_media (``bool``, *optional*):
+                Pass True, if the caption must be shown above the message media.
+                This parameter is deprecated and should not be used.
+                Use `link_preview_options` instead.
+
+            reply_to_message_id (``int``, *optional*):
+                If the message is a reply, ID of the original message.
+                This parameter is deprecated and should not be used.
+                Use `reply_parameters` instead.
+
+            reply_to_chat_id (``int`` | ``str``, *optional*):
+                Unique identifier (int) or username (str) of the chat holding the message that is replied to.
+                This parameter is deprecated and should not be used.
+                Use `reply_parameters` instead.
+
+            reply_to_story_id (``int``, *optional*):
+                If the message is a reply to a story, ID of the story.
+                This parameter is deprecated and should not be used.
+                Use `reply_parameters` instead.
+
+            quote_text (``str``, *optional*):
+                Text of the quoted part of the message that is replied to.
+                This parameter is deprecated and should not be used.
+                Use `reply_parameters` instead.
+
+            quote_entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
+                List of special entities that appear in the quote, which can be specified instead of *parse_mode*.
+                This parameter is deprecated and should not be used.
+                Use `reply_parameters` instead.
+
+            quote_offset (``int``, *optional*):
+                Offset for quote in original message.
+                This parameter is deprecated and should not be used.
+                Use `reply_parameters` instead.
+
+            disable_web_page_preview (``bool``, *optional*):
+                Disables link previews for links in this message.
+                This parameter is deprecated and should not be used.
+                Use `link_preview_options` instead.
+
         Returns:
             :obj:`~pyrogram.types.Message` | ``None``: On success, the sent text message is returned,
             otherwise, in case the server answered with no message, None is returned.

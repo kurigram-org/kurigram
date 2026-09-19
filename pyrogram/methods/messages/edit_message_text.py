@@ -87,6 +87,16 @@ class EditMessageText:
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
                 An InlineKeyboardMarkup object.
 
+            show_caption_above_media (``bool``, *optional*):
+                Pass True, if the caption must be shown above the message media.
+                This parameter is deprecated and should not be used.
+                Use `link_preview_options` instead.
+
+            disable_web_page_preview (``bool``, *optional*):
+                Disables link previews for links in this message.
+                This parameter is deprecated and should not be used.
+                Use `link_preview_options` instead.
+
         Returns:
             :obj:`~pyrogram.types.Message`: On success, the edited message is returned.
 

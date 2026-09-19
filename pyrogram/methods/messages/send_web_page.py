@@ -151,8 +151,35 @@ class SendWebPage:
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
                 instructions to remove reply keyboard or to force a reply from the user.
 
+            reply_to_message_id (``int``, *optional*):
+                If the message is a reply, ID of the original message.
+                This parameter is deprecated and should not be used.
+                Use `reply_parameters` instead.
+
+            reply_to_chat_id (``int`` | ``str``, *optional*):
+                Unique identifier (int) or username (str) of the chat holding the message that is replied to.
+                This parameter is deprecated and should not be used.
+                Use `reply_parameters` instead.
+
+            reply_to_story_id (``int``, *optional*):
+                If the message is a reply to a story, ID of the story.
+                This parameter is deprecated and should not be used.
+                Use `reply_parameters` instead.
+
+            quote_text (``str``, *optional*):
+                Text of the quoted part of the message that is replied to.
+                This parameter is deprecated and should not be used.
+                Use `reply_parameters` instead.
+
+            quote_entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
+                List of special entities that appear in the quote, which can be specified instead of *parse_mode*.
+                This parameter is deprecated and should not be used.
+                Use `reply_parameters` instead.
+
             quote_offset (``int``, *optional*):
                 Offset for quote in original message.
+                This parameter is deprecated and should not be used.
+                Use `reply_parameters` instead.
 
         Returns:
             :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the

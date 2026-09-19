@@ -88,6 +88,16 @@ class SendGame:
                 An object for an inline keyboard. If empty, one ‘Play game_title’ button will be shown automatically.
                 If not empty, the first button must launch the game.
 
+            reply_to_message_id (``int``, *optional*):
+                If the message is a reply, ID of the original message.
+                This parameter is deprecated and should not be used.
+                Use `reply_parameters` instead.
+
+            reply_to_chat_id (``int`` | ``str``, *optional*):
+                Unique identifier (int) or username (str) of the chat holding the message that is replied to.
+                This parameter is deprecated and should not be used.
+                Use `reply_parameters` instead.
+
         Returns:
             :obj:`~pyrogram.types.Message` | ``None``: On success, the sent game message is returned,
             otherwise, in case the server answered with no message, None is returned.

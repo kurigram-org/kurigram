@@ -116,6 +116,9 @@ class CopyMessage:
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
 
+            has_spoiler (``bool``, *optional*):
+                Pass True if the media needs to be covered with a spoiler animation.
+
             show_caption_above_media (``bool``, *optional*):
                 Pass True, if the caption must be shown above the message media.
 
@@ -136,6 +139,26 @@ class CopyMessage:
                 instructions to remove reply keyboard or to force a reply from the user.
                 If not specified, the original reply markup is kept.
                 Pass None to remove the reply markup.
+
+            reply_to_chat_id (``int`` | ``str``, *optional*):
+                Unique identifier (int) or username (str) of the chat holding the message that is replied to.
+                This parameter is deprecated and should not be used.
+                Use `reply_parameters` instead.
+
+            reply_to_message_id (``int``, *optional*):
+                If the message is a reply, ID of the original message.
+                This parameter is deprecated and should not be used.
+                Use `reply_parameters` instead.
+
+            quote_text (``str``, *optional*):
+                Text of the quoted part of the message that is replied to.
+                This parameter is deprecated and should not be used.
+                Use `reply_parameters` instead.
+
+            quote_entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
+                List of special entities that appear in the quote, which can be specified instead of *parse_mode*.
+                This parameter is deprecated and should not be used.
+                Use `reply_parameters` instead.
 
         Returns:
             :obj:`~pyrogram.types.Message` | ``None``: On success, the copied message is returned,

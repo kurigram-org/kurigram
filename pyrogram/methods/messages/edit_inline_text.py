@@ -67,6 +67,11 @@ class EditInlineText:
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
                 An InlineKeyboardMarkup object.
 
+            disable_web_page_preview (``bool``, *optional*):
+                Disables link previews for links in this message.
+                This parameter is deprecated and should not be used.
+                Use `link_preview_options` instead.
+
         Returns:
             ``bool``: On success, True is returned.
 

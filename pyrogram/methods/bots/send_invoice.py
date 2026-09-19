@@ -190,6 +190,11 @@ class SendInvoice:
             caption_entities (List of :obj:`~pyrogram.types.MessageEntity`):
                 List of special entities that appear in the caption, which can be specified instead of *parse_mode*.
 
+            reply_to_message_id (``int``, *optional*):
+                If the message is a reply, ID of the original message.
+                This parameter is deprecated and should not be used.
+                Use `reply_parameters` instead.
+
         Returns:
             :obj:`~pyrogram.types.Message` | ``None``: On success, the sent invoice message is returned,
             otherwise, in case the server answered with no message, None is returned.
