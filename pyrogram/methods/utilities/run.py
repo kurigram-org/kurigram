@@ -19,9 +19,12 @@
 from __future__ import annotations as _annotations
 
 import asyncio
+from typing import TYPE_CHECKING
 
-import pyrogram
 from pyrogram.methods.utilities.idle import idle
+
+if TYPE_CHECKING:
+    import pyrogram
 
 
 class Run:

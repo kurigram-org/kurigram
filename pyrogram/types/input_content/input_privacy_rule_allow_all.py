@@ -20,6 +20,7 @@ from __future__ import annotations as _annotations
 
 import pyrogram
 from pyrogram import raw
+
 from .input_privacy_rule import InputPrivacyRule
 
 

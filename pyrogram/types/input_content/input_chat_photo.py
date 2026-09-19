@@ -18,14 +18,16 @@
 
 from __future__ import annotations as _annotations
 
-from typing import BinaryIO, cast
+from typing import TYPE_CHECKING, BinaryIO, cast
 
 import pyrogram
 from pyrogram import raw, utils
-from pyrogram._typing import PathType
 from pyrogram.file_id import FileType
 
 from ..object import Object
+
+if TYPE_CHECKING:
+    from pyrogram._typing import PathType
 
 
 class InputChatPhoto(Object):

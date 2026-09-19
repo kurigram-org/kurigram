@@ -22,15 +22,18 @@ import io
 import os
 import re
 from pathlib import Path
-from typing import BinaryIO
-from collections.abc import Callable
+from typing import TYPE_CHECKING, BinaryIO
 
 import pyrogram
 from pyrogram import raw, utils
-from pyrogram._typing import PathType
 from pyrogram.file_id import FileType
 
 from .input_media import InputMedia
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from pyrogram._typing import PathType
 
 
 class InputMediaSticker(InputMedia):

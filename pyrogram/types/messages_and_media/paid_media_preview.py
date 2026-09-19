@@ -18,9 +18,12 @@
 
 from __future__ import annotations as _annotations
 
-from pyrogram import types
+from typing import TYPE_CHECKING
 
 from ..object import Object
+
+if TYPE_CHECKING:
+    from pyrogram import types
 
 
 class PaidMediaPreview(Object):

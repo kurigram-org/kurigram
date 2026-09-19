@@ -19,14 +19,16 @@
 from __future__ import annotations as _annotations
 
 import inspect
+import sys
 from pathlib import Path
 from typing import Final
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 
 import pytest
 
 import pyrogram
 from pyrogram import filters
+from pyrogram.filters import Filter
 from pyrogram.methods import decorators
 from pyrogram.methods.decorators.handler_type import HandlerType
 
@@ -82,8 +84,21 @@ def test_decorator_binds_the_callback_signature_to_one_type_variable(decorator_n
     decorator = getattr(pyrogram.Client, decorator_name)
 
     # `from __future__ import annotations` leaves the return annotation a string, and
-    #  `eval_str` is what turns it back into the object this compares against.
-    signature = inspect.signature(decorator, eval_str=True)
+    #  `eval_str` is what turns it back into the object this compares against. A decorator
+    #  module imports `Callable`/`HandlerType` (and, for `on_error`, `Filter`/`Sequence`)
+    #  under `TYPE_CHECKING` only, so its own globals cannot resolve them: hand them in, the
+    #  same way `test_handler_update_types.py` does for handler modules.
+    signature = inspect.signature(
+        decorator,
+        globals=vars(sys.modules[decorator.__module__]),
+        locals={
+            "Callable": Callable,
+            "HandlerType": HandlerType,
+            "Filter": Filter,
+            "Sequence": Sequence,
+        },
+        eval_str=True,
+    )
 
     assert signature.return_annotation == Callable[[HandlerType], HandlerType]
 

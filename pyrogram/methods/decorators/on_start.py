@@ -18,10 +18,14 @@
 
 from __future__ import annotations as _annotations
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import pyrogram
-from .handler_type import HandlerType
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from .handler_type import HandlerType
 
 
 class OnStart:

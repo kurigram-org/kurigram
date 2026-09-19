@@ -21,12 +21,15 @@ from __future__ import annotations as _annotations
 import asyncio
 import functools
 import inspect
-from collections.abc import AsyncIterator, Coroutine, Generator
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pyrogram import types
 from pyrogram.methods import Methods
-from pyrogram.methods.utilities import idle as idle_module, compose as compose_module
+from pyrogram.methods.utilities import compose as compose_module
+from pyrogram.methods.utilities import idle as idle_module
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator, Coroutine, Generator
 
 # The loop driven on behalf of a caller that is inside none. It outlives the call it was
 #  built for, because `app.start()` from a plain script has to leave behind a client that

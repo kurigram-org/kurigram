@@ -19,11 +19,13 @@
 from __future__ import annotations as _annotations
 
 import re
-from typing import overload
-from collections.abc import Iterable
+from typing import TYPE_CHECKING, overload
 
 import pyrogram
 from pyrogram import raw, types
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class GetStories:

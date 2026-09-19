@@ -21,9 +21,8 @@ from __future__ import annotations as _annotations
 import asyncio
 import inspect
 import re
-from typing import TYPE_CHECKING, Any, Final
 from re import Pattern
-from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, Final
 
 import pyrogram
 from pyrogram import enums
@@ -52,6 +51,8 @@ from pyrogram.types import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from pyrogram.raw.base import Update as RawUpdate
 
 

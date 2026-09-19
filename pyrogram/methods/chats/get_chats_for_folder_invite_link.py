@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import types, enums
+from pyrogram import enums, types
 
 
 class GetChatsForFolderInviteLink:

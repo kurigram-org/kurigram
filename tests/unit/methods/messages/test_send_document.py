@@ -18,17 +18,20 @@
 
 from __future__ import annotations as _annotations
 
-from collections.abc import Callable
 from io import BytesIO
-from pathlib import Path
-from typing import BinaryIO, Final
+from typing import TYPE_CHECKING, BinaryIO, Final
 
 import pytest
 
 from pyrogram import Client, raw
-from pyrogram._typing import PathType
 from pyrogram.methods.messages.send_document import SendDocument
 from pyrogram.parser import Parser
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
+
+    from pyrogram._typing import PathType
 
 _UPLOADED_FILE: Final[raw.types.InputFile] = raw.types.InputFile(
     id=1234567890,

@@ -20,8 +20,7 @@ from __future__ import annotations as _annotations
 
 import re
 from importlib import import_module
-from pathlib import Path
-from types import ModuleType
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -45,6 +44,10 @@ from pyrogram.errors import (
 )
 from pyrogram.errors.exceptions.all import exceptions
 from tests.unit.errors import raise_it
+
+if TYPE_CHECKING:
+    from pathlib import Path
+    from types import ModuleType
 
 
 @pytest.mark.parametrize(

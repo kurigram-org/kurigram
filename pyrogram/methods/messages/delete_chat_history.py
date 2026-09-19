@@ -18,12 +18,15 @@
 
 from __future__ import annotations as _annotations
 
-from datetime import datetime
 import logging
+from typing import TYPE_CHECKING
 
 import pyrogram
 from pyrogram import raw
 from pyrogram import utils
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 log = logging.getLogger(__name__)
 

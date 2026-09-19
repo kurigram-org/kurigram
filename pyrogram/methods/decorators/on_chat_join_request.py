@@ -18,12 +18,16 @@
 
 from __future__ import annotations as _annotations
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import pyrogram
 from pyrogram.filters import Filter
-from .handler_type import HandlerType
 from .unbound_arguments import unbound_arguments
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from .handler_type import HandlerType
 
 
 class OnChatJoinRequest:

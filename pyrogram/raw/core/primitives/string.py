@@ -18,9 +18,12 @@
 
 from __future__ import annotations as _annotations
 
-from io import BytesIO
+from typing import TYPE_CHECKING
 
 from .bytes import Bytes
+
+if TYPE_CHECKING:
+    from io import BytesIO
 
 
 class String(Bytes):

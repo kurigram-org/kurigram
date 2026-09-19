@@ -19,14 +19,16 @@
 from __future__ import annotations as _annotations
 
 import asyncio
-from concurrent.futures import Executor
-from pathlib import Path
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
 from pyrogram import raw, types
 from pyrogram.methods.advanced.save_file import SaveFile
+
+if TYPE_CHECKING:
+    from concurrent.futures import Executor
+    from pathlib import Path
 
 _PART_SIZE: Final[int] = 512 * 1024
 

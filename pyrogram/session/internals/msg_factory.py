@@ -19,11 +19,14 @@
 from __future__ import annotations as _annotations
 
 import asyncio
+from typing import TYPE_CHECKING
 
-import pyrogram
 from pyrogram.raw.core import Message, MsgContainer, TLObject
 from pyrogram.raw.functions import Ping
 from pyrogram.raw.types import HttpWait, MsgsAck
+
+if TYPE_CHECKING:
+    import pyrogram
 
 
 class MsgFactory:

@@ -28,11 +28,8 @@ from __future__ import annotations as _annotations
 import ast
 import builtins
 import importlib
-import pathlib
 from dataclasses import dataclass
-from types import ModuleType
-from typing import Any
-from collections.abc import Iterator, Sequence
+from typing import TYPE_CHECKING, Any
 
 import pyrogram
 from tests.guards.name_resolution import (
@@ -40,6 +37,11 @@ from tests.guards.name_resolution import (
     attribute_chain,
     hand_written_files,
 )
+
+if TYPE_CHECKING:
+    import pathlib
+    from collections.abc import Iterator, Sequence
+    from types import ModuleType
 
 
 @dataclass(frozen=True)

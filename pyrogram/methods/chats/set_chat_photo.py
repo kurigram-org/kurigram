@@ -19,14 +19,14 @@
 from __future__ import annotations as _annotations
 
 import os
-from typing import BinaryIO
+from typing import TYPE_CHECKING, BinaryIO
 
 import pyrogram
-from pyrogram import raw
-from pyrogram import utils
-from pyrogram import types
-from pyrogram._typing import PathType
+from pyrogram import raw, types, utils
 from pyrogram.file_id import FileType
+
+if TYPE_CHECKING:
+    from pyrogram._typing import PathType
 
 
 class SetChatPhoto:

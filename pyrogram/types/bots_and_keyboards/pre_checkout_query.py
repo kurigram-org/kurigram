@@ -19,7 +19,8 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import types, raw
+from pyrogram import raw, types
+
 from ..object import Object
 from ..update import Update
 

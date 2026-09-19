@@ -18,8 +18,7 @@
 
 from __future__ import annotations as _annotations
 
-from pathlib import Path
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -36,6 +35,9 @@ from pyrogram.errors import (
     UnknownError,
 )
 from tests.unit.errors import RPC_NAME, raise_it
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 ATTRIBUTES: Final[tuple[str, ...]] = ("ID", "CODE", "NAME", "MESSAGE")
 

@@ -19,9 +19,11 @@
 from __future__ import annotations as _annotations
 
 import logging
+from typing import TYPE_CHECKING
 
-import pyrogram
-from pyrogram import types, enums
+if TYPE_CHECKING:
+    import pyrogram
+    from pyrogram import enums, types
 
 log = logging.getLogger(__name__)
 

@@ -18,7 +18,8 @@
 
 from __future__ import annotations as _annotations
 
-from pyrogram import raw, enums
+from pyrogram import enums, raw
+
 from ..object import Object
 
 

@@ -25,14 +25,16 @@ functions: a database handle, a client object, a lazily built proxy.
 from __future__ import annotations as _annotations
 
 import logging
-from pathlib import Path
-from typing import Final, Protocol
+from typing import TYPE_CHECKING, Final, Protocol
 
 import pytest
 
 from pyrogram import Client, filters
 from pyrogram.client import _plugin_handlers
 from pyrogram.handlers import MessageHandler
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 _PLUGIN_SOURCE: Final[str] = """
 from pyrogram import Client

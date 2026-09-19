@@ -20,13 +20,16 @@ from __future__ import annotations as _annotations
 
 import html
 import logging
-from datetime import datetime
+from typing import TYPE_CHECKING
 
 import pyrogram
 from pyrogram import enums, raw, types, utils
 
 from ..object import Object
 from ..update import Update
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 log = logging.getLogger(__name__)
 

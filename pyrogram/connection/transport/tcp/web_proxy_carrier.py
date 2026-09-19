@@ -28,10 +28,12 @@ import ssl
 from dataclasses import dataclass
 from enum import IntEnum
 from http import HTTPStatus
-from typing import Final
-from collections.abc import Coroutine
+from typing import TYPE_CHECKING, Final
 
 from pyrogram.connection.proxy import HTTPS_PORT
+
+if TYPE_CHECKING:
+    from collections.abc import Coroutine
 
 log = logging.getLogger(__name__)
 

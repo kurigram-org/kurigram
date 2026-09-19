@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import logging
-from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 import pyrogram
 from pyrogram import raw
@@ -31,6 +31,9 @@ from pyrogram.errors import (
 )
 from pyrogram.storage import UpdateState
 from pyrogram.utils import ZERO_CHANNEL_ID
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 log = logging.getLogger(__name__)
 

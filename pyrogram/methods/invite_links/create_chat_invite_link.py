@@ -18,11 +18,13 @@
 
 from __future__ import annotations as _annotations
 
-from datetime import datetime
+from typing import TYPE_CHECKING
 
 import pyrogram
-from pyrogram import raw, utils
-from pyrogram import types
+from pyrogram import raw, types, utils
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 
 class CreateChatInviteLink:

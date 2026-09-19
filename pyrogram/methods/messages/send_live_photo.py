@@ -19,14 +19,17 @@
 from __future__ import annotations as _annotations
 
 import logging
-from datetime import datetime
-from typing import BinaryIO
-from collections.abc import Callable
+from typing import TYPE_CHECKING, BinaryIO
 
 import pyrogram
 from pyrogram import StopTransmission, enums, raw, types, utils
-from pyrogram._typing import PathType
 from pyrogram.errors import FilePartMissing
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from datetime import datetime
+
+    from pyrogram._typing import PathType
 
 log = logging.getLogger(__name__)
 

@@ -30,10 +30,12 @@ from __future__ import annotations as _annotations
 
 import ast
 from dataclasses import dataclass
-from typing import Final
-from collections.abc import Iterator
+from typing import TYPE_CHECKING, Final
 
 from tests.guards.name_resolution import REPOSITORY_ROOT
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 _SWEPT: Final[tuple[str, ...]] = ("pyrogram/client.py", "pyrogram/dispatcher.py")
 

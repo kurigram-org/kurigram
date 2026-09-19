@@ -30,13 +30,15 @@ import inspect
 import re
 import sys
 import textwrap
-from types import ModuleType
-from typing import Final, NamedTuple
-from collections.abc import Iterator
+from typing import TYPE_CHECKING, Final, NamedTuple
 
 import pytest
 
 from pyrogram import Client, types
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+    from types import ModuleType
 
 
 class Shortcut(NamedTuple):

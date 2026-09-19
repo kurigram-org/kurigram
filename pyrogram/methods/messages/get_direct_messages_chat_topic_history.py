@@ -18,11 +18,14 @@
 
 from __future__ import annotations as _annotations
 
-from datetime import datetime
-from collections.abc import AsyncGenerator
+from typing import TYPE_CHECKING
 
 import pyrogram
 from pyrogram import raw, types, utils
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+    from datetime import datetime
 
 
 async def get_chunk(

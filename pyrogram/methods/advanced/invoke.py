@@ -19,12 +19,14 @@
 from __future__ import annotations as _annotations
 
 import logging
-from typing import TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
 import pyrogram
 from pyrogram import raw
-from pyrogram.raw.core import TLObject
 from pyrogram.session import Session
+
+if TYPE_CHECKING:
+    from pyrogram.raw.core import TLObject
 
 log = logging.getLogger(__name__)
 

@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import logging
-from re import Match
+from typing import TYPE_CHECKING
 
 import pyrogram
 from pyrogram import enums, raw, types
@@ -28,6 +28,9 @@ from pyrogram.errors import ChannelPrivate
 from ... import utils
 from ..object import Object
 from ..update import Update
+
+if TYPE_CHECKING:
+    from re import Match
 
 log = logging.getLogger(__name__)
 

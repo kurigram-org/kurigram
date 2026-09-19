@@ -18,11 +18,13 @@
 
 from __future__ import annotations as _annotations
 
-from io import BytesIO
 from json import dumps
-from typing import cast, Any, TypeVar, Generic
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 from ..all import objects
+
+if TYPE_CHECKING:
+    from io import BytesIO
 
 ReturnType = TypeVar("ReturnType")
 
@@ -34,7 +36,7 @@ class TLObject(Generic[ReturnType]):
 
     @classmethod
     def read(cls, b: BytesIO, *args: Any) -> Any:
-        return cast(TLObject, objects[int.from_bytes(b.read(4), "little")]).read(b, *args)
+        return cast("TLObject", objects[int.from_bytes(b.read(4), "little")]).read(b, *args)
 
     def write(self, *args: Any) -> bytes:
         raise NotImplementedError

@@ -30,12 +30,14 @@ than patching them out. Patched out, nothing touches `updates_queue` or
 from __future__ import annotations as _annotations
 
 import asyncio
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
-import pytest
-
-from pyrogram import Client
 from pyrogram.methods.utilities import run as run_module
+
+if TYPE_CHECKING:
+    import pytest
+
+    from pyrogram import Client
 
 _OTHER_DC_ID: Final[int] = 4
 

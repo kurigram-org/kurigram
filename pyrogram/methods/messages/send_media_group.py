@@ -21,12 +21,15 @@ from __future__ import annotations as _annotations
 import logging
 import os
 import re
-from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pyrogram
 from pyrogram import enums, raw, types, utils
 from pyrogram.file_id import FileType
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 log = logging.getLogger(__name__)
 

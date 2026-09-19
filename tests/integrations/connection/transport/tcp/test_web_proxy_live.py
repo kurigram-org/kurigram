@@ -50,17 +50,20 @@ but its operator has. Fill in .env.test from .env.test.example, then::
 
 from __future__ import annotations as _annotations
 
-from pyrogram import Client
-from pyrogram.connection.proxy import WebProxy, normalize_proxy
-from pyrogram.connection.transport.tcp import TCP
-from pyrogram.session.auth import Auth
+from typing import TYPE_CHECKING
 
+from pyrogram.connection.proxy import WebProxy, normalize_proxy
+from pyrogram.session.auth import Auth
 from tests.integrations.connection.transport.tcp.conftest import (
     AUTH_KEY_SIZE,
     MTPROTO_PORT,
     RelayConfig,
     round_trip_req_pq_multi,
 )
+
+if TYPE_CHECKING:
+    from pyrogram import Client
+    from pyrogram.connection.transport.tcp import TCP
 
 
 async def test_req_pq_multi_round_trip_through_live_relay(

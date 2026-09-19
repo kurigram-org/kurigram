@@ -35,16 +35,18 @@ import subprocess
 import sys
 import threading
 import time
-from collections.abc import AsyncGenerator, Iterator
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Final, Protocol
+from typing import TYPE_CHECKING, Final, Protocol
 
 import pytest
 
 import pyrogram
 from pyrogram import Client, sync, types
 from pyrogram.sync import _bridge_loop, async_to_sync
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator, Iterator
 
 _HANDLED_SIGNALS: Final[tuple[signal.Signals, ...]] = (
     signal.SIGINT,

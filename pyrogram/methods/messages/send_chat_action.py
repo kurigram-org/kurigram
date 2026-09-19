@@ -18,11 +18,13 @@
 
 from __future__ import annotations as _annotations
 
-from typing import Final
-from collections.abc import Callable
+from typing import TYPE_CHECKING, Final
 
 import pyrogram
 from pyrogram import raw, enums
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # Every `enums.ChatAction` member maps to exactly one raw constructor here, so
 #  building the raw action never has to inspect the enum member's name at

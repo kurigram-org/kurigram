@@ -18,11 +18,14 @@
 
 from __future__ import annotations as _annotations
 
-from datetime import datetime
+from typing import TYPE_CHECKING
 
 from pyrogram import enums, types
 
 from .message_origin import MessageOrigin
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 
 class MessageOriginChannel(MessageOrigin):

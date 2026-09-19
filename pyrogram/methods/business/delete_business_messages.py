@@ -18,10 +18,13 @@
 
 from __future__ import annotations as _annotations
 
-from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 import pyrogram
 from pyrogram import raw
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class DeleteBusinessMessages:

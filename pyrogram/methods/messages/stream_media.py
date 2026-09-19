@@ -19,11 +19,14 @@
 from __future__ import annotations as _annotations
 
 import math
-from collections.abc import AsyncGenerator
+from typing import TYPE_CHECKING
 
 import pyrogram
 from pyrogram import types
 from pyrogram.file_id import FileId
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 
 class StreamMedia:

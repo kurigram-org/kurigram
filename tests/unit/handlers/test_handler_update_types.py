@@ -31,10 +31,11 @@ import sys
 import typing
 from typing import Final
 from re import Pattern
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 
 import pyrogram
 from pyrogram import handlers, types
+from pyrogram.filters import Filter
 from pyrogram.types import Update
 
 # The `Other parameters:` block of a handler docstring names the type the callback is
@@ -81,12 +82,13 @@ def handed_to(handler: type[handlers.Handler]) -> str | None:
     nor `stop_propagation()`: a separate shape, and a separate decision.
     """
     # Every module carries `from __future__ import annotations`, so the signature is a set
-    #  of strings until something evaluates them. A handler module imports `types` under
-    #  `TYPE_CHECKING` only, so its own globals cannot resolve that name: hand it in.
+    #  of strings until something evaluates them. A handler module imports `pyrogram`/`types`
+    #  and, where the callback signature names it, `Callable`/`Filter`, under `TYPE_CHECKING`
+    #  only, so its own globals cannot resolve those names: hand them in.
     signature = inspect.signature(
         handler.__init__,
         globals=vars(sys.modules[handler.__module__]),
-        locals={"pyrogram": pyrogram, "types": types},
+        locals={"pyrogram": pyrogram, "types": types, "Callable": Callable, "Filter": Filter},
         eval_str=True,
     )
 

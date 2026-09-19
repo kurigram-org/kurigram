@@ -18,18 +18,21 @@
 
 from __future__ import annotations as _annotations
 
-from collections.abc import Callable
 from io import BytesIO
-from pathlib import Path
-from typing import BinaryIO, Final, Protocol
+from typing import TYPE_CHECKING, BinaryIO, Final, Protocol
 
 import pytest
 
 from pyrogram import Client, raw
-from pyrogram._typing import PathType
 from pyrogram.methods.stories.edit_story_media import EditStoryMedia
 from pyrogram.methods.stories.send_story import SendStory
 from pyrogram.parser import Parser
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
+
+    from pyrogram._typing import PathType
 
 # Both story senders pick the video branch on `guess_mime_type(file.name) == "video/mp4"`,
 #  so the name the fake upload reports is what selects it.

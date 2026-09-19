@@ -28,8 +28,10 @@ from __future__ import annotations as _annotations
 
 import importlib
 import pathlib
-from typing import Any, Final
-from collections.abc import Iterator, Sequence
+from typing import TYPE_CHECKING, Any, Final
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
 
 REPOSITORY_ROOT: Final[pathlib.Path] = pathlib.Path(__file__).resolve().parents[2]
 PACKAGE_ROOT: Final[pathlib.Path] = REPOSITORY_ROOT / "pyrogram"

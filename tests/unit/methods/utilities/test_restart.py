@@ -26,9 +26,10 @@ instead of the lock alone would throw the cached messages away on every restart.
 
 from __future__ import annotations as _annotations
 
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
-from pyrogram import Client
+if TYPE_CHECKING:
+    from pyrogram import Client
 
 _MESSAGE_KEY: Final[tuple[int, int]] = (-1001, 42)
 _TOPIC_KEY: Final[tuple[int, int]] = (-1001, 7)

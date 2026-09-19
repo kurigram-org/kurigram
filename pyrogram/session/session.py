@@ -25,12 +25,10 @@ import os
 from enum import Enum, auto
 from hashlib import sha1
 from io import BytesIO
-from typing import Any
-from collections.abc import Coroutine
+from typing import TYPE_CHECKING, Any
 
 import pyrogram
 from pyrogram import raw, utils
-from pyrogram.connection import Connection
 from pyrogram.connection.proxy import client_proxy_address
 from pyrogram.crypto import mtproto
 from pyrogram.errors import (
@@ -48,6 +46,11 @@ from pyrogram.raw.all import layer
 from pyrogram.raw.core import FutureSalt, FutureSalts, Int, MsgContainer, TLObject
 
 from .internals import MsgFactory
+
+if TYPE_CHECKING:
+    from collections.abc import Coroutine
+
+    from pyrogram.connection import Connection
 
 log = logging.getLogger(__name__)
 

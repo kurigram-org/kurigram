@@ -18,10 +18,12 @@
 
 from __future__ import annotations as _annotations
 
-from io import BytesIO
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ..tl_object import TLObject
+
+if TYPE_CHECKING:
+    from io import BytesIO
 
 
 class BoolFalse(bytes, TLObject):

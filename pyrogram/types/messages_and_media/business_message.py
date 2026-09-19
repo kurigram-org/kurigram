@@ -18,10 +18,13 @@
 
 from __future__ import annotations as _annotations
 
-from datetime import datetime
+from typing import TYPE_CHECKING
 
 from pyrogram import types, enums, raw, utils
 from ..object import Object
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 
 class BusinessMessage(Object):

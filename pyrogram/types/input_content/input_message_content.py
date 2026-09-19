@@ -18,9 +18,12 @@
 
 from __future__ import annotations as _annotations
 
-import pyrogram
+from typing import TYPE_CHECKING
 
 from ..object import Object
+
+if TYPE_CHECKING:
+    import pyrogram
 
 
 class InputMessageContent(Object):

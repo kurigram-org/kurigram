@@ -19,11 +19,15 @@
 from __future__ import annotations as _annotations
 
 import asyncio
-from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 import pyrogram
 from pyrogram import raw
+
 from .input_privacy_rule import InputPrivacyRule
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class InputPrivacyRuleDisallowUsers(InputPrivacyRule):

@@ -29,15 +29,18 @@ from __future__ import annotations as _annotations
 import asyncio
 import sys
 import threading
-from collections import OrderedDict
-from collections.abc import Iterator
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
 from pyrogram import Client
 from pyrogram.handlers import MessageHandler
-from pyrogram.types import Message
+
+if TYPE_CHECKING:
+    from collections import OrderedDict
+    from collections.abc import Iterator
+
+    from pyrogram.types import Message
 
 _REGISTERING_THREADS: Final[int] = 2
 _HANDLERS_PER_THREAD: Final[int] = 500

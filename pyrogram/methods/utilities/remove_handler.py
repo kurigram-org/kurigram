@@ -18,9 +18,13 @@
 
 from __future__ import annotations as _annotations
 
-import pyrogram
-from pyrogram.handlers import StartHandler, StopHandler, ConnectHandler, DisconnectHandler
-from pyrogram.handlers.handler import Handler
+from typing import TYPE_CHECKING
+
+from pyrogram.handlers import ConnectHandler, DisconnectHandler, StartHandler, StopHandler
+
+if TYPE_CHECKING:
+    import pyrogram
+    from pyrogram.handlers.handler import Handler
 
 
 class RemoveHandler:

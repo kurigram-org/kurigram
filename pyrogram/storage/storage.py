@@ -23,9 +23,10 @@ import struct
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
-from collections.abc import Iterable
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from pyrogram import raw
 
 

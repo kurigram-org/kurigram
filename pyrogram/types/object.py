@@ -23,8 +23,8 @@ from datetime import datetime
 from enum import Enum
 from json import dumps
 
-
-import pyrogram
+if typing.TYPE_CHECKING:
+    import pyrogram
 
 
 def _public_attributes(instance: Object) -> dict[str, typing.Any]:

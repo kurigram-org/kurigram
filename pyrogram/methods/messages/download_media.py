@@ -26,11 +26,12 @@ from typing import TYPE_CHECKING, BinaryIO, Literal, overload
 
 import pyrogram
 from pyrogram import types, utils
-from pyrogram._typing import PathType
 from pyrogram.file_id import PHOTO_TYPES, FileId, FileType
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from pyrogram._typing import PathType
 
 DEFAULT_DOWNLOAD_DIR = "downloads/"
 

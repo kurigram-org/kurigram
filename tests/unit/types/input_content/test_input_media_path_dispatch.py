@@ -20,12 +20,14 @@ from __future__ import annotations as _annotations
 
 import re
 from pathlib import Path, PurePosixPath
-from typing import BinaryIO, Protocol
-from collections.abc import Callable
+from typing import TYPE_CHECKING, BinaryIO, Protocol
 
 import pytest
 
 from pyrogram import raw, types
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # `write()` only ever touches `client` through `client.resolve_peer(chat_id)`, and that
 #  call is skipped whenever `chat_id` stays at its default `None` (see e.g.

@@ -21,13 +21,16 @@ from __future__ import annotations as _annotations
 import html
 import re
 import urllib.parse
+from typing import TYPE_CHECKING
 
-import pyrogram
-from pyrogram import types
 from pyrogram.enums import MessageEntityType
 
 from . import utils
 from .html import HTML
+
+if TYPE_CHECKING:
+    import pyrogram
+    from pyrogram import types
 
 BOLD_DELIM = "**"
 ITALIC_DELIM = "__"

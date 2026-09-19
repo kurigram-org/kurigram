@@ -18,11 +18,14 @@
 
 from __future__ import annotations as _annotations
 
-from typing import overload
-from collections.abc import Iterable
 import re
+from typing import TYPE_CHECKING, overload
+
 import pyrogram
 from pyrogram import raw, types, utils
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class GetMessages:

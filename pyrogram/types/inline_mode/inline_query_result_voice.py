@@ -19,7 +19,8 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types, utils, enums
+from pyrogram import enums, raw, types, utils
+
 from .inline_query_result import InlineQueryResult
 
 

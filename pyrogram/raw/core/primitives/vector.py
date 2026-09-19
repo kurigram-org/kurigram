@@ -18,13 +18,15 @@
 
 from __future__ import annotations as _annotations
 
-from io import BytesIO
-from typing import cast, Any
+from typing import TYPE_CHECKING, Any, cast
 
-from .bool import BoolFalse, BoolTrue, Bool
-from .int import Int, Long
 from ..list import List
 from ..tl_object import TLObject
+from .bool import Bool, BoolFalse, BoolTrue
+from .int import Int, Long
+
+if TYPE_CHECKING:
+    from io import BytesIO
 
 
 class Vector(bytes, TLObject):
@@ -60,5 +62,5 @@ class Vector(bytes, TLObject):
     def __new__(cls, value: list, t: Any = None) -> bytes:
         return b"".join(
             [Int(cls.ID, False), Int(len(value))]
-            + [cast(bytes, t(i)) if t else i.write() for i in value]
+            + [cast("bytes", t(i)) if t else i.write() for i in value]
         )

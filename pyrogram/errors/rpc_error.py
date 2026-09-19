@@ -23,12 +23,15 @@ from dataclasses import dataclass
 from datetime import datetime
 from importlib import import_module
 from pathlib import Path
-from typing import Final
 from re import Pattern
+from typing import TYPE_CHECKING, Final
 
 from pyrogram import raw
-from pyrogram.raw.core import TLObject
+
 from .exceptions.all import exceptions
+
+if TYPE_CHECKING:
+    from pyrogram.raw.core import TLObject
 
 STRING_PARAMETER_PREFIXES: Final[tuple[str, ...]] = (
     "APNS_VERIFY_CHECK_",

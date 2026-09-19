@@ -18,6 +18,7 @@
 
 from __future__ import annotations as _annotations
 
+import asyncio
 import hashlib
 import logging
 import os
@@ -26,7 +27,6 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import ClassVar, Final, NamedTuple
 
-import asyncio
 from python_socks import ProxyType
 from python_socks.async_.asyncio import Proxy as SocksProxy
 

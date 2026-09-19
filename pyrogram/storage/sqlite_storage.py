@@ -24,13 +24,15 @@ import sqlite3
 import struct
 import time
 from pathlib import Path
-from typing import Any
-from collections.abc import Iterable
+from typing import TYPE_CHECKING, Any
 
 from pyrogram import raw
 
 from .. import utils
 from .storage import Storage, UpdateState
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 log = logging.getLogger(__name__)
 

@@ -19,11 +19,13 @@
 from __future__ import annotations as _annotations
 
 import logging
-from typing import BinaryIO
+from typing import TYPE_CHECKING, BinaryIO
 
 import pyrogram
 from pyrogram import raw, types
-from pyrogram._typing import PathType
+
+if TYPE_CHECKING:
+    from pyrogram._typing import PathType
 
 log = logging.getLogger(__name__)
 

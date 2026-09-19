@@ -25,13 +25,15 @@ and carries on, so a dead reference looks almost right and nothing reports it.
 from __future__ import annotations as _annotations
 
 import ast
-import pathlib
 import re
-from typing import Final, NamedTuple
 from re import Pattern
-from collections.abc import Iterator
+from typing import TYPE_CHECKING, Final, NamedTuple
 
 from tests.guards.name_resolution import REPOSITORY_ROOT, hand_written_files, resolves
+
+if TYPE_CHECKING:
+    import pathlib
+    from collections.abc import Iterator
 
 # `:obj:`Message`` and `:py:obj:`Message`` are the same role, the second one naming the
 #  domain the first one inherits.

@@ -19,9 +19,12 @@
 from __future__ import annotations as _annotations
 
 import logging
+from typing import TYPE_CHECKING
 
-from pyrogram.connection.proxy import Proxy
 from pyrogram.connection.transport.tcp.tcp import ABRIDGED_OBFUSCATE_TAG, TCP
+
+if TYPE_CHECKING:
+    from pyrogram.connection.proxy import Proxy
 
 log = logging.getLogger(__name__)
 

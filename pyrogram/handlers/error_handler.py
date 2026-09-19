@@ -18,16 +18,16 @@
 
 from __future__ import annotations as _annotations
 
-from typing import TYPE_CHECKING, Any
 from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING, Any
 
 from pyrogram import raw
-from pyrogram.filters import Filter
 
 from .handler import Handler
 
 if TYPE_CHECKING:
     import pyrogram
+    from pyrogram.filters import Filter
 
 
 ErrorCallbackType = Callable[

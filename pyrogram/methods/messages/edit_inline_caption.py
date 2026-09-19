@@ -18,8 +18,11 @@
 
 from __future__ import annotations as _annotations
 
-import pyrogram
-from pyrogram import types, enums
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import pyrogram
+    from pyrogram import types, enums
 
 
 class EditInlineCaption:

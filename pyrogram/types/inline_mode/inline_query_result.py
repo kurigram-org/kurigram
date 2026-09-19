@@ -18,11 +18,14 @@
 
 from __future__ import annotations as _annotations
 
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
-import pyrogram
-from pyrogram import types
 from ..object import Object
+
+if TYPE_CHECKING:
+    import pyrogram
+    from pyrogram import types
 
 
 class InlineQueryResult(Object):

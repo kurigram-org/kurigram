@@ -36,18 +36,19 @@ Skipped unless the environment carries a proxy to run against. Fill in
 
 from __future__ import annotations as _annotations
 
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
-from pyrogram import Client
-from pyrogram.connection.proxy import MTProxy
-from pyrogram.connection.transport.tcp import TCP
 from pyrogram.session.auth import Auth
-
 from tests.integrations.connection.transport.tcp.conftest import (
     AUTH_KEY_SIZE,
     MTPROTO_PORT,
     round_trip_req_pq_multi,
 )
+
+if TYPE_CHECKING:
+    from pyrogram import Client
+    from pyrogram.connection.proxy import MTProxy
+    from pyrogram.connection.transport.tcp import TCP
 
 # `Auth` dials the proxy rather than this address, but the signature still
 #  requires both halves.

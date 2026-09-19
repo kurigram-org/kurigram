@@ -19,11 +19,10 @@
 from __future__ import annotations as _annotations
 
 import asyncio
-from concurrent.futures import Executor
 from hashlib import sha1, sha256
 from io import BytesIO
 from os import urandom
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -32,6 +31,9 @@ from pyrogram import raw
 from pyrogram.crypto import aes, mtproto
 from pyrogram.raw.core import FutureSalt, FutureSalts, Long, Message, TLObject
 from pyrogram.session.session import Result, Session, SessionState
+
+if TYPE_CHECKING:
+    from concurrent.futures import Executor
 
 _DC_ID: Final[int] = 2
 _PORT: Final[int] = 443

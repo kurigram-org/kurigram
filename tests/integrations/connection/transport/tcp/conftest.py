@@ -31,15 +31,18 @@ import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Final, NamedTuple
-from collections.abc import AsyncGenerator, AsyncIterator
+from typing import TYPE_CHECKING, Final, NamedTuple
 
 import pytest
 
 from pyrogram import Client
 from pyrogram.connection.connection import transport_class_for
 from pyrogram.connection.proxy import MTProxy, Proxy, WebProxy, normalize_proxy
-from pyrogram.connection.transport.tcp import TCP
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator, AsyncIterator
+
+    from pyrogram.connection.transport.tcp import TCP
 
 # Every integration test shares one session name, so a stray session file left
 #  behind by a crashed run is always the same one.

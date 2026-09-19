@@ -20,10 +20,12 @@ from __future__ import annotations as _annotations
 
 import ast
 import pathlib
-from typing import Final
-from collections.abc import Iterator
+from typing import TYPE_CHECKING, Final
 
 from tests.guards.name_resolution import REPOSITORY_ROOT, hand_written_files, is_generated
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 # A parameter annotated `Optional` and defaulting to something else says two things at once:
 #  the caller may pass `None`, and the caller who passes nothing does not get `None`. Almost

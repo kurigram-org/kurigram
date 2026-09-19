@@ -19,8 +19,10 @@
 from __future__ import annotations as _annotations
 
 import asyncio
+from typing import TYPE_CHECKING
 
-import pyrogram
+if TYPE_CHECKING:
+    import pyrogram
 
 
 class Restart:

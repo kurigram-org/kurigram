@@ -19,9 +19,12 @@
 from __future__ import annotations as _annotations
 
 import asyncio
+from typing import TYPE_CHECKING
 
-import pyrogram
 from .idle import idle
+
+if TYPE_CHECKING:
+    import pyrogram
 
 
 async def compose(clients: list[pyrogram.Client], sequential: bool = False):

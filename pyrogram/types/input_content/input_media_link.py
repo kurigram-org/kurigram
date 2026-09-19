@@ -18,12 +18,15 @@
 
 from __future__ import annotations as _annotations
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import pyrogram
 from pyrogram import raw
 
 from .input_media import InputMedia
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class InputMediaLink(InputMedia):
