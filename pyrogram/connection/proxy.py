@@ -22,7 +22,7 @@ import base64
 import ipaddress
 import re
 from dataclasses import dataclass
-from typing import ClassVar, Final, Literal, NamedTuple, TypedDict
+from typing import ClassVar, Final, Literal, TypedDict
 from re import Pattern
 from urllib.parse import parse_qs, urlsplit
 
@@ -100,7 +100,8 @@ class WebProxy:
 Proxy = SOCKS4Proxy | SOCKS5Proxy | HTTPProxy | MTProxy | WebProxy
 
 
-class ProxyAddress(NamedTuple):
+@dataclass(frozen=True)
+class ProxyAddress:
     hostname: str
     port: int
 
@@ -258,7 +259,8 @@ _WEB_FAKE_TLS_REJECTION: Final[str] = (
 )
 
 
-class _DecodedSecret(NamedTuple):
+@dataclass(frozen=True)
+class _DecodedSecret:
     secret: bytes  # bare 16 bytes, or 17 with the dd marker kept
     sni_hostname: str | None  # the domain an ee secret appends, else None
 
