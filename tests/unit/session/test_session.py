@@ -19,6 +19,7 @@
 from __future__ import annotations as _annotations
 
 import asyncio
+import logging
 from concurrent.futures import Executor
 from hashlib import sha1, sha256
 from io import BytesIO
@@ -523,3 +524,92 @@ async def test_invoke_on_a_session_that_is_not_running_raises(
 
     # `Session.__str__` carries the state, so this pins the message on both parameters.
     assert str(session) in message
+
+
+async def test_unknown_constructor_drops_packet_without_triggering_restart(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Ensure unmapped constructor ValueErrors drop the packet without restarting the session."""
+    session = _started_session()
+    restarted: bool = False
+
+    async def fake_restart() -> None:
+        nonlocal restarted
+        restarted = True
+
+    session.restart = fake_restart  # type: ignore[method-assign]
+
+    def faulty_unpack(*_args: object, **_kwargs: object) -> object:
+        msg = "The server sent an unknown constructor: 0xdeadbeef"
+        raise ValueError(msg)
+
+    monkeypatch.setattr(mtproto, "unpack", faulty_unpack)
+
+    with caplog.at_level(logging.WARNING, logger="pyrogram.session.session"):
+        await session.handle_packet(b"mock_unknown_constructor_packet")
+
+    assert not restarted
+    assert session.state is SessionState.STARTED
+    assert "Dropped packet with unknown constructor" in caplog.text
+    assert "0xdeadbeef" in caplog.text
+
+
+async def test_corrupted_payload_without_unknown_constructor_triggers_restart(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Ensure genuine structural/cryptographic corruptions still trigger session restart."""
+    session = _started_session()
+    restarted = asyncio.Event()
+
+    async def fake_restart() -> None:
+        restarted.set()
+
+    session.restart = fake_restart  # type: ignore[method-assign]
+
+    def corrupted_unpack(*_args: object, **_kwargs: object) -> object:
+        msg = "Corrupted MTProto payload checksum mismatch"
+        raise ValueError(msg)
+
+    monkeypatch.setattr(mtproto, "unpack", corrupted_unpack)
+
+    await session.handle_packet(b"corrupted_packet")
+    await asyncio.sleep(0)
+
+    assert restarted.is_set()
+
+
+async def test_subsequent_valid_packets_processed_after_unknown_constructor_drop(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Ensure the state machine remains functional after dropping an unknown constructor."""
+    session = _started_session()
+    session.salt = _STALE_SALT
+
+    call_count = 0
+    orig_unpack = mtproto.unpack
+
+    def selective_unpack(*args: object, **kwargs: object) -> object:
+        nonlocal call_count
+        call_count += 1
+        if call_count == 1:
+            msg = "The server sent an unknown constructor: 0x12345678"
+            raise ValueError(msg)
+        return orig_unpack(*args, **kwargs)
+
+    monkeypatch.setattr(mtproto, "unpack", selective_unpack)
+
+    # First packet: unmapped constructor -> dropped gracefully
+    await session.handle_packet(b"unmapped_tl_packet")
+    assert session.salt == _STALE_SALT
+
+    # Second packet: legitimate BadServerSalt packet -> successfully handled
+    ping_msg_id = await session.msg_factory.allocate_message_identity()
+    await session.handle_packet(
+        await _bad_server_salt_packet(
+            session=session,
+            bad_msg_id=ping_msg_id,
+        )
+    )
+
+    assert session.salt == _NEW_SALT

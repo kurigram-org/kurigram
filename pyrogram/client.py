@@ -56,6 +56,7 @@ from pyrogram.errors import (
     SessionPasswordNeeded,
     Unauthorized,
     VolumeLocNotFound,
+    RPCError,
 )
 from pyrogram.handlers.handler import Handler
 from pyrogram.methods import Methods
@@ -878,7 +879,12 @@ class Client(Methods):
 
         return is_min
 
-    async def handle_updates(self, updates):
+    async def handle_updates(self, updates: raw.base.Updates) -> None:
+        """Process incoming MTProto updates and route them to the dispatcher.
+
+        Args:
+            updates: The raw MTProto updates object received from the session.
+        """
         self.last_update_time = datetime.now()
 
         if isinstance(updates, (raw.types.Updates, raw.types.UpdatesCombined)):
@@ -942,8 +948,11 @@ class Client(Methods):
                             ChannelPrivate,
                             PersistentTimestampOutdated,
                             PersistentTimestampInvalid,
-                        ):
-                            pass
+                            RPCError,
+                            TimeoutError,
+                            OSError,
+                        ) as e:
+                            log.debug("[%s] Skipping channel difference sync: %s", self.name, e)
                         else:
                             if not isinstance(diff, raw.types.updates.ChannelDifferenceEmpty):
                                 users.update({u.id: u for u in diff.users})
@@ -958,29 +967,29 @@ class Client(Methods):
             await self.storage.set_update_state(
                 UpdateState(0, updates.pts, None, updates.date, None)
             )
-
-            diff = await self.invoke(
-                raw.functions.updates.GetDifference(
-                    pts=updates.pts - updates.pts_count, date=updates.date, qts=-1
-                )
-            )
-
-            users = {u.id: u for u in diff.users}
-            chats = {c.id: c for c in diff.chats}
-
-            for message in diff.new_messages:
-                self.dispatcher.updates_queue.put_nowait(
-                    (
-                        raw.types.UpdateNewMessage(
-                            message=message, pts=updates.pts, pts_count=updates.pts_count
-                        ),
-                        users,
-                        chats,
+            try:
+                diff = await self.invoke(
+                    raw.functions.updates.GetDifference(
+                        pts=updates.pts - updates.pts_count, date=updates.date, qts=-1
                     )
                 )
-
-            for update in diff.other_updates:
-                self.dispatcher.updates_queue.put_nowait((update, users, chats))
+            except (RPCError, TimeoutError, OSError) as e:
+                log.warning("[%s] Difference sync failed for short message: %s", self.name, e)
+            else:
+                users = {u.id: u for u in diff.users}
+                chats = {c.id: c for c in diff.chats}
+                for message in diff.new_messages:
+                    self.dispatcher.updates_queue.put_nowait(
+                        (
+                            raw.types.UpdateNewMessage(
+                                message=message, pts=updates.pts, pts_count=updates.pts_count
+                            ),
+                            users,
+                            chats,
+                        )
+                    )
+                for update in diff.other_updates:
+                    self.dispatcher.updates_queue.put_nowait((update, users, chats))
         elif isinstance(updates, raw.types.UpdateShort):
             self.dispatcher.updates_queue.put_nowait((updates.update, {}, {}))
         elif isinstance(updates, raw.types.UpdatesTooLong):

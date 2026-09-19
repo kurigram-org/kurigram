@@ -375,7 +375,12 @@ class Session:
             if self._must_stay_stopped:
                 await self._stop()
 
-    async def handle_packet(self, packet):
+    async def handle_packet(self, packet: bytes) -> None:
+        """Unpack an incoming MTProto packet and route its messages.
+
+        Args:
+            packet: The raw encrypted MTProto payload received from the transport.
+        """
         try:
             data = await asyncio.get_running_loop().run_in_executor(
                 self.connection.protocol.crypto_executor,
@@ -386,8 +391,13 @@ class Session:
                 self.auth_key_id,
             )
         except ValueError as e:
+            err_msg = str(e)
+            if "unknown constructor" in err_msg.lower():
+                log.warning("[%s] Dropped packet with unknown constructor: %s", self.dc_id, err_msg)
+                return
+
             log.debug(e)
-            log.info("Restarting session due to - %s - %s", e.__class__.__name__, e)
+            log.info("Restarting session due to - %s - %s", type(e).__name__, e)
             asyncio.create_task(self.restart())
             return
 
@@ -402,8 +412,7 @@ class Session:
             if msg.seq_no % 2 != 0:
                 if msg.msg_id in self.pending_acks:
                     continue
-                else:
-                    self.pending_acks.add(msg.msg_id)
+                self.pending_acks.add(msg.msg_id)
 
             try:
                 if len(self.stored_msg_ids) > Session.STORED_MSG_IDS_MAX_SIZE:
@@ -429,7 +438,6 @@ class Session:
                     time_diff = (
                         msg.msg_id - (await self.msg_factory.allocate_message_identity())
                     ) / 2**32
-
                     if time_diff > 30:
                         raise SecurityCheckMismatch(
                             "The msg_id belongs to over 30 seconds in the future. "
@@ -449,7 +457,7 @@ class Session:
                 self.ignore_count += 1
 
                 if self.ignore_count >= self.MAX_CONSECUTIVE_IGNORED:
-                    log.info("Restarting session due to - %s - %s", e.__class__.__name__, e)
+                    log.info("Restarting session due to - %s - %s", type(e).__name__, e)
                     asyncio.create_task(self.restart())
 
                 return

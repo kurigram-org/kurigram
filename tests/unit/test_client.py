@@ -30,7 +30,7 @@ from typing import Final, Protocol
 
 import pytest
 
-from pyrogram import Client, filters
+from pyrogram import Client, filters, raw
 from pyrogram.client import _plugin_handlers
 from pyrogram.handlers import MessageHandler
 
@@ -52,7 +52,6 @@ collection = AnyAttribute()
 async def greet(client, message):
     pass
 """
-
 
 _KEYWORD_PLUGIN_SOURCE: Final[str] = """
 from pyrogram import Client, filters
@@ -160,3 +159,51 @@ def test_load_plugins_reports_the_pair_it_refuses(
 
     assert client.dispatcher.groups == {}
     assert "greet" in caplog.text
+
+
+async def test_handle_updates_survives_channel_difference_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Ensure GetChannelDifference timeout does not abort update container processing."""
+
+    client = Client("test_resilience", in_memory=True)
+    await client.storage.open()
+
+    async def timeout_invoke(query: object, *_args: object, **_kwargs: object) -> object:
+        if isinstance(query, raw.functions.updates.GetChannelDifference):
+            msg = "Channel difference query timed out"
+            raise TimeoutError(msg)
+        return raw.types.InputPeerChannel(channel_id=123, access_hash=456)
+
+    async def resolve_peer_mock(*_args: object) -> raw.types.InputPeerChannel:
+        return raw.types.InputPeerChannel(channel_id=123, access_hash=456)
+
+    monkeypatch.setattr(client, "invoke", timeout_invoke)
+    monkeypatch.setattr(client, "resolve_peer", resolve_peer_mock)
+
+    dummy_update = raw.types.UpdateShort(
+        update=raw.types.UpdateUserTyping(user_id=1, action=raw.types.SendMessageTypingAction()),
+        date=100,
+    )
+    min_msg_update = raw.types.UpdateNewChannelMessage(
+        message=raw.types.Message(
+            id=10,
+            peer_id=raw.types.PeerChannel(channel_id=123),
+            date=100,
+            message="test",
+        ),
+        pts=2,
+        pts_count=1,
+    )
+    updates_obj = raw.types.Updates(
+        updates=[min_msg_update, dummy_update],
+        users=[],
+        chats=[],
+        date=100,
+        seq=0,
+    )
+
+    await client.handle_updates(updates_obj)
+
+    # Both updates must reach the dispatcher queue despite GetChannelDifference timeout
+    assert client.dispatcher.updates_queue.qsize() == 2
