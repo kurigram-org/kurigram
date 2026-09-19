@@ -22,7 +22,7 @@ import contextlib
 import logging
 from functools import partial
 from itertools import groupby
-from typing import TYPE_CHECKING, BinaryIO, SupportsIndex
+from typing import TYPE_CHECKING, BinaryIO, Literal, SupportsIndex, overload
 
 import pyrogram
 from pyrogram import enums, raw, types, utils
@@ -9653,6 +9653,57 @@ class Message(Object, Update):
         """
 
         return await self._client.retract_vote(chat_id=self.chat.id, message_id=self.id)
+
+    @overload
+    async def download(
+        self,
+        file_name: PathType = "",
+        in_memory: Literal[False] = False,
+        block: Literal[True] = True,
+        progress: Callable | None = None,
+        progress_args: tuple = (),
+    ) -> str | list[str] | None: ...
+
+    @overload
+    async def download(
+        self,
+        file_name: PathType = "",
+        in_memory: Literal[True] = True,
+        block: Literal[True] = True,
+        progress: Callable | None = None,
+        progress_args: tuple = (),
+    ) -> BytesIO | list[BytesIO] | None: ...
+
+    @overload
+    async def download(
+        self,
+        file_name: PathType = "",
+        *,
+        in_memory: bool = False,
+        block: Literal[False],
+        progress: Callable | None = None,
+        progress_args: tuple = (),
+    ) -> None: ...
+
+    @overload
+    async def download(
+        self,
+        file_name: PathType,
+        in_memory: bool,
+        block: Literal[False],
+        progress: Callable | None = None,
+        progress_args: tuple = (),
+    ) -> None: ...
+
+    @overload
+    async def download(
+        self,
+        file_name: PathType = "",
+        in_memory: bool = False,
+        block: bool = True,
+        progress: Callable | None = None,
+        progress_args: tuple = (),
+    ) -> str | BytesIO | list[str] | list[BytesIO] | None: ...
 
     async def download(
         self,
