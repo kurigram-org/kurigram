@@ -221,7 +221,6 @@ FILE_EMTPY	An empty file was provided.
 FILE_ID_INVALID	The provided file id is invalid.
 FILE_MIGRATE_X	The file currently being accessed is stored in DC{dc_id}, please re-send the query to that DC.
 FILE_PARTS_INVALID	The number of file parts is invalid.
-FILE_PART_0_MISSING	File part 0 missing.
 FILE_PART_EMPTY	The provided file part is empty.
 FILE_PART_INVALID	The file part number is invalid.
 FILE_PART_LENGTH_INVALID	The length of a file part is invalid.
