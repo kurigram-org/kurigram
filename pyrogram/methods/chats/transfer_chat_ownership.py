@@ -68,7 +68,7 @@ class TransferChatOwnership:
         if not isinstance(peer_channel, raw.types.InputPeerChannel):
             raise ValueError("The chat_id must belong to a channel/supergroup.")
 
-        if not isinstance(peer_user, raw.types.InputPeerUser):
+        if not isinstance(peer_user, (raw.types.InputPeerUser, raw.types.InputPeerUserFromMessage)):
             raise ValueError("The user_id must belong to a user.")
 
         r = await self.invoke(

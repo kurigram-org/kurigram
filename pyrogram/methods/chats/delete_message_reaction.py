@@ -60,7 +60,7 @@ class DeleteMessageReaction:
         if user_id is not None:
             peer = await self.resolve_peer(user_id)
 
-            if not isinstance(peer, (raw.types.InputPeerUser, raw.types.InputPeerSelf)):
+            if not isinstance(peer, (raw.types.InputPeerUser, raw.types.InputPeerSelf, raw.types.InputPeerUserFromMessage)):
                 return False
         elif actor_chat_id is not None:
             peer = await self.resolve_peer(actor_chat_id)

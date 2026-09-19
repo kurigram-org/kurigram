@@ -346,7 +346,11 @@ class SendMessage:
         if isinstance(r, raw.types.UpdateShortSentMessage):
             peer = await self.resolve_peer(chat_id)
 
-            peer_id = peer.user_id if isinstance(peer, raw.types.InputPeerUser) else -peer.chat_id
+            peer_id = (
+                peer.user_id 
+                if isinstance(peer, (raw.types.InputPeerUser, raw.types.InputPeerUserFromMessage)) 
+                else -peer.chat_id
+            )
 
             return types.Message(
                 id=r.id,
