@@ -39,6 +39,8 @@ class UpdateChatNotifications:
     ) -> bool:
         """Update the notification settings for the selected chat
 
+        .. include:: /_includes/usable-by/users.rst
+
         Parameters:
             chat_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the target chat.
