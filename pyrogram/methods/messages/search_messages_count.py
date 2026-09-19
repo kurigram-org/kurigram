@@ -70,7 +70,7 @@ class SearchMessagesCount:
         total = 0
 
         for split_range in ranges:
-            r = await self.invoke(
+            result = await self.invoke(
                 raw.functions.InvokeWithMessagesRange(
                     range=split_range,
                     query=raw.functions.messages.Search(
@@ -90,9 +90,10 @@ class SearchMessagesCount:
                     ),
                 )
             )
-            if hasattr(r, "count"):
-                total += r.count
+            # `messages.Messages` is the one constructor of the base type without a `count`.
+            if isinstance(result, raw.types.messages.Messages):
+                total += len(result.messages)
             else:
-                total += len(r.messages)
+                total += result.count
 
         return total
