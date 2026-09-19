@@ -64,14 +64,16 @@ class UpdateChatNotifications:
         Example:
             .. code-block:: python
 
+                from datetime import datetime, timedelta
+
                 # Mute a chat permanently
                 await app.update_chat_notifications(chat_id, mute=True)
 
                 # Mute a chat for 10 minutes
                 await app.update_chat_notifications(
                     chat_id,
-                    mute=True
-                    mute_until=datetime.timedelta(minutes=10)
+                    mute=True,
+                    mute_until=datetime.now() + timedelta(minutes=10)
                 )
 
                 # Unmute a chat
