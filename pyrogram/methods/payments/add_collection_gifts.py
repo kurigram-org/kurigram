@@ -38,9 +38,6 @@ class AddCollectionGifts:
             collection_id (``int``):
                 Identifier of the gift collection.
 
-            name (``str``):
-                Name of the collection, 1-12 characters.
-
             gift_ids (List of ``str``):
                 Identifier of the gifts to add to the collection.
 

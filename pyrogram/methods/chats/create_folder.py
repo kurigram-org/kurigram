@@ -69,9 +69,6 @@ class CreateFolder:
                 Pass :obj:`~pyrogram.enums.FolderColor` to set folder color.
                 Can't be changed if folder tags are disabled or the current user doesn't have Telegram Premium subscription.
 
-            is_shareable (``bool``, *optional*):
-                True, if at least one link has been created for the folder.
-
             pinned_chats (List of :obj:`~pyrogram.types.Chat`, *optional*):
                 The pinned chats in the folder.
                 You can pass an ID (int), username (str) or phone number (str).

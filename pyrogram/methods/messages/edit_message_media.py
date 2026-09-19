@@ -74,10 +74,6 @@ class EditMessageMedia:
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
                 An InlineKeyboardMarkup object.
 
-            file_name (``str``, *optional*):
-                File name of the media to be sent. Not applicable to photos.
-                Defaults to file's path basename.
-
         Returns:
             :obj:`~pyrogram.types.Message`: On success, the edited message is returned.
 
