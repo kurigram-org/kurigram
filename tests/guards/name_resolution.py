@@ -62,6 +62,17 @@ TOOLING_ROOTS: Final[tuple[pathlib.Path, ...]] = (
 CONFIGURATION_GLOBS: Final[tuple[str, ...]] = ("*.toml", "*.yml", "*.yaml")
 
 
+def source_of(path: pathlib.Path) -> str:
+    """Read a file of the tree as text, always as UTF-8.
+
+    Every sweep reads the sources itself, and `read_text()` with no argument takes the
+    encoding from the locale of the process: on Windows that is `cp1251`, and the first
+    byte outside ASCII ends the read. The tree is written in UTF-8 whatever the machine,
+    so the encoding is named here once rather than repeated at every call.
+    """
+    return path.read_text(encoding="utf-8")
+
+
 def is_generated(path: pathlib.Path) -> bool:
     return path in GENERATED or any(tree in path.parents for tree in GENERATED)
 

@@ -31,7 +31,12 @@ from typing import Final, NamedTuple
 from re import Pattern
 from collections.abc import Iterator
 
-from tests.guards.name_resolution import REPOSITORY_ROOT, hand_written_files, resolves
+from tests.guards.name_resolution import (
+    REPOSITORY_ROOT,
+    hand_written_files,
+    resolves,
+    source_of,
+)
 
 # `:obj:`Message`` and `:py:obj:`Message`` are the same role, the second one naming the
 #  domain the first one inherits.
@@ -104,7 +109,7 @@ def label_agrees_with_target(label: str, *, target: str) -> bool:
 
 
 def docstrings_of(path: pathlib.Path) -> Iterator[tuple[str, int]]:
-    lines = path.read_text(encoding="utf-8").splitlines()
+    lines = source_of(path).splitlines()
 
     for node in ast.walk(ast.parse("\n".join(lines))):
         if not isinstance(node, _DOCUMENTED_NODES) or not ast.get_docstring(node):

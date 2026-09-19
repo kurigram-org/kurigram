@@ -39,6 +39,7 @@ from tests.guards.name_resolution import (
     REPOSITORY_ROOT,
     attribute_chain,
     hand_written_files,
+    source_of,
 )
 
 
@@ -194,7 +195,7 @@ def namespace_of(module: ModuleType, *, tree: ast.Module) -> dict[str, Any]:
 
 def annotations_in(path: pathlib.Path) -> Iterator[tuple[Annotation, dict[str, Any]]]:
     module = importlib.import_module(module_name_of(path))
-    tree = ast.parse(path.read_text(encoding="utf-8"))
+    tree = ast.parse(source_of(path))
     namespace = namespace_of(module, tree=tree)
 
     for annotation in annotations_of(tree):

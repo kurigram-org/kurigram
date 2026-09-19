@@ -47,6 +47,7 @@ from tests.guards.name_resolution import (
     REPOSITORY_ROOT,
     configuration_files,
     hand_written_files,
+    source_of,
     tooling_files,
 )
 
@@ -110,11 +111,11 @@ def comments_using_a_dash() -> list[str]:
 
     for path in chain(hand_written_files(), tooling_files()):
         relative = path.relative_to(REPOSITORY_ROOT).as_posix()
-        found.extend(f"{relative}:{line}" for line in dashes_in_comments(path.read_text()))
+        found.extend(f"{relative}:{line}" for line in dashes_in_comments(source_of(path)))
 
     for path in configuration_files():
         relative = path.relative_to(REPOSITORY_ROOT).as_posix()
-        found.extend(f"{relative}:{line}" for line in dashes_in_hash_comments(path.read_text()))
+        found.extend(f"{relative}:{line}" for line in dashes_in_hash_comments(source_of(path)))
 
     return found
 

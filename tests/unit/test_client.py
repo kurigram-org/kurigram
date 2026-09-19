@@ -86,7 +86,7 @@ def write_plugin(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PluginWrite
     def _write(package: str, *, source: str) -> str:
         root: Path = tmp_path / package
         root.mkdir()
-        (root / "handlers.py").write_text(source)
+        (root / "handlers.py").write_text(source, encoding="utf-8")
 
         return package
 

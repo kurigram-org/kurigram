@@ -34,7 +34,12 @@ from __future__ import annotations as _annotations
 import ast
 from itertools import chain
 
-from tests.guards.name_resolution import REPOSITORY_ROOT, hand_written_files, tooling_files
+from tests.guards.name_resolution import (
+    REPOSITORY_ROOT,
+    hand_written_files,
+    source_of,
+    tooling_files,
+)
 
 
 def writes_an_annotation(tree: ast.Module) -> bool:
@@ -65,7 +70,7 @@ def modules_that_do_not_defer() -> list[str]:
     found: list[str] = []
 
     for path in chain(hand_written_files(), tooling_files()):
-        tree = ast.parse(path.read_text(), filename=path.name)
+        tree = ast.parse(source_of(path), filename=path.name)
 
         if writes_an_annotation(tree) and not defers_its_annotations(tree):
             found.append(path.relative_to(REPOSITORY_ROOT).as_posix())
@@ -81,7 +86,7 @@ def test_the_sweep_reads_the_modules_it_claims_to() -> None:
     annotated = [
         path.relative_to(REPOSITORY_ROOT).as_posix()
         for path in chain(hand_written_files(), tooling_files())
-        if writes_an_annotation(ast.parse(path.read_text(), filename=path.name))
+        if writes_an_annotation(ast.parse(source_of(path), filename=path.name))
     ]
 
     assert len(annotated) > 700
