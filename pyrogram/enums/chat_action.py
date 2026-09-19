@@ -68,5 +68,11 @@ class ChatAction(AutoName):
     CHOOSE_STICKER = raw.types.SendMessageChooseStickerAction
     "Choosing sticker"
 
+    EMOJI_INTERACTION = raw.types.SendMessageEmojiInteraction
+    "Interacting with an animated emoji"
+
+    EMOJI_INTERACTION_SEEN = raw.types.SendMessageEmojiInteractionSeen
+    "Watched an animated emoji interaction"
+
     CANCEL = raw.types.SendMessageCancelAction
     "Cancel ongoing chat action"

@@ -49,6 +49,54 @@ _ACTIONS: Final[dict[enums.ChatAction, Callable[[], raw.base.SendMessageAction]]
     enums.ChatAction.CANCEL: raw.types.SendMessageCancelAction,
 }
 
+# The two emoji-interaction actions are the only ones whose fields the caller decides, so
+#  they are the only ones `_ACTIONS` cannot hold: `emoticon`, `message_id` and `interaction`
+#  have no constant that would be right, the way `progress=0` is right above. This names the
+#  parameters each of them needs, which is what the checks below report on.
+_FIELD_ACTIONS: Final[dict[enums.ChatAction, frozenset[str]]] = {
+    enums.ChatAction.EMOJI_INTERACTION: frozenset({"emoticon", "message_id", "interaction"}),
+    enums.ChatAction.EMOJI_INTERACTION_SEEN: frozenset({"emoticon"}),
+}
+
+
+def _build_action(
+    action: enums.ChatAction,
+    *,
+    emoticon: str | None,
+    message_id: int | None,
+    interaction: str | None,
+) -> raw.base.SendMessageAction:
+    accepted = _FIELD_ACTIONS.get(action, frozenset())
+    given = {
+        name
+        for name, value in (
+            ("emoticon", emoticon),
+            ("message_id", message_id),
+            ("interaction", interaction),
+        )
+        if value is not None
+    }
+
+    missing = sorted(accepted - given)
+    if missing:
+        raise ValueError(f"{action} needs {', '.join(missing)}")
+
+    unexpected = sorted(given - accepted)
+    if unexpected:
+        raise ValueError(f"{action} takes no {', '.join(unexpected)}")
+
+    if action is enums.ChatAction.EMOJI_INTERACTION:
+        return raw.types.SendMessageEmojiInteraction(
+            emoticon=emoticon,
+            msg_id=message_id,
+            interaction=raw.types.DataJSON(data=interaction),
+        )
+
+    if action is enums.ChatAction.EMOJI_INTERACTION_SEEN:
+        return raw.types.SendMessageEmojiInteractionSeen(emoticon=emoticon)
+
+    return _ACTIONS[action]()
+
 
 class SendChatAction:
     async def send_chat_action(
@@ -56,6 +104,10 @@ class SendChatAction:
         chat_id: int | str,
         action: enums.ChatAction,
         business_connection_id: str | None = None,
+        *,
+        emoticon: str | None = None,
+        message_id: int | None = None,
+        interaction: str | None = None,
     ) -> bool:
         """Tell the other party that something is happening on your side.
 
@@ -73,11 +125,28 @@ class SendChatAction:
             business_connection_id (``str``, *optional*):
                 Unique identifier of the business connection on behalf of which the message will be sent.
 
+            emoticon (``str``, *optional*):
+                The animated emoji that was clicked.
+                Required by :obj:`~pyrogram.enums.ChatAction.EMOJI_INTERACTION` and
+                :obj:`~pyrogram.enums.ChatAction.EMOJI_INTERACTION_SEEN`, rejected by every other action.
+
+            message_id (``int``, *optional*):
+                Identifier of the message carrying the animated emoji that was clicked.
+                Required by :obj:`~pyrogram.enums.ChatAction.EMOJI_INTERACTION`, rejected by every other action.
+
+            interaction (``str``, *optional*):
+                JSON-serialized description of the taps, as `the animated emoji documentation
+                <https://core.telegram.org/api/animated-emojis>`_ specifies it: ``v`` is the object version,
+                currently ``1``, and ``a`` is an array of taps, each with ``i``, the 1-based index of the
+                animation played, and ``t``, the seconds since the previous tap.
+                Required by :obj:`~pyrogram.enums.ChatAction.EMOJI_INTERACTION`, rejected by every other action.
+
         Returns:
             ``bool``: On success, True is returned.
 
         Raises:
-            ValueError: In case the provided string is not a valid chat action.
+            ValueError: In case the action was given fields it does not take, or was not given
+                the fields it needs.
 
         Example:
             .. code-block:: python
@@ -95,11 +164,33 @@ class SendChatAction:
 
                 # Cancel any current chat action
                 await app.send_chat_action(chat_id, enums.ChatAction.CANCEL)
+
+                # Report two taps on an animated emoji sent in message 1234
+                await app.send_chat_action(
+                    chat_id,
+                    enums.ChatAction.EMOJI_INTERACTION,
+                    emoticon="👍",
+                    message_id=1234,
+                    interaction='{"v": 1, "a": [{"i": 1, "t": 0.0}, {"i": 3, "t": 0.4}]}',
+                )
+
+                # Acknowledge the animation the other party sent back
+                await app.send_chat_action(
+                    chat_id,
+                    enums.ChatAction.EMOJI_INTERACTION_SEEN,
+                    emoticon="👍",
+                )
         """
 
         return await self.invoke(
             raw.functions.messages.SetTyping(
-                peer=await self.resolve_peer(chat_id), action=_ACTIONS[action]()
+                peer=await self.resolve_peer(chat_id),
+                action=_build_action(
+                    action,
+                    emoticon=emoticon,
+                    message_id=message_id,
+                    interaction=interaction,
+                ),
             ),
             business_connection_id=business_connection_id,
         )
