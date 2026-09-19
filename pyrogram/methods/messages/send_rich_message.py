@@ -38,6 +38,7 @@ class SendRichMessage:
         effect_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
         protect_content: bool | None = None,
+        business_connection_id: str | None = None,
         allow_paid_broadcast: bool | None = None,
         suggested_post_parameters: types.SuggestedPostParameters | None = None,
         reply_markup: (
@@ -85,6 +86,9 @@ class SendRichMessage:
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be sent.
 
             allow_paid_broadcast (``bool``, *optional*):
                 If True, you will be allowed to send up to 1000 messages per second.
@@ -160,7 +164,7 @@ class SendRichMessage:
                 effect=effect_id,
             )
 
-        r = await self.invoke(rpc)
+        r = await self.invoke(rpc, business_connection_id=business_connection_id)
 
         if isinstance(r, raw.types.UpdateShortSentMessage):
             peer = await self.resolve_peer(chat_id)
