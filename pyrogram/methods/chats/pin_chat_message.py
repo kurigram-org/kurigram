@@ -73,8 +73,8 @@ class PinChatMessage:
             raw.functions.messages.UpdatePinnedMessage(
                 peer=await self.resolve_peer(chat_id),
                 id=message_id,
-                silent=disable_notification or None,
-                pm_oneside=not both_sides or None,
+                silent=disable_notification,
+                pm_oneside=not both_sides,
             ),
             business_connection_id=business_connection_id,
         )

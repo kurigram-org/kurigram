@@ -22,20 +22,16 @@ import pyrogram
 from pyrogram import raw
 
 
-class UnpinForumTopic:
-    async def unpin_forum_topic(
-        self: pyrogram.Client, chat_id: int | str, message_thread_id: int
-    ) -> bool:
-        """Unpin a forum topic.
+class HideGeneralForumTopic:
+    async def hide_general_forum_topic(self: pyrogram.Client, chat_id: int | str) -> bool:
+        """Use this method to hide the 'General' topic in a forum supergroup chat.
+        The bot must be an administrator in the chat for this to work and must have the `can_manage_topics` administrator rights.
 
-        .. include:: /_includes/usable-by/users.rst
+        .. include:: /_includes/usable-by/users-bots.rst
 
         Parameters:
             chat_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the target chat.
-
-            message_thread_id (``int``):
-                Unique identifier (int) of the target forum topic.
 
         Returns:
             ``bool``: On success, True is returned.
@@ -43,12 +39,12 @@ class UnpinForumTopic:
         Example:
             .. code-block:: python
 
-                await app.unpin_forum_topic(chat_id, topimessage_thread_idc_id)
+                await app.hide_general_forum_topic(chat_id)
         """
-        await self.invoke(
-            raw.functions.messages.UpdatePinnedForumTopic(
-                peer=await self.resolve_peer(chat_id), topic_id=message_thread_id, pinned=False
+        r = await self.invoke(
+            raw.functions.messages.EditForumTopic(
+                peer=await self.resolve_peer(chat_id), topic_id=1, hidden=True
             )
         )
 
-        return True
+        return bool(r)

@@ -19,7 +19,7 @@
 from .add_chat_members import AddChatMembers
 from .archive_chats import ArchiveChats
 from .ban_chat_member import BanChatMember
-from .close_forum_topic import CloseForumTopic
+from .close_forum_topic import CloseForumTopic, CloseGeneralForumTopic
 from .create_channel import CreateChannel
 from .create_folder import CreateFolder
 from .create_folder_invite_link import CreateFolderInviteLink
@@ -36,7 +36,7 @@ from .delete_message_reaction import DeleteMessageReaction
 from .delete_supergroup import DeleteSupergroup
 from .delete_user_history import DeleteUserHistory
 from .edit_folder import EditFolder
-from .edit_forum_topic import EditForumTopic
+from .edit_forum_topic import EditForumTopic, EditGeneralForumTopic
 from .get_chat import GetChat
 from .get_chat_event_log import GetChatEventLog
 from .get_chat_member import GetChatMember
@@ -90,7 +90,10 @@ from .set_slow_mode import SetSlowMode
 from .set_upgraded_gift_colors import SetUpgradedGiftColors
 from .toggle_folder_tags import ToggleFolderTags
 from .toggle_forum_topics import ToggleForumTopics
+from .reopen_forum_topic import ReopenForumTopic, ReopenGeneralForumTopic
 from .toggle_join_to_send import ToggleJoinToSend
+from .unhide_general_forum_topic import UnhideGeneralForumTopic
+from .hide_general_forum_topic import HideGeneralForumTopic
 from .transfer_chat_ownership import TransferChatOwnership
 from .unarchive_chats import UnarchiveChats
 from .unban_chat_member import UnbanChatMember
@@ -98,24 +101,36 @@ from .unpin_all_chat_messages import UnpinAllChatMessages
 from .unpin_chat_message import UnpinChatMessage
 from .unpin_forum_topic import UnpinForumTopic
 from .update_chat_notifications import UpdateChatNotifications
+from .unpin_all_forum_topic_messages import (
+    UnpinAllForumTopicMessages,
+    UnpinAllGeneralForumTopicMessages,
+)
 
 
 class Chats(
     GetChat,
     GetChatsForFolderInviteLink,
+    ReopenGeneralForumTopic,
+    UnhideGeneralForumTopic,
+    HideGeneralForumTopic,
+    CloseGeneralForumTopic,
+    UnpinAllGeneralForumTopicMessages,
     LeaveChat,
     LeaveFolder,
     JoinChat,
     JoinFolder,
     BanChatMember,
     UnbanChatMember,
+    EditGeneralForumTopic,
     RestrictChatMember,
     PromoteChatMember,
     GetChatMembers,
     GetChatMember,
     SetChatPhoto,
     DeleteChatPhoto,
+    UnpinAllForumTopicMessages,
     DeleteAllMessageReactions,
+    ReopenForumTopic,
     DeleteFolder,
     SetChatTitle,
     SetChatTTL,

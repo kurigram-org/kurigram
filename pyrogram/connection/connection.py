@@ -22,7 +22,6 @@ import asyncio
 import logging
 from typing import Final
 
-from pyrogram import utils
 from pyrogram.connection.proxy import Proxy, uses_random_padding
 from pyrogram.connection.transport import TCP, TCPAbridged, TCPIntermediatePadded
 
@@ -71,7 +70,6 @@ class Connection:
         media: bool = False,
         protocol_factory: type[TCP] = TCPAbridged,
         crypto_executor_workers: int = 1,
-        loop: asyncio.AbstractEventLoop | None = None,
     ) -> None:
         self.dc_id = dc_id
         self.server_address = server_address
@@ -95,18 +93,12 @@ class Connection:
         self.protocol: TCP | None = None
         self._protocol_dc_id = _protocol_dc_id(dc_id, test_mode=test_mode, media=media)
 
-        if isinstance(loop, asyncio.AbstractEventLoop):
-            self.loop = loop
-        else:
-            self.loop = utils.get_event_loop()
-
     async def connect(self) -> None:
         for _ in range(Connection.MAX_CONNECTION_ATTEMPTS):
             self.protocol = self.protocol_factory(
                 ipv6=self.ipv6,
                 proxy=self.proxy,
                 crypto_executor_workers=self.crypto_executor_workers,
-                loop=self.loop,
                 dc_id=self._protocol_dc_id,
             )
 

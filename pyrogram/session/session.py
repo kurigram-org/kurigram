@@ -76,11 +76,14 @@ class InvalidDC(TransportError):
 
 
 class Result:
-    __slots__ = ("value", "event")
+    __slots__ = ("value", "event", "exception")
 
     def __init__(self):
         self.value: Any = None
         self.event: asyncio.Event = asyncio.Event()
+
+        # Set instead of `value` when no answer can arrive; `send()` re-raises it.
+        self.exception: Exception | None = None
 
 
 class Session:
@@ -184,7 +187,7 @@ class Session:
         # The set is what `stop()` waits on, and it is also the strong reference the
         #  loop does not hold: an unreferenced task can be collected mid-execution.
         #  https://docs.python.org/3/library/asyncio-task.html#creating-tasks
-        task = self.client.loop.create_task(coroutine)
+        task = asyncio.create_task(coroutine)
 
         self.pending_tasks.add(task)
         task.add_done_callback(self.pending_tasks.discard)
@@ -224,13 +227,12 @@ class Session:
             media=self.is_media,
             protocol_factory=self.client.protocol_factory,
             crypto_executor_workers=self.CRYPTO_EXECUTOR_WORKERS,
-            loop=self.client.loop,
         )
 
         try:
             await self.connection.connect()
 
-            self.recv_task = self.client.loop.create_task(self.recv_worker())
+            self.recv_task = asyncio.create_task(self.recv_worker())
 
             await self.send(raw.functions.Ping(ping_id=0), timeout=self.START_TIMEOUT)
 
@@ -269,7 +271,7 @@ class Session:
                     timeout=self.START_TIMEOUT,
                 )
 
-            self.ping_task = self.client.loop.create_task(self.ping_worker())
+            self.ping_task = asyncio.create_task(self.ping_worker())
 
             log.info("Session initialized: Pyrogram v%s (Layer %s)", pyrogram.__version__, layer)
             log.info("Device: %s - %s", self.client.device_model, self.client.app_version)
@@ -279,7 +281,7 @@ class Session:
             raise e
         except (OSError, RPCError) as e:
             log.info("Restarting session due to - %s - %s", e.__class__.__name__, e)
-            self.client.loop.create_task(self.restart())
+            asyncio.create_task(self.restart())
             return
         except Exception as e:
             await self.stop()
@@ -316,6 +318,19 @@ class Session:
         self.is_started.clear()
 
         self.stored_msg_ids.clear()
+
+        # The unsent acks name msg ids of the connection this stop closes, which the
+        #  server cannot match after a reconnect.
+        self.pending_acks.clear()
+
+        # A pending waiter's msg id also dies with the connection and nothing re-sends
+        #  the request, so no answer can arrive: failing each waiter here turns a
+        #  silent `WAIT_TIMEOUT` into an immediate, accurate error.
+        for result in self.results.values():
+            result.exception = TimeoutError("Session stopped before an answer arrived")
+            result.event.set()
+
+        self.results.clear()
 
         self.ping_task_event.set()
 
@@ -362,7 +377,7 @@ class Session:
 
     async def handle_packet(self, packet):
         try:
-            data = await self.client.loop.run_in_executor(
+            data = await asyncio.get_running_loop().run_in_executor(
                 self.connection.protocol.crypto_executor,
                 mtproto.unpack,
                 BytesIO(packet),
@@ -373,7 +388,7 @@ class Session:
         except ValueError as e:
             log.debug(e)
             log.info("Restarting session due to - %s - %s", e.__class__.__name__, e)
-            self.client.loop.create_task(self.restart())
+            asyncio.create_task(self.restart())
             return
 
         messages = data.body.messages if isinstance(data.body, MsgContainer) else [data]
@@ -435,7 +450,7 @@ class Session:
 
                 if self.ignore_count >= self.MAX_CONSECUTIVE_IGNORED:
                     log.info("Restarting session due to - %s - %s", e.__class__.__name__, e)
-                    self.client.loop.create_task(self.restart())
+                    asyncio.create_task(self.restart())
 
                 return
             else:
@@ -538,7 +553,7 @@ class Session:
                 )
             except OSError as e:
                 log.info("Restarting session due to - %s - %s", e.__class__.__name__, e)
-                self.client.loop.create_task(self.restart())
+                asyncio.create_task(self.restart())
                 break
             except RPCError:
                 pass
@@ -588,7 +603,7 @@ class Session:
                         error = "Server sent a null packet."
 
                     log.info("Restarting session due to - %s", error)
-                    self.client.loop.create_task(self.restart())
+                    asyncio.create_task(self.restart())
 
                 break
 
@@ -600,12 +615,17 @@ class Session:
         message = await self.msg_factory.create(data)
         msg_id = message.msg_id
 
+        # Held locally as well: `_stop()` empties `self.results` when it fails the
+        #  pending waiters, so the dict entry may be gone by the time the wait ends.
+        pending_result: Result | None = None
+
         if wait_response:
-            self.results[msg_id] = Result()
+            pending_result = Result()
+            self.results[msg_id] = pending_result
 
         log.debug("Sent: %s", message)
 
-        payload = await self.client.loop.run_in_executor(
+        payload = await asyncio.get_running_loop().run_in_executor(
             self.connection.protocol.crypto_executor,
             mtproto.pack,
             message,
@@ -621,13 +641,18 @@ class Session:
             self.results.pop(msg_id, None)
             raise e
 
-        if wait_response:
+        if pending_result is not None:
             try:
-                await asyncio.wait_for(self.results[msg_id].event.wait(), timeout)
+                await asyncio.wait_for(pending_result.event.wait(), timeout)
             except asyncio.TimeoutError:
                 pass
 
-            result = self.results.pop(msg_id).value
+            self.results.pop(msg_id, None)
+
+            if pending_result.exception is not None:
+                raise pending_result.exception
+
+            result = pending_result.value
 
             if result is None:
                 raise TimeoutError("Request timed out")

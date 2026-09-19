@@ -77,13 +77,20 @@ async def idle():
         log.info(f"Stop signal received ({signals[signum]}). Exiting...")
         loop.call_soon_threadsafe(task.cancel)
 
-    for s in (SIGINT, SIGTERM, SIGABRT):
-        signal_fn(s, signal_handler)
+    # Handed back in the `finally` below: the handler closes over this loop, and the caller
+    #  closes it. A signal arriving after `run()` returned died with `RuntimeError: Event
+    #  loop is closed`, raised out of the handler itself.
+    replaced = {number: signal_fn(number, signal_handler) for number in (SIGINT, SIGTERM, SIGABRT)}
 
-    while True:
-        task = asyncio.create_task(asyncio.sleep(600))
+    try:
+        while True:
+            task = asyncio.create_task(asyncio.sleep(600))
 
-        try:
-            await task
-        except asyncio.CancelledError:
-            break
+            try:
+                await task
+            except asyncio.CancelledError:
+                break
+
+    finally:
+        for number, handler in replaced.items():
+            signal_fn(number, handler)

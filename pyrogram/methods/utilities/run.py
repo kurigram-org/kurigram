@@ -18,7 +18,7 @@
 
 from __future__ import annotations as _annotations
 
-import inspect
+import asyncio
 
 import pyrogram
 from pyrogram.methods.utilities.idle import idle
@@ -30,7 +30,7 @@ class Run:
         *,
         use_qr: bool = False,
         except_ids: list[int] | None = None,
-    ):
+    ) -> None:
         """Start the client, idle the main script and finally stop the client.
 
         When calling this method without any argument it acts as a convenience method that calls
@@ -61,17 +61,13 @@ class Run:
                 ...  # Set handlers up
                 app.run()
         """
-        run = self.loop.run_until_complete
 
-        if inspect.iscoroutinefunction(self.start):
-            run(self.start(use_qr=use_qr, except_ids=except_ids))
-            run(idle())
-            run(self.stop())
-        else:
-            # `self.start`/`self.stop` are declared `async def`, so `ty` sees a plain
-            #  coroutine function here: it can't know `pyrogram.sync` (pyrogram/sync.py)
-            #  may have patched them into blocking sync wrappers, which is exactly what
-            #  the `iscoroutinefunction` check above is testing for.
-            self.start(use_qr=use_qr, except_ids=except_ids)  # ty: ignore[unused-awaitable]
-            run(idle())
-            self.stop()  # ty: ignore[unused-awaitable]
+        async def start_idle_and_stop() -> None:
+            await self.start(
+                use_qr=use_qr,
+                except_ids=except_ids,
+            )
+            await idle()
+            await self.stop()
+
+        asyncio.run(start_idle_and_stop())

@@ -128,7 +128,7 @@ class EditInlineMedia:
                     spoiler=media.has_spoiler,
                     attributes=[
                         raw.types.DocumentAttributeVideo(
-                            supports_streaming=media.supports_streaming or None,
+                            supports_streaming=media.supports_streaming,
                             duration=media.duration,
                             w=media.width,
                             h=media.height,

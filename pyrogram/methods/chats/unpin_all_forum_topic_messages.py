@@ -22,12 +22,12 @@ import pyrogram
 from pyrogram import raw
 
 
-class CloseForumTopic:
-    async def close_forum_topic(
+class UnpinAllForumTopicMessages:
+    async def unpin_all_forum_topic_messages(
         self: pyrogram.Client, chat_id: int | str, message_thread_id: int
     ) -> bool:
-        """Use this method to close an open topic in a forum supergroup chat.
-        The bot must be an administrator in the chat for this to work and must have the `can_manage_topics` administrator rights, unless it is the creator of the topic.
+        """Use this method to clear the list of pinned messages in a forum topic in a forum supergroup chat or a private chat with a user.
+        In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the `can_pin_messages` administrator right in the supergroup.
 
         .. include:: /_includes/usable-by/users-bots.rst
 
@@ -39,26 +39,30 @@ class CloseForumTopic:
                 Unique identifier for the target message thread of the forum topic.
 
         Returns:
-            ``bool``: On success, True is returned.
+            ``bool``: True on success.
 
         Example:
             .. code-block:: python
 
-                await app.close_forum_topic(chat_id, message_thread_id)
+                # Unpin all forum topic messages
+                await app.unpin_all_forum_topic_messages(chat_id, message_thread_id)
         """
         r = await self.invoke(
-            raw.functions.messages.EditForumTopic(
-                peer=await self.resolve_peer(chat_id), topic_id=message_thread_id, closed=True
+            raw.functions.messages.UnpinAllMessages(
+                peer=await self.resolve_peer(chat_id), top_msg_id=message_thread_id
             )
         )
 
         return bool(r)
 
 
-class CloseGeneralForumTopic:
-    async def close_general_forum_topic(self: pyrogram.Client, chat_id: int | str) -> bool:
-        """Use this method to close an open 'General' topic in a forum supergroup chat.
-        The bot must be an administrator in the chat for this to work and must have the `can_manage_topics` administrator rights.
+class UnpinAllGeneralForumTopicMessages:
+    async def unpin_all_general_forum_topic_messages(
+        self: pyrogram.Client,
+        chat_id: int | str,
+    ) -> bool:
+        """Use this method to clear the list of pinned messages in a General forum topic.
+        In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the `can_pin_messages` administrator right in the supergroup.
 
         .. include:: /_includes/usable-by/users-bots.rst
 
@@ -67,11 +71,12 @@ class CloseGeneralForumTopic:
                 Unique identifier (int) or username (str) of the target chat.
 
         Returns:
-            ``bool``: On success, True is returned.
+            ``bool``: True on success.
 
         Example:
             .. code-block:: python
 
-                await app.close_general_forum_topic(chat_id)
+                # Unpin all forum topic messages
+                await app.unpin_all_general_forum_topic_messages(chat_id)
         """
-        return bool(await self.close_forum_topic(chat_id, message_thread_id=1))
+        return bool(await self.unpin_all_forum_topic_messages(chat_id, message_thread_id=1))

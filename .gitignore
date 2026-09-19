@@ -1,5 +1,8 @@
 # Development
-docs
+
+# Anchored: a bare `docs` matches at any depth and hid the tracked `compiler/docs/`
+#  from `ruff`, which respects `.gitignore` during file discovery.
+/docs/
 *.session
 config.ini
 main.py

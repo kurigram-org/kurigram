@@ -22,12 +22,12 @@ import pyrogram
 from pyrogram import raw
 
 
-class DeleteForumTopic:
-    async def delete_forum_topic(
-        self: pyrogram.Client, chat_id: int | str, message_thread_id: int
+class ReopenForumTopic:
+    async def reopen_forum_topic(
+        self: pyrogram.Client, chat_id: int | str, message_thread_id: str
     ) -> bool:
-        """Use this method to delete a forum topic along with all its messages in a forum supergroup chat or a private chat with a user.
-        In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the `can_delete_messages` administrator rights.
+        """Use this method to reopen a closed topic in a forum supergroup chat.
+        The bot must be an administrator in the chat for this to work and must have the `can_manage_topics` administrator rights, unless it is the creator of the topic.
 
         .. include:: /_includes/usable-by/users-bots.rst
 
@@ -44,12 +44,34 @@ class DeleteForumTopic:
         Example:
             .. code-block:: python
 
-                await app.delete_forum_topic(chat_id, message_thread_id)
+                await app.reopen_forum_topic(chat_id, message_thread_id)
         """
         r = await self.invoke(
-            raw.functions.messages.DeleteTopicHistory(
-                peer=await self.resolve_peer(chat_id), top_msg_id=message_thread_id
+            raw.functions.messages.EditForumTopic(
+                peer=await self.resolve_peer(chat_id), topic_id=message_thread_id, closed=False
             )
         )
 
         return bool(r)
+
+
+class ReopenGeneralForumTopic:
+    async def reopen_general_forum_topic(self: pyrogram.Client, chat_id: int | str) -> bool:
+        """UUse this method to reopen a closed 'General' topic in a forum supergroup chat.
+        The bot must be an administrator in the chat for this to work and must have the `can_manage_topics` administrator rights, unless it is the creator of the topic.
+
+        .. include:: /_includes/usable-by/users-bots.rst
+
+        Parameters:
+            chat_id (``int`` | ``str``):
+                Unique identifier (int) or username (str) of the target chat.
+
+        Returns:
+            ``bool``: On success, True is returned.
+
+        Example:
+            .. code-block:: python
+
+                await app.reopen_general_forum_topic(chat_id)
+        """
+        return bool(await self.reopen_forum_topic(chat_id, message_thread_id=1))

@@ -36,7 +36,6 @@ from .file_ids import (
 from .gifts import get_input_stargift
 from .inline import pack_inline_message_id, unpack_inline_message_id
 from .json_values import jsonvalue_to_obj, obj_to_jsonvalue
-from .loop import get_event_loop, get_running_loop
 from .messages import get_reply_to, parse_deleted_messages, parse_messages
 from .peers import (
     MAX_CHANNEL_ID,
@@ -70,7 +69,6 @@ __all__ = [
     "from_inline_bytes",
     "from_nano",
     "get_channel_id",
-    "get_event_loop",
     "get_file_name",
     "get_first_url",
     "get_input_media_from_file_id",
@@ -81,7 +79,6 @@ __all__ = [
     "get_premium_duration_month_count",
     "get_raw_peer_id",
     "get_reply_to",
-    "get_running_loop",
     "itob",
     "jsonvalue_to_obj",
     "max_datetime",

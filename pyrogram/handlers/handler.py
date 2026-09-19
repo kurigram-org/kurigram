@@ -18,6 +18,7 @@
 
 from __future__ import annotations as _annotations
 
+import asyncio
 import inspect
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
@@ -51,7 +52,7 @@ class Handler(Generic[CallbackType]):
             if inspect.iscoroutinefunction(self.filters.__call__):
                 return await self.filters(client, update)
             else:
-                return await client.loop.run_in_executor(
+                return await asyncio.get_running_loop().run_in_executor(
                     client.executor, self.filters, client, update
                 )
 

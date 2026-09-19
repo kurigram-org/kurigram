@@ -237,7 +237,7 @@ class SendLocation:
                 peer=await self.resolve_peer(chat_id),
                 media=media,
                 message="",
-                silent=disable_notification or None,
+                silent=disable_notification,
                 reply_to=await utils.get_reply_to(
                     self, reply_parameters, message_thread_id, direct_messages_topic_id
                 ),

@@ -30,7 +30,6 @@ import asyncio
 from python_socks import ProxyType
 from python_socks.async_.asyncio import Proxy as SocksProxy
 
-from pyrogram import utils
 from pyrogram.connection.proxy import (
     MARKED_SECRET_SIZE,
     OBFUSCATED2_SECRET_SIZE,
@@ -168,7 +167,6 @@ class TCP:
         ipv6: bool = False,
         proxy: Proxy | None = None,
         crypto_executor_workers: int = 1,
-        loop: asyncio.AbstractEventLoop | None = None,
         dc_id: int | None = None,
     ) -> None:
         self.ipv6 = ipv6
@@ -189,11 +187,6 @@ class TCP:
 
         self.marker_event = asyncio.Event()
         self.lock = asyncio.Lock()
-
-        if isinstance(loop, asyncio.AbstractEventLoop):
-            self.loop = loop
-        else:
-            self.loop = utils.get_event_loop()
 
         self._web_carrier: WebProxyCarrier | None = None
         self._records: FakeTlsRecords | None = None
@@ -254,7 +247,6 @@ class TCP:
         carrier = WebProxyCarrier(
             web_proxy.hostname,
             secret=web_proxy.secret,
-            loop=self.loop,
         )
         self._web_carrier = carrier
         try:
@@ -514,7 +506,7 @@ class TCP:
                 log.debug("Marker event received, proceeding with send")
 
             if self._encrypt is not None:
-                data = await self.loop.run_in_executor(
+                data = await asyncio.get_running_loop().run_in_executor(
                     self.crypto_executor, aes.ctr256_encrypt, data, *self._encrypt
                 )
 
@@ -542,7 +534,7 @@ class TCP:
             data = await self._recv_from_socket(length)
 
         if data is not None and self._decrypt is not None:
-            data = await self.loop.run_in_executor(
+            data = await asyncio.get_running_loop().run_in_executor(
                 self.crypto_executor, aes.ctr256_decrypt, data, *self._decrypt
             )
 

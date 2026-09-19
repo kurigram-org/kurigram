@@ -277,7 +277,7 @@ async def test_stop_waits_for_the_packet_it_is_still_handling() -> None:
         handled = True
 
     session.handle_packet = handle_packet
-    session.recv_task = session.client.loop.create_task(session.recv_worker())
+    session.recv_task = asyncio.create_task(session.recv_worker())
 
     await asyncio.sleep(0)
 
@@ -306,7 +306,7 @@ async def test_stop_cancels_a_packet_that_will_not_finish(
         await asyncio.Event().wait()
 
     session.handle_packet = handle_packet
-    session.recv_task = session.client.loop.create_task(session.recv_worker())
+    session.recv_task = asyncio.create_task(session.recv_worker())
 
     await asyncio.sleep(0)
 
@@ -345,7 +345,7 @@ async def test_a_restart_queued_before_stop_does_not_reconnect() -> None:
 
     # The task is only scheduled here: it runs once the loop is yielded to, which is
     #  after the stop below, and that is the order the client shuts down in.
-    restarting = session.client.loop.create_task(session.restart())
+    restarting = asyncio.create_task(session.restart())
 
     await session.stop()
     await restarting
@@ -368,7 +368,7 @@ async def test_a_restart_already_starting_is_stopped_again() -> None:
         session.is_started.set()
 
     session.start = start
-    restarting = session.client.loop.create_task(session.restart())
+    restarting = asyncio.create_task(session.restart())
 
     await starting.wait()
     await session.stop()
@@ -378,6 +378,33 @@ async def test_a_restart_already_starting_is_stopped_again() -> None:
 
     assert session.state is SessionState.STOPPED
     assert not session.is_started.is_set()
+
+
+async def test_stop_fails_the_request_still_waiting_for_its_answer() -> None:
+    session = _started_session()
+
+    sending = asyncio.ensure_future(session.send(raw.functions.Ping(ping_id=0)))
+
+    while not session.results:
+        await asyncio.sleep(0)
+
+    await session.stop()
+
+    with pytest.raises(TimeoutError, match="stopped"):
+        await asyncio.wait_for(sending, _NOT_DONE_TIMEOUT)
+
+    assert session.results == {}
+
+
+async def test_stop_drops_the_acks_owed_to_the_closed_connection() -> None:
+    session = _started_session()
+
+    # A server message identity is odd, and its ack was never flushed.
+    session.pending_acks.add(await session.msg_factory.allocate_message_identity() + 1)
+
+    await session.stop()
+
+    assert session.pending_acks == set()
 
 
 async def test_a_bad_server_salt_nobody_awaits_still_updates_the_salt() -> None:

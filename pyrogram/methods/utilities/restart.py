@@ -18,6 +18,8 @@
 
 from __future__ import annotations as _annotations
 
+import asyncio
+
 import pyrogram
 
 
@@ -73,6 +75,6 @@ class Restart:
         if block:
             await do_it()
         else:
-            self.loop.create_task(do_it())
+            asyncio.create_task(do_it())
 
         return self

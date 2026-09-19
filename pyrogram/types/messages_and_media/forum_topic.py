@@ -38,11 +38,11 @@ class ForumTopic(Object):
         date (:py:obj:`~datetime.datetime`, *optional*):
             Date when the topic was created.
 
-        icon_color (``str``, *optional*):
-            Color of the topic icon in HEX format
+        icon_color (``int``, *optional*):
+            Color of the topic icon in RGB format.
 
         icon_emoji_id (``int``, *optional*):
-            Unique identifier of the custom emoji shown as the topic icon
+            Unique identifier of the custom emoji shown as the topic icon.
 
         creator (:obj:`~pyrogram.types.Chat`, *optional*):
             Topic creator.
@@ -87,7 +87,7 @@ class ForumTopic(Object):
         id: int,
         title: str | None = None,
         date: datetime | None = None,
-        icon_color: str | None = None,
+        icon_color: int | None = None,
         icon_emoji_id: int | None = None,
         creator: types.Chat | None = None,
         top_message: types.Message | None = None,
@@ -156,9 +156,7 @@ class ForumTopic(Object):
             id=forum_topic.id,
             title=forum_topic.title,
             date=utils.timestamp_to_datetime(forum_topic.date),
-            icon_color=format(forum_topic.icon_color, "x")
-            if getattr(forum_topic, "icon_color", None)
-            else None,
+            icon_color=forum_topic.icon_color,
             icon_emoji_id=getattr(forum_topic, "icon_emoji_id", None),
             creator=creator,
             top_message=messages.get(getattr(forum_topic, "top_message", None)),
@@ -172,3 +170,39 @@ class ForumTopic(Object):
             is_short=getattr(forum_topic, "short", None),
             is_hidden=getattr(forum_topic, "hidden", None),
         )
+
+    @staticmethod
+    async def _parse_message(
+        client: pyrogram.Client,
+        message: raw.base.Message,
+        users: dict[int, raw.base.User] | None = None,
+        chats: dict[int, raw.base.Chat] | None = None,
+    ) -> ForumTopic:
+        if chats is None:
+            chats = {}
+        if users is None:
+            users = {}
+
+        if isinstance(message, raw.types.MessageService) and isinstance(
+            message.action, raw.types.MessageActionTopicCreate
+        ):
+            topic_id = message.id
+
+            if message.reply_to:
+                topic_id = message.reply_to.reply_to_top_id
+
+            peer_id = utils.get_raw_peer_id(message.from_id)
+
+            if isinstance(message.from_id, raw.types.PeerUser):
+                creator = await types.Chat._parse_user_chat(client, users.get(peer_id))
+            else:
+                creator = await types.Chat._parse_channel_chat(client, chats.get(peer_id))
+
+            return ForumTopic(
+                id=topic_id,
+                title=message.action.title,
+                date=utils.timestamp_to_datetime(message.date),
+                icon_color=message.action.icon_color,
+                icon_emoji_id=message.action.icon_emoji_id,
+                creator=creator,
+            )

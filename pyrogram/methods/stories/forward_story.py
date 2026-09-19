@@ -114,7 +114,7 @@ class ForwardStory:
                 media=raw.types.InputMediaStory(
                     peer=await self.resolve_peer(from_chat_id), id=story_id
                 ),
-                silent=disable_notification or None,
+                silent=disable_notification,
                 random_id=self.rnd_id(),
                 schedule_date=utils.datetime_to_timestamp(schedule_date),
                 schedule_repeat_period=repeat_period,

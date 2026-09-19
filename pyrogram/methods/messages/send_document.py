@@ -273,7 +273,7 @@ class SendDocument:
                     media = raw.types.InputMediaUploadedDocument(
                         mime_type=self.guess_mime_type(document) or "application/zip",
                         file=file,
-                        force_file=force_document or None,
+                        force_file=force_document,
                         thumb=thumb,
                         attributes=[
                             raw.types.DocumentAttributeFilename(
@@ -295,7 +295,7 @@ class SendDocument:
                 media = raw.types.InputMediaUploadedDocument(
                     mime_type=self.guess_mime_type(file_name or document.name) or "application/zip",
                     file=file,
-                    force_file=force_document or None,
+                    force_file=force_document,
                     thumb=thumb,
                     attributes=[
                         raw.types.DocumentAttributeFilename(file_name=file_name or document.name)
@@ -330,7 +330,7 @@ class SendDocument:
                         rpc = raw.functions.messages.SendMedia(
                             peer=peer,
                             media=media,
-                            silent=disable_notification or None,
+                            silent=disable_notification,
                             reply_to=await utils.get_reply_to(
                                 self, reply_parameters, message_thread_id, direct_messages_topic_id
                             ),

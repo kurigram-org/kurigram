@@ -23,7 +23,9 @@ from pyrogram import raw
 
 
 class PinForumTopic:
-    async def pin_forum_topic(self: pyrogram.Client, chat_id: int | str, topic_id: int) -> bool:
+    async def pin_forum_topic(
+        self: pyrogram.Client, chat_id: int | str, message_thread_id: int
+    ) -> bool:
         """Pin a forum topic.
 
         .. include:: /_includes/usable-by/users.rst
@@ -32,7 +34,7 @@ class PinForumTopic:
             chat_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the target chat.
 
-            topic_id (``int``):
+            message_thread_id (``int``):
                 Unique identifier (int) of the target forum topic.
 
         Returns:
@@ -41,11 +43,11 @@ class PinForumTopic:
         Example:
             .. code-block:: python
 
-                await app.pin_forum_topic(chat_id, topic_id)
+                await app.pin_forum_topic(chat_id, message_thread_id)
         """
         await self.invoke(
             raw.functions.channels.UpdatePinnedForumTopic(
-                channel=await self.resolve_peer(chat_id), topic_id=topic_id, pinned=True
+                channel=await self.resolve_peer(chat_id), topic_id=message_thread_id, pinned=True
             )
         )
 

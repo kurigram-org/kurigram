@@ -177,7 +177,7 @@ class SendStory:
                             thumb=thumb,
                             attributes=[
                                 raw.types.DocumentAttributeVideo(
-                                    supports_streaming=supports_streaming or None,
+                                    supports_streaming=supports_streaming,
                                     duration=duration,
                                     w=width,
                                     h=height,
@@ -206,7 +206,7 @@ class SendStory:
                         thumb=thumb,
                         attributes=[
                             raw.types.DocumentAttributeVideo(
-                                supports_streaming=supports_streaming or None,
+                                supports_streaming=supports_streaming,
                                 duration=duration,
                                 w=width,
                                 h=height,

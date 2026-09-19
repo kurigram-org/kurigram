@@ -266,9 +266,6 @@ class Client(Methods):
             Pass True to automatically fetch names of sticker sets.
             Defaults to True.
 
-        loop (:py:class:`asyncio.AbstractEventLoop`, *optional*):
-            Event loop.
-
         init_connection_params (``dict`` | :obj:`~pyrogram.raw.base.JSONValue`, *optional*):
             Additional initConnection parameters.
             For now, only the tz_offset field is supported, for specifying timezone offset in seconds.
@@ -354,7 +351,6 @@ class Client(Methods):
         init_connection_params: dict | raw.base.JSONValue | None = None,
         connection_factory: type[Connection] = Connection,
         protocol_factory: type[TCP] = TCPAbridged,
-        loop: asyncio.AbstractEventLoop | None = None,
     ):
         super().__init__()
 
@@ -455,22 +451,12 @@ class Client(Methods):
         self.updates_watchdog_event = asyncio.Event()
         self.last_update_time = datetime.now()
 
-        if isinstance(loop, asyncio.AbstractEventLoop):
-            self.loop = loop
-        else:
-            self.loop = None
+        # `start()` records the loop it is running on, and `pyrogram/sync.py` is the one
+        #  reader: a call arriving from a thread with no loop of its own reaches this one
+        #  through `run_coroutine_threadsafe`, which takes the loop as an argument.
+        self._loop: asyncio.AbstractEventLoop | None = None
 
         self.__config: raw.types.Config = None
-
-    @property
-    def loop(self) -> asyncio.AbstractEventLoop:
-        if not self._loop:
-            self._loop = utils.get_event_loop()
-        return self._loop
-
-    @loop.setter
-    def loop(self, value: asyncio.AbstractEventLoop):
-        self._loop = value
 
     def __enter__(self):
         return self.start()
@@ -492,6 +478,22 @@ class Client(Methods):
             await self.stop()
         except ConnectionError:
             pass
+
+    # An `asyncio` primitive binds to the first loop that awaits it and refuses every other
+    #  one, and each of these is built in `__init__`, where there is no loop yet. A second
+    #  `run()` on one client died with `<asyncio.locks.Event object at 0x...> is bound to a
+    #  different event loop`.
+    #  https://github.com/python/cpython/blob/323c59a5e348347be2ce2b7ea55fcb30bf68b2d3/Lib/asyncio/mixins.py#L19
+    def _rebuild_loop_bound_state(self) -> None:
+        self.sessions_lock = asyncio.Lock()
+
+        self.save_file_semaphore = asyncio.Semaphore(self.max_concurrent_transmissions)
+        self.get_file_semaphore = asyncio.Semaphore(self.max_concurrent_transmissions)
+
+        self.updates_watchdog_event = asyncio.Event()
+
+        self.message_cache.reset_lock()
+        self.topic_cache.reset_lock()
 
     async def updates_watchdog(self):
         while True:
@@ -526,12 +528,12 @@ class Client(Methods):
             try:
                 if not self.phone_number:
                     while True:
-                        value = await ainput("Enter phone number or bot token: ", loop=self.loop)
+                        value = await ainput("Enter phone number or bot token: ")
 
                         if not value:
                             continue
 
-                        confirm = await ainput(f'Is "{value}" correct? (y/N): ', loop=self.loop)
+                        confirm = await ainput(f'Is "{value}" correct? (y/N): ')
 
                         if confirm.lower() == "y":
                             break
@@ -556,12 +558,12 @@ class Client(Methods):
             while True:
                 try:
                     while True:
-                        email = await ainput("Enter email: ", loop=self.loop)
+                        email = await ainput("Enter email: ")
 
                         if not email:
                             continue
 
-                        confirm = await ainput(f'Is "{email}" correct? (y/N): ', loop=self.loop)
+                        confirm = await ainput(f'Is "{email}" correct? (y/N): ')
 
                         if confirm.lower() == "y":
                             break
@@ -576,7 +578,7 @@ class Client(Methods):
                         )
                     )
 
-                    email_code = await ainput("Enter confirmation code: ", loop=self.loop)
+                    email_code = await ainput("Enter confirmation code: ")
 
                     email_sent_code = await self.invoke(
                         raw.functions.account.VerifyEmail(
@@ -617,7 +619,7 @@ class Client(Methods):
 
         while True:
             if not self.phone_code:
-                self.phone_code = await ainput("Enter confirmation code: ", loop=self.loop)
+                self.phone_code = await ainput("Enter confirmation code: ")
 
             try:
                 signed_in = await self.sign_in(
@@ -636,23 +638,18 @@ class Client(Methods):
                         self.password = await ainput(
                             "Enter 2FA password (empty to recover): ",
                             hide=self.hide_password,
-                            loop=self.loop,
                         )
 
                     try:
                         if not self.password:
-                            confirm = await ainput(
-                                "Confirm password recovery (y/N): ", loop=self.loop
-                            )
+                            confirm = await ainput("Confirm password recovery (y/N): ")
 
                             if confirm.lower() == "y":
                                 email_pattern = await self.send_recovery_code()
                                 print(f"The recovery code has been sent to {email_pattern}")
 
                                 while True:
-                                    recovery_code = await ainput(
-                                        "Enter recovery code: ", loop=self.loop
-                                    )
+                                    recovery_code = await ainput("Enter recovery code: ")
 
                                     try:
                                         return await self.recover_password(recovery_code)
@@ -675,8 +672,8 @@ class Client(Methods):
             return signed_in
 
         while True:
-            first_name = await ainput("Enter first name: ", loop=self.loop)
-            last_name = await ainput("Enter last name (empty to skip): ", loop=self.loop)
+            first_name = await ainput("Enter first name: ")
+            last_name = await ainput("Enter last name (empty to skip): ")
 
             try:
                 signed_up = await self.sign_up(
@@ -746,23 +743,18 @@ class Client(Methods):
                         self.password = await ainput(
                             "Enter 2FA password (empty to recover): ",
                             hide=self.hide_password,
-                            loop=self.loop,
                         )
 
                     try:
                         if not self.password:
-                            confirm = await ainput(
-                                "Confirm password recovery (y/N): ", loop=self.loop
-                            )
+                            confirm = await ainput("Confirm password recovery (y/N): ")
 
                             if confirm.lower() == "y":
                                 email_pattern = await self.send_recovery_code()
                                 print(f"The recovery code has been sent to {email_pattern}")
 
                                 while True:
-                                    recovery_code = await ainput(
-                                        "Enter recovery code: ", loop=self.loop
-                                    )
+                                    recovery_code = await ainput("Enter recovery code: ")
 
                                     try:
                                         return await self.recover_password(recovery_code)
@@ -1050,17 +1042,13 @@ class Client(Methods):
                 else:
                     while True:
                         try:
-                            value = int(
-                                await ainput(
-                                    "Enter the api_id part of the API key: ", loop=self.loop
-                                )
-                            )
+                            value = int(await ainput("Enter the api_id part of the API key: "))
 
                             if value <= 0:
                                 print("Invalid value")
                                 continue
 
-                            confirm = await ainput(f'Is "{value}" correct? (y/N): ', loop=self.loop)
+                            confirm = await ainput(f'Is "{value}" correct? (y/N): ')
 
                             if confirm.lower() == "y":
                                 await self.storage.api_id(value)
@@ -1379,7 +1367,8 @@ class Client(Methods):
                             if inspect.iscoroutinefunction(progress):
                                 await func()
                             else:
-                                await self.loop.run_in_executor(self.executor, func)
+                                loop = asyncio.get_running_loop()
+                                await loop.run_in_executor(self.executor, func)
 
                         if len(chunk) < chunk_size or current >= total:
                             break
@@ -1417,7 +1406,7 @@ class Client(Methods):
                             chunk = r2.bytes
 
                             # https://core.telegram.org/cdn#decrypting-files
-                            decrypted_chunk = await self.loop.run_in_executor(
+                            decrypted_chunk = await asyncio.get_running_loop().run_in_executor(
                                 self.executor,
                                 aes.ctr256_decrypt,
                                 chunk,
@@ -1445,7 +1434,7 @@ class Client(Methods):
                                         "h.hash == sha256(cdn_chunk).digest()",
                                     )
 
-                            await self.loop.run_in_executor(
+                            await asyncio.get_running_loop().run_in_executor(
                                 self.executor,
                                 _check_all_hashes,
                                 hashes,
@@ -1470,7 +1459,8 @@ class Client(Methods):
                                 if inspect.iscoroutinefunction(progress):
                                     await func()
                                 else:
-                                    await self.loop.run_in_executor(self.executor, func)
+                                    loop = asyncio.get_running_loop()
+                                    await loop.run_in_executor(self.executor, func)
 
                             if len(chunk) < chunk_size or current >= total:
                                 break
@@ -1722,6 +1712,11 @@ class Cache:
 
         self.capacity = capacity
         self._cache: OrderedDict[Any, Any] = OrderedDict()
+        self._lock = asyncio.Lock()
+
+    # Rebuilds the lock and keeps what is cached. Why it has to be rebuilt at all is on
+    #  `Client._rebuild_loop_bound_state`.
+    def reset_lock(self) -> None:
         self._lock = asyncio.Lock()
 
     def __len__(self) -> int:

@@ -103,10 +103,10 @@ class ReplyKeyboardMarkup(Object):
                 )
                 for i in self.keyboard
             ],
-            resize=self.resize_keyboard or None,
-            single_use=self.one_time_keyboard or None,
-            selective=self.selective or None,
-            persistent=self.is_persistent or None,
+            resize=self.resize_keyboard,
+            single_use=self.one_time_keyboard,
+            selective=self.selective,
+            persistent=self.is_persistent,
             placeholder=self.placeholder or None,
             force_reply=self.force_reply,
         )

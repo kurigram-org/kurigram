@@ -488,11 +488,9 @@ class WebProxyCarrier:
         *,
         secret: bytes,
         port: int = HTTPS_PORT,
-        loop: asyncio.AbstractEventLoop | None = None,
     ) -> None:
         self._hostname = hostname
         self._secret = secret
-        self._loop = loop or asyncio.get_event_loop()
 
         # `http/1.1` only: the framing this client speaks is HTTP/1.1, and an
         #  ALPN-negotiated h2 would make every response unparseable.
@@ -556,7 +554,7 @@ class WebProxyCarrier:
 
         # The poll has to be running before HELLO goes out: WELCOME comes back
         #  down the downlink, and nothing would be reading it otherwise.
-        self._poll_task = self._loop.create_task(self._poll_loop())
+        self._poll_task = asyncio.create_task(self._poll_loop())
 
         await self._send_frames(
             [
@@ -650,7 +648,7 @@ class WebProxyCarrier:
             return
 
         if self._grant_flush_task is None:
-            task = self._loop.create_task(self._delayed_grant_flush())
+            task = asyncio.create_task(self._delayed_grant_flush())
             self._grant_flush_task = task
             self._track(task)
 
@@ -708,7 +706,7 @@ class WebProxyCarrier:
         log.debug("WEB proxy: background task failed: %s", exception)
 
     def _track_task(self, coroutine: Coroutine[None, None, None]) -> None:
-        self._track(self._loop.create_task(coroutine))
+        self._track(asyncio.create_task(coroutine))
 
     async def _cancel_tracked(self, task: asyncio.Task) -> None:
         task.cancel()

@@ -21,6 +21,7 @@ from __future__ import annotations as _annotations
 import asyncio
 import inspect
 import logging
+import threading
 from collections import OrderedDict
 from typing import Any
 
@@ -142,13 +143,20 @@ class Dispatcher:
     def __init__(self, client: pyrogram.Client):
         self.client = client
 
-        self.handler_worker_tasks = []
-        self.locks_list = []
+        self.handler_worker_tasks: list[asyncio.Task[None]] = []
 
         self.updates_queue: asyncio.Queue[
             tuple[raw.base.Update, dict[int, raw.base.User], dict[int, raw.base.Chat]] | None
         ] = asyncio.Queue()
         self.groups: OrderedDict[int, list[Handler[Any]]] = OrderedDict()
+
+        # `add_handler` is called from whatever thread the caller happens to be on, and every
+        #  writer below reads `groups`, copies it and rebinds the attribute. Without this two
+        #  threads read the same mapping and the second rebind drops the first one's handler:
+        #  two threads registering 500 each ended with 551 of 1000. A `threading.Lock` rather
+        #  than an `asyncio` one because none of these methods is a coroutine and a loop need
+        #  not exist yet.
+        self._groups_lock = threading.Lock()
 
         async def message_parser(update, users, chats):
             return (
@@ -355,7 +363,14 @@ class Dispatcher:
             key: value for key_tuple, value in self.update_parsers.items() for key in key_tuple
         }
 
+    # Rebuilds the queue for the loop about to run it. Why, on
+    #  `Client._rebuild_loop_bound_state`.
+    def _rebuild_loop_bound_state(self) -> None:
+        self.updates_queue = asyncio.Queue()
+
     async def start(self):
+        self._rebuild_loop_bound_state()
+
         if callable(self.client.start_handler):
             try:
                 await self.client.start_handler(self.client)
@@ -364,11 +379,7 @@ class Dispatcher:
 
         if not self.client.no_updates:
             for _ in range(self.client.workers):
-                self.locks_list.append(asyncio.Lock())
-
-                self.handler_worker_tasks.append(
-                    self.client.loop.create_task(self.handler_worker(self.locks_list[-1]))
-                )
+                self.handler_worker_tasks.append(asyncio.create_task(self.handler_worker()))
 
             log.info("Started %s HandlerTasks", self.client.workers)
 
@@ -391,47 +402,37 @@ class Dispatcher:
 
             if clear_handlers:
                 self.handler_worker_tasks.clear()
-                self.groups.clear()
+
+                with self._groups_lock:
+                    self.groups = OrderedDict()
 
             log.info("Stopped %s HandlerTasks", self.client.workers)
 
     def add_handler(self, handler: Handler[Any], group: int) -> None:
-        async def fn():
-            for lock in self.locks_list:
-                await lock.acquire()
+        with self._groups_lock:
+            groups = self._copy_groups()
+            groups.setdefault(group, []).append(handler)
 
-            try:
-                if group not in self.groups:
-                    self.groups[group] = []
-                    self.groups = OrderedDict(sorted(self.groups.items()))
-
-                self.groups[group].append(handler)
-            finally:
-                for lock in self.locks_list:
-                    lock.release()
-
-        self.client.loop.create_task(fn())
+            self.groups = OrderedDict(sorted(groups.items()))
 
     def remove_handler(self, handler: Handler[Any], group: int) -> None:
-        async def fn():
-            for lock in self.locks_list:
-                await lock.acquire()
+        with self._groups_lock:
+            if group not in self.groups:
+                raise ValueError(f"Group {group} does not exist. Handler was not removed.")
 
-            try:
-                if group not in self.groups:
-                    raise ValueError(f"Group {group} does not exist. Handler was not removed.")
+            groups = self._copy_groups()
+            groups[group].remove(handler)
 
-                self.groups[group].remove(handler)
+            if not groups[group]:
+                del groups[group]
 
-                if not self.groups[group]:
-                    del self.groups[group]
-            finally:
-                for lock in self.locks_list:
-                    lock.release()
+            self.groups = groups
 
-        self.client.loop.create_task(fn())
+    def _copy_groups(self) -> OrderedDict[int, list[Handler[Any]]]:
+        """A copy the registration methods edit, so a dispatching worker keeps the old one."""
+        return OrderedDict((group, list(handlers)) for group, handlers in self.groups.items())
 
-    async def handler_worker(self, lock):
+    async def handler_worker(self) -> None:
         while True:
             packet = await self.updates_queue.get()
 
@@ -446,50 +447,56 @@ class Dispatcher:
                     await parser(update, users, chats) if parser is not None else (None, type(None))
                 )
 
-                async with lock:
-                    for group in self.groups.values():
-                        for handler in group:
-                            if isinstance(handler, ErrorHandler):
-                                continue
+                for group in self.groups.values():
+                    for handler in group:
+                        if isinstance(handler, ErrorHandler):
+                            continue
 
-                            args = None
+                        args: tuple[Any, ...] | None = None
 
-                            if isinstance(handler, handler_type):
-                                try:
-                                    if await handler.check(self.client, parsed_update):
-                                        args = (parsed_update,)
-                                except Exception as e:
-                                    log.exception(e)
-                                    continue
-
-                            elif isinstance(handler, RawUpdateHandler):
-                                try:
-                                    if await handler.check(self.client, update):
-                                        args = (update, users, chats)
-                                except Exception as e:
-                                    log.exception(e)
-                                    continue
-
-                            if args is None:
-                                continue
-
+                        if isinstance(handler, handler_type):
                             try:
-                                if inspect.iscoroutinefunction(handler.callback):
-                                    await handler.callback(self.client, *args)
-                                else:
-                                    await self.client.loop.run_in_executor(
-                                        self.client.executor, handler.callback, self.client, *args
-                                    )
-                            except pyrogram.StopPropagation:
-                                raise
-                            except pyrogram.ContinuePropagation:
+                                if await handler.check(self.client, parsed_update):
+                                    args = (parsed_update,)
+                            except Exception as e:
+                                log.exception(e)
                                 continue
-                            except Exception as exc:
-                                await self.handle_update_handler_exception(
-                                    exc, handler, update, users, chats
-                                )
 
-                            break
+                        elif isinstance(handler, RawUpdateHandler):
+                            try:
+                                if await handler.check(self.client, update):
+                                    args = (update, users, chats)
+                            except Exception as e:
+                                log.exception(e)
+                                continue
+
+                        if args is None:
+                            continue
+
+                        try:
+                            if inspect.iscoroutinefunction(handler.callback):
+                                await handler.callback(self.client, *args)
+                            else:
+                                await asyncio.get_running_loop().run_in_executor(
+                                    self.client.executor,
+                                    handler.callback,
+                                    self.client,
+                                    *args,
+                                )
+                        except pyrogram.StopPropagation:
+                            raise
+                        except pyrogram.ContinuePropagation:
+                            continue
+                        except Exception as exc:
+                            await self.handle_update_handler_exception(
+                                exc,
+                                handler,
+                                update,
+                                users,
+                                chats,
+                            )
+
+                        break
             except pyrogram.StopPropagation:
                 pass
             except Exception as e:
@@ -519,7 +526,7 @@ class Dispatcher:
                                 self.client, exc, update_handler, update, users, chats
                             )
                         else:
-                            await self.client.loop.run_in_executor(
+                            await asyncio.get_running_loop().run_in_executor(
                                 self.client.executor,
                                 handler.callback,
                                 self.client,
