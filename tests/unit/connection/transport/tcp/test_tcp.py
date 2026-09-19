@@ -32,6 +32,7 @@ from pyrogram.connection.proxy import (
     HTTPProxy,
     MTProxy,
     Proxy,
+    SOCKS4Proxy,
     SOCKS5Proxy,
     WebProxy,
 )
@@ -612,6 +613,10 @@ _SOCKS5_PROXY: Final[SOCKS5Proxy] = SOCKS5Proxy(
     hostname="1.2.3.4",
     port=1080,
 )
+_SOCKS4_PROXY: Final[SOCKS4Proxy] = SOCKS4Proxy(
+    hostname="1.2.3.4",
+    port=1080,
+)
 
 
 class _RefusingProxy:
@@ -690,6 +695,28 @@ async def test_connect_via_proxy_leaves_a_reply_that_is_not_about_routing_alone(
 
     with pytest.raises(ProxyError) as raised:
         await transport._connect_via_proxy(_IPV6_DC_ADDRESS)
+
+    assert raised.value is refused
+
+
+async def test_connect_via_proxy_refuses_an_ipv6_dial_through_socks4() -> None:
+    # No stub: the guard fires before anything is dialed, which is the point -
+    #  SOCKS4 cannot carry the address at all.
+    transport = TCPAbridged(
+        proxy=_SOCKS4_PROXY,
+        dc_id=_DC_ID,
+    )
+
+    with pytest.raises(ValueError, match="SOCKS4 has no IPv6 address type"):
+        await transport._connect_via_proxy(_IPV6_DC_ADDRESS)
+
+
+async def test_connect_via_proxy_still_dials_ipv4_through_socks4() -> None:
+    refused = ProxyError("Request rejected or failed", error_code=91)
+    transport = _transport_dialing_into(_SOCKS4_PROXY, error=refused)
+
+    with pytest.raises(ProxyError) as raised:
+        await transport._connect_via_proxy(_UNREACHABLE_DC_ADDRESS)
 
     assert raised.value is refused
 

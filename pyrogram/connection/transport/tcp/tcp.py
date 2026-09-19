@@ -357,6 +357,19 @@ class TCP:
     async def _connect_via_proxy(self, destination: tuple[str, int]) -> None:
         dest_host, dest_port = destination
 
+        # SOCKS4 carries a 4-byte DSTIP and has no IPv6 address type at all
+        #  (https://www.openssh.org/txt/socks4.protocol), so `python_socks` falls
+        #  through to the SOCKS4a hostname field and sends the literal as a DNS name,
+        #  which can only come back as reply 91, "request rejected or failed".
+        #  https://github.com/romis2012/python-socks/blob/bc543bb8449bb9b3db372bd28116548d40d73915/python_socks/_protocols/socks4.py#L45-L62
+        if isinstance(self.proxy, SOCKS4Proxy) and _is_ipv6_literal(dest_host):
+            msg = (
+                f"SOCKS4 has no IPv6 address type, so {self.proxy.hostname}:{self.proxy.port} "
+                f"cannot dial the DC at [{dest_host}]:{dest_port}; build the Client with "
+                f"ipv6=False, or use a SOCKS5 proxy"
+            )
+            raise ValueError(msg)
+
         proxy = await self._build_proxy()
 
         log.info(
