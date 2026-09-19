@@ -18,6 +18,7 @@
 
 from __future__ import annotations as _annotations
 
+from math import gcd
 from random import randint
 
 CURRENT_DH_PRIME = int(
@@ -31,18 +32,6 @@ CURRENT_DH_PRIME = int(
     "0D8115F635B105EE2E4E15D04B2454BF6F4FADF034B10403119CD8E3B92FCC5B",
     16,
 )
-
-
-# Recursive variant
-# def gcd(cls, a: int, b: int) -> int:
-#     return cls.gcd(b, a % b) if b else a
-
-
-def gcd(a: int, b: int) -> int:
-    while b:
-        a, b = b, a % b
-
-    return a
 
 
 def decompose(pq: int) -> int:
