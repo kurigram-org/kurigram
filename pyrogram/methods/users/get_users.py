@@ -55,9 +55,10 @@ class GetUsers:
 
         Returns:
             :obj:`~pyrogram.types.User` | List of :obj:`~pyrogram.types.User` | ``None``: In case *user_ids* was not a
-            list, a single user is returned, otherwise a list of users is returned. Telegram answers with an empty
-            list for an identifier that belongs to no user (a channel, a chat, or a peer this account cannot see),
-            in which case None is returned for a single identifier and the missing users are absent from the list.
+            list, a single user is returned, otherwise a list of users is returned. Telegram answers with nothing
+            for an identifier that belongs to no user (a channel, a chat, a deleted account, or a peer this
+            account cannot see), in which case ``None`` is returned for a single identifier and the list simply
+            leaves that identifier out. Use :meth:`~pyrogram.Client.get_user` to be told which one is missing.
 
         Example:
             .. code-block:: python
@@ -78,6 +79,12 @@ class GetUsers:
         users = types.List()
 
         for i in r:
-            users.append(await types.User._parse(self, i))
+            user = await types.User._parse(self, i)
+
+            # `User._parse()` gives `None` back for a `userEmpty`, which is what an identifier that
+            #  belongs to no user comes back as. A list holding it holds a hole nobody can iterate
+            #  past, and the identifiers Telegram omits entirely are already absent from it.
+            if user is not None:
+                users.append(user)
 
         return users if is_iterable else users[0] if users else None

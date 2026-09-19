@@ -1433,8 +1433,8 @@ class Chat(Object):
     @staticmethod
     async def _parse_full(
         client: pyrogram.Client,
-        chat_full: raw.types.UserFull | raw.types.ChatFull | raw.types.ChannelFull,
-    ) -> Chat | None:
+        chat_full: raw.types.users.UserFull | raw.types.messages.ChatFull,
+    ) -> Chat:
         users = {u.id: u for u in chat_full.users}
         chats = {c.id: c for c in chat_full.chats}
 
@@ -1449,13 +1449,28 @@ class Chat(Object):
         ):
             return await Chat._parse_full_channel(client, chat_full.full_chat, users, chats)
 
+        # The three branches above cover every answer the schema allows to the three calls that
+        #  reach here, so a fourth shape means the layer moved under us. Falling off the end
+        #  instead returned `None`, and the caller met it as an `AttributeError` frames later.
+        #  `messages.ChatFull` is a wrapper the library does know, so name what it carries.
+        unreadable = (
+            chat_full.full_chat if isinstance(chat_full, raw.types.messages.ChatFull) else chat_full
+        )
+
+        raise ValueError(f"Unknown full chat type: {type(unreadable).__name__}")
+
     @staticmethod
     async def _parse_chat(
-        client, chat: raw.types.Chat | raw.types.User | raw.types.Channel
+        client: pyrogram.Client,
+        chat: raw.base.Chat | raw.base.User,
     ) -> Chat | None:
-        if isinstance(chat, (raw.types.Chat, raw.types.ChatForbidden)):
+        # `chatEmpty` and `userEmpty` are their own TL constructors rather than subclasses of
+        #  `chat` and `user`, so without naming them here they reached the channel branch, which
+        #  read a flag off them: `AttributeError: 'ChatEmpty' object has no attribute 'monoforum'`.
+        #  The two parsers below already answer `None` for them.
+        if isinstance(chat, (raw.types.Chat, raw.types.ChatForbidden, raw.types.ChatEmpty)):
             return await Chat._parse_chat_chat(client, chat)
-        elif isinstance(chat, raw.types.User):
+        elif isinstance(chat, (raw.types.User, raw.types.UserEmpty)):
             return await Chat._parse_user_chat(client, chat)
         else:
             return await Chat._parse_channel_chat(client, chat)
