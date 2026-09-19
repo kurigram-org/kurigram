@@ -33,11 +33,10 @@ from typing import TYPE_CHECKING, Final
 
 import pytest
 
-from pyrogram import Client
-from pyrogram.handlers import MessageHandler
+from pyrogram import Client, raw
+from pyrogram.handlers import MessageHandler, RawUpdateHandler
 
 if TYPE_CHECKING:
-    from collections import OrderedDict
     from collections.abc import Iterator
 
     from pyrogram.types import Message
@@ -74,7 +73,7 @@ def test_a_handler_registered_outside_a_loop_survives_into_one(client: Client) -
 
     client.add_handler(handler)
 
-    async def registered() -> OrderedDict[int, list[MessageHandler]]:
+    async def registered() -> dict[int, list[MessageHandler]]:
         return client.dispatcher.groups
 
     assert asyncio.run(registered()) == {0: [handler]}
@@ -88,6 +87,40 @@ def test_groups_are_dispatched_lowest_first(client: Client) -> None:
     client.add_handler(first, group=-1)
 
     assert list(client.dispatcher.groups) == [-1, 3]
+
+
+def _recording_handler(group: int, *, fired: list[int]) -> RawUpdateHandler:
+    """A raw handler that notes the group it was registered in, once it runs."""
+
+    async def record(
+        client: Client,
+        update: raw.base.Update,
+        users: dict[int, raw.base.User],
+        chats: dict[int, raw.base.Chat],
+        /,
+    ) -> None:
+        fired.append(group)
+
+    return RawUpdateHandler(record)
+
+
+async def test_a_lower_group_is_dispatched_before_a_higher_one(client: Client) -> None:
+    """What the sort in `add_handler` is for, read off a dispatch rather than off the keys."""
+    fired: list[int] = []
+
+    client.add_handler(_recording_handler(3, fired=fired), group=3)
+    client.add_handler(_recording_handler(-1, fired=fired), group=-1)
+
+    dispatcher = client.dispatcher
+
+    # An update no parser claims, so the worker reaches the handlers with it untouched and
+    #  needs neither the network nor a session.
+    dispatcher.updates_queue.put_nowait((raw.types.UpdateDcOptions(dc_options=[]), {}, {}))
+    dispatcher.updates_queue.put_nowait(None)
+
+    await dispatcher.handler_worker()
+
+    assert fired == [-1, 3]
 
 
 def test_remove_handler_takes_the_group_with_its_last_handler(client: Client) -> None:
