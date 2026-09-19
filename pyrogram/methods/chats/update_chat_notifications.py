@@ -51,10 +51,11 @@ class UpdateChatNotifications:
                 Defaults to forever when mute is True, and to the epoch (not muted) otherwise.
 
             stories_muted (``bool``, *optional*):
-                N/A
+                Pass True to stop being notified about new stories posted by this chat.
+                Independent of mute, which covers messages only.
 
             stories_hide_sender (``bool``, *optional*):
-                N/A
+                Pass True to hide the poster's name in story notifications from this chat.
 
             show_previews (``bool``, *optional*):
                 If the text of the message shall be displayed in notification.
