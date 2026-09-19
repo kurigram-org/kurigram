@@ -20,7 +20,8 @@ from __future__ import annotations as _annotations
 
 import hashlib
 import hmac
-from typing import Final, NamedTuple
+from dataclasses import dataclass
+from typing import Final
 
 from pyrogram.crypto import faketls
 
@@ -225,7 +226,8 @@ def test_server_hello_is_authentic_rejects_a_tampered_reply() -> None:
     )
 
 
-class _KeyShareEntry(NamedTuple):
+@dataclass(frozen=True)
+class _KeyShareEntry:
     group: int
     key: bytes
 

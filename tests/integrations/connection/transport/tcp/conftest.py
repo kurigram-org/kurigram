@@ -31,7 +31,7 @@ import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Final, NamedTuple
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -93,7 +93,8 @@ def relay_transport_class(relay_proxy: WebProxy) -> type[TCP]:
     return transport_class_for(relay_proxy)
 
 
-class _LinkParams(NamedTuple):
+@dataclass(frozen=True)
+class _LinkParams:
     links: list[str | None]
     ids: list[str]
 
@@ -109,17 +110,24 @@ def _mtproxy_link_parameters() -> _LinkParams:
     links = os.environ.get("MTPROXY_TEST_LINKS", "").split()
 
     if not links:
-        return _LinkParams(links=[None], ids=["unset"])
+        return _LinkParams(
+            links=[None],
+            ids=["unset"],
+        )
 
-    parameters = _LinkParams(links=[], ids=[])
+    configured: list[str | None] = []
+    ids: list[str] = []
 
     for link in links:
         proxy = normalize_proxy(link)
-        parameters.links.append(link)
+        configured.append(link)
         # The link carries the secret, so the id names the address alone.
-        parameters.ids.append(f"{proxy.hostname}:{proxy.port}")
+        ids.append(f"{proxy.hostname}:{proxy.port}")
 
-    return parameters
+    return _LinkParams(
+        links=configured,
+        ids=ids,
+    )
 
 
 # One variable rather than three per proxy, because a proxy is shared as a link
