@@ -44,7 +44,7 @@ class DeleteDirectMessagesChatTopicHistory:
             chat_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the target chat.
 
-            topic_id (``int``):
+            topic_id (``int``, *optional*):
                 Identifier of the topic which messages will be fetched.
 
             max_id (``int``, *optional*):

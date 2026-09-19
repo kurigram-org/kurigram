@@ -38,7 +38,7 @@ class BuyGiftUpgrade:
             prepaid_upgrade_hash (``str``):
                 Prepaid upgrade hash as received along with the gift.
 
-            star_count (``int``, *optional*):
+            star_count (``int``):
                 The amount of Telegram Stars the user agreed to pay for the upgrade.
                 Must be equal to gift.upgrade_price.
 

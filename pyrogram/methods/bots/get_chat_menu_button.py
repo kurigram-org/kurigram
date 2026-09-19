@@ -32,7 +32,7 @@ class GetChatMenuButton:
         .. include:: /_includes/usable-by/bots.rst
 
         Parameters:
-            chat_id (``int`` | ``str``):
+            chat_id (``int`` | ``str``, *optional*):
                 Unique identifier (int) or username (str) of the target chat.
                 If not specified, default bot's menu button will be returned.
         """

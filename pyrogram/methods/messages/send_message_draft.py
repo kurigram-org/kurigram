@@ -51,7 +51,7 @@ class SendMessageDraft:
                 Unique identifier of the message draft, must be non-zero.
                 Changes of drafts with the same identifier are animated.
 
-            text (``str``):
+            text (``str``, *optional*):
                 Text of the message to be sent, 0-4096 characters after entities parsing.
                 Pass an empty text to show a "Thinking…" placeholder.
 
@@ -62,7 +62,7 @@ class SendMessageDraft:
                 By default, texts are parsed using both Markdown and HTML styles.
                 You can combine both syntaxes together.
 
-            entities (List of :obj:`~pyrogram.types.MessageEntity`):
+            entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
                 List of special entities that appear in message text, which can be specified instead of *parse_mode*.
 
             can_stop (``bool``, *optional*):

@@ -475,7 +475,7 @@ class Folder(Object):
                await folder.update_color(enums.FolderColor.RED)
 
         Parameters:
-            color (:obj:`~pyrogram.enums.FolderColor`, *optional*):
+            color (:obj:`~pyrogram.enums.FolderColor`):
                 Color type.
                 Pass :obj:`~pyrogram.enums.FolderColor` to set folder color.
 

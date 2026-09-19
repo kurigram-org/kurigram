@@ -355,7 +355,7 @@ class CallbackQuery(Object, Update):
         Bound method *edit_message_reply_markup* of :obj:`~pyrogram.types.CallbackQuery`.
 
         Parameters:
-            reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`):
+            reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
                 An InlineKeyboardMarkup object.
 
         Returns:
