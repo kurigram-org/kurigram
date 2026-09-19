@@ -46,8 +46,9 @@ class UpdateChatNotifications:
             mute (``bool``, *optional*):
                 Pass True if you want to mute chat.
 
-            until_date (:py:obj:`~datetime.datetime`, *optional*):
-                Date when the user will be unmuted. Works only if the mute parameter is set to True. Defaults to forever.
+            mute_until (:py:obj:`~datetime.datetime`, *optional*):
+                Date until which the chat stays muted.
+                Defaults to forever when mute is True, and to the epoch (not muted) otherwise.
 
             stories_muted (``bool``, *optional*):
                 N/A
