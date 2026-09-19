@@ -130,6 +130,10 @@ produce a bug that looks like a Telegram problem.
 Defaults that changed
 ---------------------
 
+The same call now behaves differently, or a parameter that could be omitted no longer can be.
+Parameters that merely gained a default are left out: they cannot break a call that already
+passed them.
+
 {defaults}
 
 -----

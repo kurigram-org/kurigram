@@ -395,7 +395,11 @@ def _render_positional(*, reference: Surface, here: Surface) -> str:
             shared_length,
         )
 
-        if safe >= len(before):
+        # A fully-equal shared prefix cannot misbind: what the tree APPENDED moves nothing,
+        #  and a DROPPED tail makes an over-full positional call raise `TypeError`, which the
+        #  parameters table already covers. Indexing `after[safe]` in the dropped-tail case
+        #  was also an `IndexError` waiting for the first release that produces one.
+        if safe >= shared_length:
             continue
 
         rows.append(
@@ -425,7 +429,20 @@ def _render_defaults(*, reference: Surface, here: Surface) -> str:
             before = reference.methods[name].default_of(parameter)
             after = here.methods[name].default_of(parameter)
 
-            if before != after:
+            if before == after:
+                continue
+
+            # A parameter that merely GAINED a default cannot break an existing call, so
+            #  listing it is noise. One that LOST its default now raises `TypeError` when
+            #  omitted, and rendering that as ``None`` to ``None`` read as no change at all:
+            #  the extractor uses `None` for "no default", which prints like a `None` default.
+            if before is None:
+                continue
+
+            if after is None:
+                rows.append((f"``{name}``", f"``{parameter}``: had ``{before}``, now required"))
+
+            else:
                 rows.append((f"``{name}``", f"``{parameter}``: ``{before}`` to ``{after}``"))
 
     return _table(
