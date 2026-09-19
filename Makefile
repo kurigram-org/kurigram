@@ -54,7 +54,7 @@ clean-api:
 	@printf "$(YELLOW)Cleaned api directory$(RESET)\n"
 
 clean-docs:
-	$(RM) docs/build docs/source/api/bound-methods docs/source/api/methods docs/source/api/types docs/source/api/enums docs/source/telegram
+	$(RM) docs/build docs/source/api/bound-methods docs/source/api/methods docs/source/api/types docs/source/api/enums docs/source/telegram docs/source/topics/porting-from-pyrogram.rst
 	@printf "$(YELLOW)Cleaned docs directory$(RESET)\n"
 
 clean: clean-venv clean-build clean-api clean-docs
@@ -70,6 +70,7 @@ SPHINX_ARGS := -b dirhtml "docs/source" "docs/build/html" -j auto
 
 docs-api:
 	cd compiler/docs && $(PYTHON) compiler.py
+	$(PYTHON) compiler/docs/porting.py
 
 docs: docs-api
 	$(UV) run --group docs sphinx-build $(SPHINX_ARGS)
