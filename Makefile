@@ -91,8 +91,11 @@ typecheck:
 test:
 	@$(LOAD_ENV_TEST) $(PYTHON) -m pytest
 
+# `--cov` reads its source and its omit list from `[tool.coverage.run]` in `pyproject.toml`, so
+#  neither this recipe nor the CI job calling it restates which tree is measured. Only the offline
+#  selection carries it: `test` and `test-integration` stay as fast as the relay lets them.
 test-unit:
-	$(PYTHON) -m pytest -m 'not integration'
+	$(PYTHON) -m pytest -m 'not integration' --cov
 
 # `test-unit` selects everything that is not integration, so it runs these too. This
 #  target is for working on the guards alone; the two are not disjoint.

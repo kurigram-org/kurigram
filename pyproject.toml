@@ -151,6 +151,24 @@ markers = [
     "integration: opens a real socket or talks to a real service",
 ]
 
+# So the number describes what somebody wrote, the same paths `[tool.ruff] extend-exclude` names
+#  are dropped here too, in the glob form `coverage` matches files with. `[tool.ty.src].exclude`
+#  below carries the reasoning for the list and for the split, and both blocks defer to it.
+[tool.coverage.run]
+source = ["pyrogram"]
+omit = [
+    "pyrogram/raw/base/*",
+    "pyrogram/raw/functions/*",
+    "pyrogram/raw/types/*",
+    "pyrogram/raw/all.py",
+    "pyrogram/errors/exceptions/*",
+]
+
+[tool.coverage.report]
+# No threshold, deliberately. The offline suite covers 54% of 24202 statements as of 2026-09-19,
+#  and a gate set at a number nobody has agreed to is raised until it stops firing, so `fail_under`
+#  waits for a number somebody has looked at and chosen.
+
 [tool.hatch.version]
 path = "pyrogram/__init__.py"
 

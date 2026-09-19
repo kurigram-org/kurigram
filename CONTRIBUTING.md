@@ -45,6 +45,9 @@ make typecheck     # ty check (requires `make api` to have been run first)
 make test-unit     # the offline suite, no relay or session needed
 ```
 
+`make test-unit` reports coverage of `pyrogram/` as it runs. Which paths are measured, whether a
+minimum is enforced, and why, all live in the `[tool.coverage]` blocks of `pyproject.toml`.
+
 `make format` rewrites the tree and `make lint` fails on anything it would still change, so
 formatting is not something review has to raise. The line length is 100; `pyproject.toml` carries
 the reasoning next to it.
