@@ -98,7 +98,6 @@ qrcode = [
 #  ask for that group alone.
 dev = [
     { include-group = "lint" },
-    { include-group = "release" },
     { include-group = "test" },
 ]
 
@@ -110,12 +109,6 @@ lint = [
     "pre-commit>=3.5.0",
     "ruff>=0.16.3",
     "ty>=0.0.78",
-]
-
-release = [
-    # `twine` stores the upload token through `keyring`.
-    "keyring>=25.5.0",
-    "twine>=6.1.0",
 ]
 
 test = [
