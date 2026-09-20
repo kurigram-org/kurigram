@@ -170,7 +170,7 @@ class Session:
         self.restart_lock = asyncio.Lock()
 
         # Never cleared: a stopped session is replaced rather than started again, since
-        #  every caller that stops one then asks for a new one (`pyrogram/client.py:1428`).
+        #  every caller that stops one then asks `Client.get_session()` to build a fresh one.
         self._must_stay_stopped: bool = False
 
     @property
