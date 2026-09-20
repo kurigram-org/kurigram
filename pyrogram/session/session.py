@@ -723,7 +723,16 @@ class Session:
 
                 await asyncio.sleep(amount)
             except (OSError, InternalServerError, ServiceUnavailable) as e:
-                log.warning('[%s] Retrying "%s" due to: %s', attempt, query_name, str(e) or repr(e))
+                # `TCP.send` raises a bare `TimeoutError`, an `OSError` whose `str()` is
+                #  empty, so without the `repr` fallback the line would end at "due to: ".
+                #  `pyrogram/connection/transport/tcp/tcp.py:505`.
+                log.warning(
+                    '[%s] Retrying "%s" (attempt %s) due to: %s',
+                    self.client.name,
+                    query_name,
+                    attempt,
+                    str(e) or repr(e),
+                )
 
                 await asyncio.sleep(retry_delay)
 
