@@ -24,7 +24,7 @@ from typing import TYPE_CHECKING, Final, cast
 import pytest
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import StopTransmission, raw, types
 from pyrogram.methods.advanced.save_file import SaveFile
 
 if TYPE_CHECKING:
@@ -156,3 +156,37 @@ async def test_a_missing_part_the_server_refused_reaches_the_caller_too(three_pa
 @pytest.mark.asyncio
 async def test_no_path_is_not_an_upload_at_all() -> None:
     assert await uploader(Media()).save_file(None) is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "asynchronous",
+    [
+        pytest.param(True, id="async-callback"),
+        pytest.param(False, id="sync-callback-via-executor"),
+    ],
+)
+async def test_stop_transmission_from_a_progress_callback_ends_the_upload(
+    three_parts: str,
+    *,
+    asynchronous: bool,
+) -> None:
+    media = Media()
+    calls: list[int] = []
+
+    def cancel_on_second_part(current: int, total: int) -> None:
+        calls.append(current)
+
+        if len(calls) == 2:
+            raise StopTransmission
+
+    async def asynchronous_cancel(current: int, total: int) -> None:
+        cancel_on_second_part(current, total)
+
+    progress = asynchronous_cancel if asynchronous else cancel_on_second_part
+
+    with pytest.raises(StopTransmission):
+        await uploader(media).save_file(three_parts, progress=progress)
+
+    # The abort lands between parts: the two already produced were sent, the third never was.
+    assert media.saved_parts == [0, 1]
