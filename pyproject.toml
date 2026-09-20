@@ -270,7 +270,4 @@ exclude = [
 #  meant to shrink one rule at a time, the same pattern `[tool.ruff.lint].select` uses.
 invalid-argument-type = "ignore"
 invalid-assignment = "ignore"
-invalid-method-override = "ignore"
-invalid-return-type = "ignore"
-no-matching-overload = "ignore"
 unresolved-attribute = "ignore"
