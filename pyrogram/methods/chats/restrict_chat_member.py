@@ -68,10 +68,11 @@ class RestrictChatMember:
                 from pyrogram.types import ChatPermissions
 
                 # Completely restrict chat member (mute) forever
-                await app.restrict_chat_member(chat_id, user_id)
+                await app.restrict_chat_member(chat_id, user_id, ChatPermissions())
 
                 # Chat member muted for 24h
-                await app.restrict_chat_member(chat_id, user_id, timedelta(days=1))
+                await app.restrict_chat_member(chat_id, user_id, ChatPermissions(),
+                    until_date=datetime.now() + timedelta(days=1))
 
                 # Chat member can only send text messages
                 await app.restrict_chat_member(chat_id, user_id,
