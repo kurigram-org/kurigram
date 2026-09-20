@@ -60,10 +60,28 @@ jobs:
         run: |
           make sync
 
-      # `ruff` excludes the generated packages, so this step alone needs no `make api`.
+      # `ruff` excludes the generated packages, so this job needs no `make api`.
       - name: Run ruff
         run: |
           make lint
+
+  # Its own job rather than a tail step of `lint`: a `ruff` failure would otherwise
+  #  hide the `ty` verdict until the next push.
+  typecheck:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@v10.0.1
+        with:
+          python-version: "3.14"
+
+      - name: Install dependencies
+        run: |
+          make sync
 
       # Unlike `ruff`, `ty` resolves `pyrogram.raw.*`, so it needs the generated tree.
       - name: Generate API
