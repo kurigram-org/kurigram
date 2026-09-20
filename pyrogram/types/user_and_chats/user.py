@@ -420,11 +420,11 @@ class User(Object, Update):
             True, if the bot supports join request queries and can be assigned to process them.
             Returned only in :meth:`~pyrogram.Client.get_me`
 
-        community_id (``int``, *optional*)
+        community_id (``int``, *optional*):
             The identifier to which chat with the bot was added.
             For bots only.
 
-        community (:obj:`~pyrogram.types.Community`, *optional*)
+        community (:obj:`~pyrogram.types.Community`, *optional*):
             The :obj:`~pyrogram.types.Community` to which chat with the bot was added.
             For bots only.
 

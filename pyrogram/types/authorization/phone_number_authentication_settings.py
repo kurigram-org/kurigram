@@ -48,7 +48,7 @@ class PhoneNumberAuthenticationSettings(Object):
             For official Android and iOS applications only.
             Settings for Firebase Authentication.
 
-        authentication_tokens (List of ``bytes``, *optional*)
+        authentication_tokens (List of ``bytes``, *optional*):
             List of up to 20 authentication tokens, recently received in previously logged out sessions.
     """
 

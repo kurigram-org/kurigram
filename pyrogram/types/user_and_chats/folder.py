@@ -43,7 +43,7 @@ class Folder(Object):
         icon (``str``, *optional*):
             The chosen icon for the chat folder.
 
-        color (:obj:`~pyrogram.enums.FolderColor`, *optional*)
+        color (:obj:`~pyrogram.enums.FolderColor`, *optional*):
             The identifier of the chosen color for the chat folder icon.
             Can't be changed if folder tags are disabled or the current user doesn't have Telegram Premium subscription.
 
@@ -257,7 +257,7 @@ class Folder(Object):
             icon (``str``, *optional*):
                 The chosen icon for the chat folder.
 
-            color (:obj:`~pyrogram.enums.FolderColor`, *optional*)
+            color (:obj:`~pyrogram.enums.FolderColor`, *optional*):
                 The identifier of the chosen color for the chat folder icon.
                 Can't be changed if folder tags are disabled or the current user doesn't have Telegram Premium subscription.
 

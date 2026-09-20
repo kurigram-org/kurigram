@@ -28,7 +28,7 @@ class ChatReactions(Object):
     """A chat reactions
 
     Parameters:
-        all_are_enabled (``bool``, *optional*)
+        all_are_enabled (``bool``, *optional*):
 
         allow_custom_emoji (``bool``, *optional*):
             Whether custom emoji are allowed or not.
