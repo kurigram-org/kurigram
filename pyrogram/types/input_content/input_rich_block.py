@@ -43,7 +43,7 @@ async def _get_input_photo(
     *,
     chat_id: int | str | None,
     input_media: raw.base.InputMedia,
-) -> raw.types.InputPhoto:
+) -> raw.base.InputPhoto:
     if isinstance(input_media, raw.types.InputMediaPhoto):
         return input_media.id
 
@@ -72,7 +72,7 @@ async def _get_input_document(
     *,
     chat_id: int | str | None,
     input_media: raw.base.InputMedia,
-) -> raw.types.InputDocument:
+) -> raw.base.InputDocument:
     if isinstance(input_media, raw.types.InputMediaDocument):
         return input_media.id
 
@@ -181,14 +181,16 @@ class InputRichBlockListItem(InputRichBlock):
         self.value = value
         self.type = type
 
-    async def write(
+    # A list item serializes to `PageListItem`/`PageListOrderedItem`, not `PageBlock`:
+    #  only `InputRichBlockList.write` ever calls it, so the narrowing is the real contract.
+    async def write(  # ty: ignore[invalid-method-override]
         self,
         *,
         client: pyrogram.Client,
         chat_id: int | str | None = None,
         photos: list[raw.base.InputPhoto],
         documents: list[raw.base.InputDocument],
-        ordered: bool,
+        ordered: bool = False,
     ) -> raw.base.PageListItem | raw.base.PageListOrderedItem:
         blocks = [
             await block.write(

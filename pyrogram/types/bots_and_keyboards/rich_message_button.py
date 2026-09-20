@@ -18,6 +18,8 @@
 
 from __future__ import annotations as _annotations
 
+from typing import Literal, overload
+
 import pyrogram
 from pyrogram import enums, raw, types
 
@@ -206,8 +208,24 @@ class RichMessageButton(Object):
         #  to hand a `None` to `RichBlockButtons.buttons`, which then fails wherever it is read.
         return RichMessageButton(text=button_text, style=button_style)
 
+    @overload
     async def write(
-        self, client: pyrogram.Client, is_block: bool = False
+        self,
+        client: pyrogram.Client,
+        is_block: Literal[False] = False,
+    ) -> raw.types.TextButton: ...
+
+    @overload
+    async def write(
+        self,
+        client: pyrogram.Client,
+        is_block: Literal[True],
+    ) -> raw.types.PageButton: ...
+
+    async def write(
+        self,
+        client: pyrogram.Client,
+        is_block: bool = False,
     ) -> raw.types.TextButton | raw.types.PageButton:
         style = (
             raw.types.RichButtonStyle(

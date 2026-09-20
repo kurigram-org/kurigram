@@ -18,11 +18,12 @@
 
 from __future__ import annotations as _annotations
 
-from typing import TYPE_CHECKING, BinaryIO
+from typing import TYPE_CHECKING, Any, BinaryIO
 
 from ..object import Object
 
 if TYPE_CHECKING:
+    import pyrogram
     from pyrogram import raw
 
     from ..._typing import PathType
@@ -56,5 +57,5 @@ class InputMedia(Object):
         self.parse_mode = parse_mode
         self.caption_entities = caption_entities
 
-    async def write(self, **kwargs) -> raw.base.InputMedia:
+    async def write(self, *, client: pyrogram.Client, **kwargs: Any) -> raw.base.InputMedia:
         raise NotImplementedError

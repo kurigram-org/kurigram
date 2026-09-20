@@ -22,7 +22,7 @@ import asyncio
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, BinaryIO, Literal, overload
+from typing import TYPE_CHECKING, BinaryIO, Literal, cast, overload
 
 import pyrogram
 from pyrogram import types, utils
@@ -383,7 +383,8 @@ class DownloadMedia:
                 if result:
                     results.append(result)
 
-            return results or None
+            # Every paid-media item downloads to one file, so the list is homogeneous.
+            return cast("list[str] | list[BinaryIO]", results) or None
 
         if not media:
             raise ValueError("This message doesn't contain any downloadable media")

@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 
 class CreateSupergroup:
@@ -75,4 +75,4 @@ class CreateSupergroup:
             )
         )
 
-        return await types.Chat._parse_chat(self, r.chats[0])
+        return utils.require_parsed(await types.Chat._parse_chat(self, r.chats[0]))

@@ -34,8 +34,10 @@ class TLObject(Generic[ReturnType]):
 
     QUALNAME = "Base"
 
+    # `b` is positional-only so subclasses may keep their own parameter names;
+    #  no call site passes it by keyword.
     @classmethod
-    def read(cls, b: BytesIO, *args: Any) -> Any:
+    def read(cls, b: BytesIO, /, *args: Any) -> Any:
         return cast("TLObject", objects[int.from_bytes(b.read(4), "little")]).read(b, *args)
 
     def write(self, *args: Any) -> bytes:
@@ -79,7 +81,9 @@ class TLObject(Generic[ReturnType]):
             ),
         )
 
-    def __eq__(self, other: object) -> bool:
+    # `other` is positional-only to match `bytes.__eq__`/`list.__eq__`, which the
+    #  primitives multiply inherit alongside this class.
+    def __eq__(self, other: object, /) -> bool:
         for attr in self.__slots__:
             try:
                 if getattr(self, attr) != getattr(other, attr):

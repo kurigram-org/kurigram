@@ -77,7 +77,10 @@ async def parse_messages(
             if messages_with_replies:
                 # We need a chat id, but some messages might be empty (no chat attribute available)
                 # Scan until we find a message with a chat available (there must be one, because we are fetching replies)
-                chat_id = next((m.chat.id for m in parsed_messages if m.chat), 0)
+                chat_id = next(
+                    (m.chat.id for m in parsed_messages if m.chat and m.chat.id is not None),
+                    0,
+                )
 
                 is_all_replies_in_same_chat = not any(
                     m.reply_to_peer_id for m in messages_with_replies.values()

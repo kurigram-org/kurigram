@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 
 class GetGlobalPrivacySettings:
@@ -38,4 +38,4 @@ class GetGlobalPrivacySettings:
         """
         r = await self.invoke(raw.functions.account.GetGlobalPrivacySettings())
 
-        return types.GlobalPrivacySettings._parse(r)
+        return utils.require_parsed(types.GlobalPrivacySettings._parse(r))

@@ -19,8 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types
-from pyrogram import utils
+from pyrogram import raw, types, utils
 
 
 class CraftGift:
@@ -63,3 +62,5 @@ class CraftGift:
                 )
 
                 return types.CraftGiftResultSuccess(gift=message.gift)
+
+        raise ValueError("The response contains no craft result update")

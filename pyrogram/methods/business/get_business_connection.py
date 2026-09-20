@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 
 class GetBusinessConnection:
@@ -49,4 +49,6 @@ class GetBusinessConnection:
 
         users = {i.id: i for i in r.users}
 
-        return await types.BusinessConnection._parse(self, r.updates[0].connection, users)
+        return utils.require_parsed(
+            await types.BusinessConnection._parse(self, r.updates[0].connection, users)
+        )

@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, enums
+from pyrogram import enums, raw
 
 
 class SearchGlobalCount:
@@ -73,7 +73,7 @@ class SearchGlobalCount:
             )
         )
 
-        if hasattr(r, "count"):
+        if isinstance(r, (raw.types.messages.MessagesSlice, raw.types.messages.ChannelMessages)):
             return r.count
-        else:
-            return len(r.messages)
+
+        return len(r.messages)

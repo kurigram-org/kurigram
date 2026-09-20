@@ -58,3 +58,5 @@ class EnableStealthMode:
         for i in r.updates:
             if isinstance(i, raw.types.UpdateStoriesStealthMode):
                 return types.StoriesStealthMode._parse(i.stealth_mode)
+
+        raise ValueError("The response contains no stealth mode update")

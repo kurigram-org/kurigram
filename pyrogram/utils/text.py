@@ -30,17 +30,19 @@ async def parse_text_entities(
     text: str,
     parse_mode: enums.ParseMode | None,
     entities: list[types.MessageEntity] | None,
-) -> dict[str, str | list[raw.base.MessageEntity]]:
+) -> dict[str, str | list[raw.base.MessageEntity] | None]:
     if entities:
         # Inject the client instance because parsing user mentions requires it
         for entity in entities:
             entity._client = client
 
-        entities = [await entity.write() for entity in entities] or None
+        raw_entities: list[raw.base.MessageEntity] | None = [
+            await entity.write() for entity in entities
+        ] or None
     else:
-        text, entities = (await client.parser.parse(text, parse_mode)).values()
+        text, raw_entities = (await client.parser.parse(text, parse_mode)).values()
 
-    return {"message": text, "entities": entities}
+    return {"message": text, "entities": raw_entities}
 
 
 async def parse_text_with_entities(client, message: raw.types.TextWithEntities, users):

@@ -50,7 +50,7 @@ class SearchPostsCount:
             )
         )
 
-        if hasattr(r, "count"):
+        if isinstance(r, (raw.types.messages.MessagesSlice, raw.types.messages.ChannelMessages)):
             return r.count
-        else:
-            return len(r.messages)
+
+        return len(r.messages)

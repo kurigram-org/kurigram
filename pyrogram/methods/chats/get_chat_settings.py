@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 
 class GetChatSettings:
@@ -52,4 +52,4 @@ class GetChatSettings:
 
         users = {i.id: i for i in r.users}
 
-        return await types.ChatSettings._parse(self, r.settings, users)
+        return utils.require_parsed(await types.ChatSettings._parse(self, r.settings, users))

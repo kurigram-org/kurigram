@@ -125,4 +125,4 @@ except ImportError:
 
                     chunk = cipher.encrypt(iv)
 
-        return out
+        return bytes(out)

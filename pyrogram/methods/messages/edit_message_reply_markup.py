@@ -21,9 +21,7 @@ from __future__ import annotations as _annotations
 from typing import TYPE_CHECKING
 
 import pyrogram
-from pyrogram import raw
-from pyrogram import types
-from pyrogram import utils
+from pyrogram import raw, types, utils
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -80,7 +78,21 @@ class EditMessageReplyMarkup:
         )
 
         for i in r.updates:
-            if isinstance(i, (raw.types.UpdateEditMessage, raw.types.UpdateEditChannelMessage)):
+            # Editing a scheduled message comes back as `UpdateNewScheduledMessage`.
+            if isinstance(
+                i,
+                (
+                    raw.types.UpdateEditMessage,
+                    raw.types.UpdateEditChannelMessage,
+                    raw.types.UpdateNewScheduledMessage,
+                ),
+            ):
                 return await types.Message._parse(
-                    self, i.message, {i.id: i for i in r.users}, {i.id: i for i in r.chats}
+                    self,
+                    i.message,
+                    {i.id: i for i in r.users},
+                    {i.id: i for i in r.chats},
+                    is_scheduled=isinstance(i, raw.types.UpdateNewScheduledMessage),
                 )
+
+        raise ValueError("The response contains no edited message")

@@ -1129,7 +1129,7 @@ class Chat(Object):
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
     ) -> Chat:
-        parsed_chat = await Chat._parse_user_chat(client, users[user.id])
+        parsed_chat = utils.require_parsed(await Chat._parse_user_chat(client, users[user.id]))
         parsed_chat.raw = user
 
         parsed_chat.settings = await types.ChatSettings._parse(client, user.settings, users)
@@ -1261,7 +1261,7 @@ class Chat(Object):
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
     ) -> Chat:
-        parsed_chat = await Chat._parse_chat_chat(client, chats[chat.id])
+        parsed_chat = utils.require_parsed(await Chat._parse_chat_chat(client, chats[chat.id]))
         parsed_chat.raw = chat
 
         parsed_chat.description = chat.about or None
@@ -1306,7 +1306,9 @@ class Chat(Object):
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
     ) -> Chat:
-        parsed_chat = await Chat._parse_channel_chat(client, chats[channel.id])
+        parsed_chat = utils.require_parsed(
+            await Chat._parse_channel_chat(client, chats[channel.id])
+        )
         parsed_chat.raw = channel
 
         parsed_chat.description = channel.about or None
@@ -1899,7 +1901,7 @@ class Chat(Object):
         """
         return await self._client.leave_chat(self.id)
 
-    async def export_invite_link(self) -> types.ChatInviteLink:
+    async def export_invite_link(self) -> str:
         """Bound method *export_invite_link* of :obj:`~pyrogram.types.Chat`.
 
         Use as a shortcut for:
@@ -1914,7 +1916,7 @@ class Chat(Object):
                 chat.export_invite_link()
 
         Returns:
-            :obj:`~pyrogram.types.ChatInviteLink`: On success, the exported invite link is returned.
+            ``str``: On success, the exported invite link is returned.
 
         Raises:
             ValueError: In case the chat_id belongs to a user.
@@ -2031,7 +2033,7 @@ class Chat(Object):
         """
         return await self._client.mark_chat_unread(self.id)
 
-    async def set_protected_content(self, enabled: bool) -> bool:
+    async def set_protected_content(self, enabled: bool) -> types.Message | bool:
         """Bound method *set_protected_content* of :obj:`~pyrogram.types.Chat`.
 
         Use as a shortcut for:
@@ -2050,7 +2052,8 @@ class Chat(Object):
                 await chat.set_protected_content(enabled)
 
         Returns:
-            ``bool``: On success, True is returned.
+            :obj:`~pyrogram.types.Message` | ``bool``: On success, a service message will be returned (when applicable),
+            otherwise, in case a message object couldn't be returned, True is returned.
         """
         return await self._client.set_chat_protected_content(self.id, enabled=enabled)
 

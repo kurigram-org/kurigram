@@ -22,7 +22,7 @@ import asyncio
 import inspect
 import re
 from re import Pattern
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Any, Final, cast
 
 import pyrogram
 from pyrogram import enums
@@ -73,18 +73,27 @@ class Filter:
         return OrFilter(self, other)
 
 
+async def _resolve_filter(
+    flt: Filter,
+    client: pyrogram.Client,
+    update: Update | RawUpdate,
+) -> bool:
+    if inspect.iscoroutinefunction(flt.__call__):
+        return await flt(client, update)
+
+    # A sync custom filter returns `bool` directly; the executor cannot say so.
+    return cast(
+        "bool",
+        await asyncio.get_running_loop().run_in_executor(client.executor, flt, client, update),
+    )
+
+
 class InvertFilter(Filter):
     def __init__(self, base: Filter) -> None:
         self.base = base
 
     async def __call__(self, client: pyrogram.Client, update: Update | RawUpdate) -> bool:
-        if inspect.iscoroutinefunction(self.base.__call__):
-            x = await self.base(client, update)
-        else:
-            loop = asyncio.get_running_loop()
-            x = await loop.run_in_executor(client.executor, self.base, client, update)
-
-        return not x
+        return not await _resolve_filter(self.base, client, update)
 
 
 class AndFilter(Filter):
@@ -93,23 +102,11 @@ class AndFilter(Filter):
         self.other = other
 
     async def __call__(self, client: pyrogram.Client, update: Update | RawUpdate) -> bool:
-        if inspect.iscoroutinefunction(self.base.__call__):
-            x = await self.base(client, update)
-        else:
-            loop = asyncio.get_running_loop()
-            x = await loop.run_in_executor(client.executor, self.base, client, update)
-
         # short circuit
-        if not x:
+        if not await _resolve_filter(self.base, client, update):
             return False
 
-        if inspect.iscoroutinefunction(self.other.__call__):
-            y = await self.other(client, update)
-        else:
-            loop = asyncio.get_running_loop()
-            y = await loop.run_in_executor(client.executor, self.other, client, update)
-
-        return x and y
+        return await _resolve_filter(self.other, client, update)
 
 
 class OrFilter(Filter):
@@ -118,23 +115,11 @@ class OrFilter(Filter):
         self.other = other
 
     async def __call__(self, client: pyrogram.Client, update: Update | RawUpdate) -> bool:
-        if inspect.iscoroutinefunction(self.base.__call__):
-            x = await self.base(client, update)
-        else:
-            loop = asyncio.get_running_loop()
-            x = await loop.run_in_executor(client.executor, self.base, client, update)
-
         # short circuit
-        if x:
+        if await _resolve_filter(self.base, client, update):
             return True
 
-        if inspect.iscoroutinefunction(self.other.__call__):
-            y = await self.other(client, update)
-        else:
-            loop = asyncio.get_running_loop()
-            y = await loop.run_in_executor(client.executor, self.other, client, update)
-
-        return x or y
+        return await _resolve_filter(self.other, client, update)
 
 
 CUSTOM_FILTER_NAME: Final[str] = "CustomFilter"
@@ -189,7 +174,7 @@ _CAN_BE_OUTGOING: Final[tuple[type[Update], ...]] = (Message, Story)
 #  down, in `boost.from_user`.
 #
 #  Reading them here rather than renaming the attributes leaves the public API untouched.
-_IS_ITS_OWN_SENDER: Final[tuple[type[Update], ...]] = (User,)
+_IS_ITS_OWN_SENDER: Final[tuple[type[User], ...]] = (User,)
 
 _WITH_A_SENDER_NAMED_USER: Final[tuple[type[Update], ...]] = (
     BusinessConnection,
@@ -202,7 +187,7 @@ _WITH_A_SENDER_CHAT_NAMED_ACTOR_CHAT: Final[tuple[type[Update], ...]] = (Message
 _WITH_A_BOOSTER: Final[tuple[type[Update], ...]] = (ChatBoostUpdated,)
 
 
-def _sender_of(update: Update) -> User | None:
+def _sender_of(update: Update | RawUpdate) -> User | None:
     if isinstance(update, _IS_ITS_OWN_SENDER):
         return update
 
@@ -215,11 +200,11 @@ def _sender_of(update: Update) -> User | None:
     return update.from_user if isinstance(update, _WITH_A_SENDER) else None
 
 
-def _chat_of(update: Update) -> Chat | None:
+def _chat_of(update: Update | RawUpdate) -> Chat | None:
     return update.chat if isinstance(update, _WITH_A_CHAT) else None
 
 
-def _sender_chat_of(update: Update) -> Chat | None:
+def _sender_chat_of(update: Update | RawUpdate) -> Chat | None:
     if isinstance(update, _WITH_A_SENDER_CHAT):
         return update.sender_chat
 
@@ -243,7 +228,7 @@ def _is_outgoing(update: Update) -> bool:
 _WITH_A_MESSAGE: Final[tuple[type[Update], ...]] = (CallbackQuery,)
 
 
-def _message_of(update: Update) -> Message | None:
+def _message_of(update: Update | RawUpdate) -> Message | None:
     if isinstance(update, Message):
         return update
 
@@ -1338,8 +1323,12 @@ def regex(pattern: str | Pattern, flags: int = 0) -> Filter:
     )
 
 
+# `Filter.__and__`/`__or__` intentionally shadow the `set` operators: `&`/`|` must keep
+#  combining filters even though the ids live in a `set` base.
+
+
 # noinspection PyPep8Naming
-class user(Filter, set):
+class user(Filter, set):  # ty: ignore[invalid-method-override]
     """Filter updates coming from one or more users.
 
     You can use `set bound methods <https://docs.python.org/3/library/stdtypes.html#set>`_ to manipulate the
@@ -1360,7 +1349,7 @@ class user(Filter, set):
             for u in users
         )
 
-    async def __call__(self, _: pyrogram.Client, update: Update) -> bool:
+    async def __call__(self, client: pyrogram.Client, update: Update | RawUpdate) -> bool:
         sender = _sender_of(update)
         if not sender:
             return False
@@ -1369,8 +1358,11 @@ class user(Filter, set):
         return bool(sender.id in self or (sender.username and sender.username.lower() in self))
 
 
+# Same intentional operator shadowing as `user` above.
+
+
 # noinspection PyPep8Naming
-class chat(Filter, set):
+class chat(Filter, set):  # ty: ignore[invalid-method-override]
     """Filter updates coming from one or more chats.
 
     You can use `set bound methods <https://docs.python.org/3/library/stdtypes.html#set>`_ to manipulate the
@@ -1391,7 +1383,7 @@ class chat(Filter, set):
             for c in chats
         )
 
-    async def __call__(self, _: pyrogram.Client, update: Update) -> bool:
+    async def __call__(self, client: pyrogram.Client, update: Update | RawUpdate) -> bool:
         chat_of_update = _chat_of(update)
         if not chat_of_update:
             return False
@@ -1411,8 +1403,11 @@ class chat(Filter, set):
         )
 
 
+# Same intentional operator shadowing as `user` above.
+
+
 # noinspection PyPep8Naming
-class topic(Filter, set):
+class topic(Filter, set):  # ty: ignore[invalid-method-override]
     """Filter updates coming from one or more topics.
 
     You can use `set bound methods <https://docs.python.org/3/library/stdtypes.html#set>`_ to manipulate the
@@ -1429,7 +1424,7 @@ class topic(Filter, set):
 
         super().__init__(t for t in topics)
 
-    async def __call__(self, _: pyrogram.Client, update: Update) -> bool:
+    async def __call__(self, client: pyrogram.Client, update: Update | RawUpdate) -> bool:
         message = _message_of(update)
 
         return bool(message and message.topic and message.topic.id in self)

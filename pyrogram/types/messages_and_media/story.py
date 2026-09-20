@@ -18,7 +18,7 @@
 
 from __future__ import annotations as _annotations
 
-from typing import TYPE_CHECKING, BinaryIO
+from typing import TYPE_CHECKING, BinaryIO, cast
 
 import pyrogram
 from pyrogram import enums, raw, types, utils
@@ -228,12 +228,14 @@ class Story(Object, Update):
     async def _parse(
         client: pyrogram.Client,
         story: raw.types.StoryItem,
-        peer: raw.base.Peer,
+        peer: raw.base.Peer | raw.base.InputPeer,
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
     ) -> Story:
         if isinstance(peer, raw.types.InputPeerSelf):
-            if client.me:
+            # `me.raw` can hold a bare `UserStatus`; only a full raw user can seed
+            #  the parse map.
+            if client.me and isinstance(client.me.raw, raw.types.User):
                 peer_id = client.me.id
                 users.update({peer_id: client.me.raw})
             else:
@@ -242,7 +244,10 @@ class Story(Object, Update):
                 )
                 peer_id = r[0].id
                 users.update({r[0].id: r[0]})
-        elif hasattr(peer, "user_id"):
+        elif isinstance(
+            peer,
+            (raw.types.PeerUser, raw.types.InputPeerUser, raw.types.InputPeerUserFromMessage),
+        ):
             peer_id = peer.user_id
 
             if peer_id not in users:
@@ -250,7 +255,14 @@ class Story(Object, Update):
                     raw.functions.users.GetUsers(id=[raw.types.InputPeerSelf(), peer])
                 )
                 users.update({i.id: i for i in r})
-        elif hasattr(peer, "channel_id"):
+        elif isinstance(
+            peer,
+            (
+                raw.types.PeerChannel,
+                raw.types.InputPeerChannel,
+                raw.types.InputPeerChannelFromMessage,
+            ),
+        ):
             peer_id = peer.channel_id
 
             if peer_id not in chats:
@@ -2171,13 +2183,17 @@ class Story(Object, Update):
             RPCError: In case of a Telegram RPC error.
             ``ValueError``: If the message doesn't contain any downloadable media
         """
-        return await self._client.download_media(
-            message=self,
-            file_name=file_name,
-            in_memory=in_memory,
-            block=block,
-            progress=progress,
-            progress_args=progress_args,
+        # A story is a single media, so the list-returning paid-media path never fires.
+        return cast(
+            "str | BinaryIO | None",
+            await self._client.download_media(
+                message=self,
+                file_name=file_name,
+                in_memory=in_memory,
+                block=block,
+                progress=progress,
+                progress_args=progress_args,
+            ),
         )
 
     async def read(self) -> list[int]:

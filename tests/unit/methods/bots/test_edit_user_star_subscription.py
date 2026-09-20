@@ -42,7 +42,8 @@ class FakeClient(EditUserStarSubscription):
         raise _InvokeCalled(query)
 
 
-async def _restore_flag_for(*, is_canceled: bool) -> bool:
+# The wire flag is tri-state: an absent `restore` is `None`, not `False`.
+async def _restore_flag_for(*, is_canceled: bool) -> bool | None:
     client = FakeClient()
 
     with pytest.raises(_InvokeCalled) as exc_info:

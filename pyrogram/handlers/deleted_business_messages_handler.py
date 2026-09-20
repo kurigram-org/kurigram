@@ -64,7 +64,9 @@ class DeletedBusinessMessagesHandler(Handler[DeletedBusinessMessagesCallbackType
     ) -> None:
         super().__init__(callback, filters)
 
-    async def check(self, client: pyrogram.Client, messages: list[types.Message]) -> bool:
+    # The dispatcher pairs this handler class with a list of deleted messages, never a
+    #  single update, so the narrowing is the real contract.
+    async def check(self, client: pyrogram.Client, messages: list[types.Message]) -> bool:  # ty: ignore[invalid-method-override]
         # Every message should be checked, if at least one matches the filter True is returned
         # otherwise, or if the list is empty, False is returned
         for message in messages:

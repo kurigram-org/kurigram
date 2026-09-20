@@ -29,9 +29,9 @@ import inspect
 import re
 import sys
 import typing
-from typing import Final
-from re import Pattern
 from collections.abc import Callable, Iterator
+from re import Pattern
+from typing import Final
 
 import pyrogram
 from pyrogram import handlers, types
@@ -114,11 +114,22 @@ def documented_by(handler: type[handlers.Handler]) -> set[str]:
 
 
 def handlers_with_an_update() -> list[tuple[str, str]]:
-    return [
-        (handler.__name__, handed_to(handler))
-        for handler in handler_classes()
-        if handler.__name__ not in _TAKES_NO_PARSED_UPDATE
-    ]
+    pairs: list[tuple[str, str]] = []
+
+    for handler in handler_classes():
+        if handler.__name__ in _TAKES_NO_PARSED_UPDATE:
+            continue
+
+        handed = handed_to(handler)
+
+        # `_TAKES_NO_PARSED_UPDATE` lists exactly the handlers `handed_to` has nothing for.
+        if handed is None:
+            msg = f"{handler.__name__} hands its callback no update"
+            raise ValueError(msg)
+
+        pairs.append((handler.__name__, handed))
+
+    return pairs
 
 
 def test_every_handler_is_handed_an_update() -> None:

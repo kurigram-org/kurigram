@@ -18,8 +18,9 @@
 
 from __future__ import annotations as _annotations
 
-from pyrogram import raw
+from typing import Final
 
+from pyrogram import raw
 
 ZERO_SECRET_CHAT_ID = -2000000000000
 ZERO_CHANNEL_ID = -1000000000000
@@ -29,6 +30,28 @@ MIN_MONOFORUM_CHANNEL_ID = 1000000000000 + (1 << 31) + 1
 MAX_MONOFORUM_CHANNEL_ID = 3000000000000
 MAX_USER_ID = (1 << 40) - 1
 MAX_CHAT_ID = 999999999999
+
+# The constructors of `Peer`/`InputPeer`/`RequestedPeer` that carry each id attribute;
+#  `isinstance` over them is what lets a type checker narrow the attribute type.
+_PEERS_WITH_A_USER_ID: Final = (
+    raw.types.PeerUser,
+    raw.types.InputPeerUser,
+    raw.types.InputPeerUserFromMessage,
+    raw.types.RequestedPeerUser,
+)
+
+_PEERS_WITH_A_CHAT_ID: Final = (
+    raw.types.PeerChat,
+    raw.types.InputPeerChat,
+    raw.types.RequestedPeerChat,
+)
+
+_PEERS_WITH_A_CHANNEL_ID: Final = (
+    raw.types.PeerChannel,
+    raw.types.InputPeerChannel,
+    raw.types.InputPeerChannelFromMessage,
+    raw.types.RequestedPeerChannel,
+)
 
 
 def get_raw_peer_id(
@@ -50,13 +73,13 @@ def get_raw_peer_id(
         elif 0 < peer <= MAX_USER_ID:
             return peer
     else:
-        if hasattr(peer, "user_id"):
+        if isinstance(peer, _PEERS_WITH_A_USER_ID):
             return peer.user_id
 
-        if hasattr(peer, "chat_id"):
+        if isinstance(peer, _PEERS_WITH_A_CHAT_ID):
             return peer.chat_id
 
-        if hasattr(peer, "channel_id"):
+        if isinstance(peer, _PEERS_WITH_A_CHANNEL_ID):
             return peer.channel_id
 
     return None
@@ -64,7 +87,7 @@ def get_raw_peer_id(
 
 def get_peer_id(peer: raw.base.Peer | raw.base.InputPeer | raw.base.RequestedPeer) -> int:
     """Get the non-raw peer id from a Peer object"""
-    if hasattr(peer, "user_id"):
+    if isinstance(peer, _PEERS_WITH_A_USER_ID):
         return peer.user_id
 
     if isinstance(peer, (raw.types.PeerChat, raw.types.InputPeerChat, raw.types.RequestedPeerChat)):

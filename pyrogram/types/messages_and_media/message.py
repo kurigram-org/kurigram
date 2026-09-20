@@ -1537,7 +1537,12 @@ class Message(Object, Update):
 
             if parsed_topic:
                 parsed_message.topic = parsed_topic
-            elif client.fetch_topics and client.me and not client.me.is_bot:
+            elif (
+                client.fetch_topics
+                and client.me
+                and not client.me.is_bot
+                and parsed_message.chat.id is not None
+            ):
                 try:
                     parsed_message.topic = await client.get_forum_topics_by_id(
                         chat_id=parsed_message.chat.id,
@@ -1957,7 +1962,12 @@ class Message(Object, Update):
 
             if parsed_topic:
                 parsed_message.topic = parsed_topic
-            elif client.fetch_topics and client.me and not client.me.is_bot:
+            elif (
+                client.fetch_topics
+                and client.me
+                and not client.me.is_bot
+                and parsed_message.chat.id is not None
+            ):
                 try:
                     parsed_message.topic = await client.get_forum_topics_by_id(
                         chat_id=parsed_message.chat.id,
@@ -1980,7 +1990,12 @@ class Message(Object, Update):
 
             if parsed_topic:
                 parsed_message.topic = parsed_topic
-            elif client.fetch_topics and client.me and not client.me.is_bot:
+            elif (
+                client.fetch_topics
+                and client.me
+                and not client.me.is_bot
+                and parsed_message.chat.id is not None
+            ):
                 try:
                     parsed_message.topic = await client.get_direct_messages_topics_by_id(
                         chat_id=parsed_message.chat.id,
@@ -2300,7 +2315,12 @@ class Message(Object, Update):
 
             if parsed_topic:
                 parsed_message.topic = parsed_topic
-            elif client.fetch_topics and client.me and not client.me.is_bot:
+            elif (
+                client.fetch_topics
+                and client.me
+                and not client.me.is_bot
+                and parsed_message.chat.id is not None
+            ):
                 try:
                     parsed_message.topic = await client.get_forum_topics_by_id(
                         chat_id=parsed_message.chat.id,
@@ -2366,7 +2386,10 @@ class Message(Object, Update):
                     )
                 elif client.fetch_replies and not parsed_message.reply_to_message:
                     with contextlib.suppress(ChannelPrivate, ChannelInvalid, MessageIdsEmpty):
-                        parsed_message.reply_to_message = await client.get_messages(
+                        # `reply_to_params` holds a valid `(chat_id, message_ids)` or
+                        #  `(chat_id, reply=True)` shape per branch above; a dict unpack
+                        #  cannot be matched against the overloads statically.
+                        parsed_message.reply_to_message = await client.get_messages(  # ty: ignore[no-matching-overload]
                             replies=replies - 1, **reply_to_params
                         )
 
@@ -9005,6 +9028,11 @@ class Message(Object, Update):
         Raises:
             RPCError: In case of a Telegram RPC error.
         """
+        # A message the server delivered always names its chat; without one there is
+        #  nowhere to forward from.
+        if self.chat is None or self.chat.id is None:
+            raise ValueError("This message has no chat to forward from")
+
         return await self._client.forward_messages(
             chat_id=chat_id,
             from_chat_id=self.chat.id,

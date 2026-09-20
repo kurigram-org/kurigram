@@ -127,3 +127,5 @@ class EditStoryPrivacy:
                 return await types.Story._parse(
                     self, i.story, i.peer, {i.id: i for i in r.users}, {i.id: i for i in r.chats}
                 )
+
+        raise ValueError("The response contains no story update")

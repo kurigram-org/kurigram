@@ -390,6 +390,10 @@ class SendAnimation:
 
                     r = await self.invoke(rpc, business_connection_id=business_connection_id)
                 except FilePartMissing as e:
+                    # The error names the missing part; without it there is nothing to resave.
+                    if e.file_part is None:
+                        raise
+
                     await self.save_file(animation, file_id=file.id, file_part=e.file_part)
                 else:
                     for i in r.updates:

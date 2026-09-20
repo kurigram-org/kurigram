@@ -48,7 +48,7 @@ class Link(str):
         self.style = style
 
     @staticmethod
-    def format(url: str, text: str, style: enums.ParseMode):
+    def _format(url: str, text: str, style: enums.ParseMode) -> str:
         if style == enums.ParseMode.MARKDOWN:
             fmt = Link.MARKDOWN
         else:
@@ -58,13 +58,13 @@ class Link(str):
 
     # noinspection PyArgumentList
     def __new__(cls, url, text, style):
-        return str.__new__(cls, Link.format(url, text, style))
+        return str.__new__(cls, Link._format(url, text, style))
 
     def __call__(self, other: str | None = None, *, style: str | None = None):
-        return Link.format(self.url, other or self.text, style or self.style)
+        return Link._format(self.url, other or self.text, style or self.style)
 
     def __str__(self):
-        return Link.format(self.url, self.text, self.style)
+        return Link._format(self.url, self.text, self.style)
 
 
 class User(Object, Update):

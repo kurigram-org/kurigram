@@ -22,8 +22,8 @@ import base64
 import ipaddress
 import re
 from dataclasses import dataclass
-from typing import ClassVar, Final, Literal, NamedTuple, TypedDict
 from re import Pattern
+from typing import ClassVar, Final, Literal, NamedTuple, TypedDict
 from urllib.parse import parse_qs, urlsplit
 
 from pyrogram.enums import ProxyScheme
@@ -136,7 +136,13 @@ def uses_random_padding(proxy: Proxy | None) -> bool:
     return len(proxy.secret) == MARKED_SECRET_SIZE
 
 
-_PROXY_TYPES: Final[tuple[type, ...]] = (SOCKS4Proxy, SOCKS5Proxy, HTTPProxy, MTProxy, WebProxy)
+_PROXY_TYPES: Final[tuple[type[Proxy], ...]] = (
+    SOCKS4Proxy,
+    SOCKS5Proxy,
+    HTTPProxy,
+    MTProxy,
+    WebProxy,
+)
 
 # Schemes python_socks dials for us; the rest need a transport of their own.
 _DIALED_PROXY_TYPES: Final[dict[ProxyScheme, type[SOCKS4Proxy | SOCKS5Proxy | HTTPProxy]]] = {

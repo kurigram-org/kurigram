@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 
 class AddContact:
@@ -82,4 +82,4 @@ class AddContact:
             )
         )
 
-        return await types.User._parse(self, r.users[0])
+        return utils.require_parsed(await types.User._parse(self, r.users[0]))

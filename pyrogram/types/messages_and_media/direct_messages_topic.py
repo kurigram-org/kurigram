@@ -88,7 +88,7 @@ class DirectMessagesTopic(Object):
         messages: dict | None = None,
         users: dict[int, raw.base.User] | None = None,
         chats: dict[int, raw.base.Chat] | None = None,
-    ) -> DirectMessagesTopic:
+    ) -> DirectMessagesTopic | None:
         messages = messages or {}
         users = users or {}
         chats = chats or {}

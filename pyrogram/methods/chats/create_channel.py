@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 
 class CreateChannel:
@@ -49,4 +49,4 @@ class CreateChannel:
             raw.functions.channels.CreateChannel(title=title, about=description, broadcast=True)
         )
 
-        return await types.Chat._parse_chat(self, r.chats[0])
+        return utils.require_parsed(await types.Chat._parse_chat(self, r.chats[0]))

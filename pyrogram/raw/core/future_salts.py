@@ -38,8 +38,8 @@ class FutureSalts(TLObject):
         self.now = now
         self.salts = salts
 
-    @staticmethod
-    def read(data: BytesIO, *args: Any) -> FutureSalts:
+    @classmethod
+    def read(cls, data: BytesIO, *args: Any) -> FutureSalts:
         req_msg_id = Long.read(data)
         now = Int.read(data)
 

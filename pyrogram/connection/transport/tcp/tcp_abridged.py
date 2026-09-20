@@ -52,11 +52,12 @@ class TCPAbridged(TCP):
             await super().send(b"\xef", wait_for_marker=False)
         self.marker_event.set()
 
-    async def send(self, data: bytes, *args) -> None:
+    async def send(self, data: bytes, wait_for_marker: bool = True) -> None:
         length = len(data) // 4
 
         await super().send(
-            (bytes([length]) if length <= 126 else b"\x7f" + length.to_bytes(3, "little")) + data
+            (bytes([length]) if length <= 126 else b"\x7f" + length.to_bytes(3, "little")) + data,
+            wait_for_marker,
         )
 
     async def recv(self, length: int = 0) -> bytes | None:

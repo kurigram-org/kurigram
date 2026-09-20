@@ -18,8 +18,11 @@
 
 from __future__ import annotations as _annotations
 
+from typing import cast
+
 import pytest
 
+import pyrogram
 from pyrogram import raw
 from pyrogram.methods.users.get_users import GetUsers
 
@@ -37,6 +40,12 @@ class Answerer(GetUsers):
         return self.answer
 
 
+def answerer(answer: list[raw.base.User]) -> pyrogram.Client:
+    # `Answerer` subclasses only the mixin, and the `get_users` overloads pin
+    #  `self: pyrogram.Client`.
+    return cast("pyrogram.Client", Answerer(answer))
+
+
 def a_user(user_id: int) -> raw.types.User:
     # `usernames` and `restriction_reason` are `flags.N?Vector<...>`, and the generated `read()`
     #  gives an absent vector back as `[]`. `User._parse()` iterates both without guarding, so a
@@ -50,26 +59,26 @@ def a_user(user_id: int) -> raw.types.User:
 async def test_a_single_identifier_that_is_no_user_gives_nothing_back() -> None:
     # Telegram answers with an empty vector for an id that belongs to a channel, a chat or a
     #  peer this account cannot see. Indexing into it raised `IndexError` out of the method body.
-    assert await Answerer([]).get_users("a_channel_username") is None
+    assert await answerer([]).get_users("a_channel_username") is None
 
 
 @pytest.mark.asyncio
 async def test_a_single_identifier_still_gives_its_user_back() -> None:
-    user = await Answerer([a_user(42)]).get_users(42)
+    user = await answerer([a_user(42)]).get_users(42)
 
     assert user.id == 42
 
 
 @pytest.mark.asyncio
 async def test_a_list_of_identifiers_that_are_no_users_gives_an_empty_list() -> None:
-    users = await Answerer([]).get_users(["a_channel_username"])
+    users = await answerer([]).get_users(["a_channel_username"])
 
     assert users == []
 
 
 @pytest.mark.asyncio
 async def test_a_list_keeps_only_the_users_telegram_answered_with() -> None:
-    users = await Answerer([a_user(1), a_user(2)]).get_users([1, 2, 3])
+    users = await answerer([a_user(1), a_user(2)]).get_users([1, 2, 3])
 
     assert [user.id for user in users] == [1, 2]
 
@@ -78,4 +87,4 @@ async def test_a_list_keeps_only_the_users_telegram_answered_with() -> None:
 async def test_a_deleted_account_arrives_as_nothing() -> None:
     # `userEmpty` is what the server sends for an account that no longer exists; `User._parse()`
     #  turns it into `None`, and that is what the single-identifier path has always returned.
-    assert await Answerer([raw.types.UserEmpty(id=42)]).get_users(42) is None
+    assert await answerer([raw.types.UserEmpty(id=42)]).get_users(42) is None

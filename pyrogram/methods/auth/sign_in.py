@@ -22,8 +22,7 @@ import logging
 import re
 
 import pyrogram
-from pyrogram import raw
-from pyrogram import types
+from pyrogram import raw, types, utils
 
 log = logging.getLogger(__name__)
 
@@ -74,4 +73,4 @@ class SignIn:
             await self.storage.user_id(r.user.id)
             await self.storage.is_bot(False)
 
-            return await types.User._parse(self, r.user)
+            return utils.require_parsed(await types.User._parse(self, r.user))

@@ -148,7 +148,7 @@ class InputSticker(Object):
         if isinstance(self.sticker, os.PathLike):
             raise FileNotFoundError(f"No such file or directory: {self.sticker}")
 
-        if re.match("^https?://", self.sticker):
+        if isinstance(self.sticker, str) and re.match("^https?://", self.sticker):
             # TODO: Add support for uploading stickers via URL
             # Maybe via urlib request 🤔🤔🤔
             raise ValueError("Stickers can't be uploaded via URL")

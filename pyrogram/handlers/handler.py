@@ -21,7 +21,7 @@ from __future__ import annotations as _annotations
 import asyncio
 import inspect
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 if TYPE_CHECKING:
     import pyrogram
@@ -52,9 +52,16 @@ class Handler(Generic[CallbackType]):
         if callable(self.filters):
             if inspect.iscoroutinefunction(self.filters.__call__):
                 return await self.filters(client, update)
+            # A sync custom filter returns `bool` directly; the executor cannot say so.
             else:
-                return await asyncio.get_running_loop().run_in_executor(
-                    client.executor, self.filters, client, update
+                return cast(
+                    "bool",
+                    await asyncio.get_running_loop().run_in_executor(
+                        client.executor,
+                        self.filters,
+                        client,
+                        update,
+                    ),
                 )
 
         return True

@@ -50,8 +50,11 @@ class Vector(bytes, TLObject):
 
         return TLObject.read(b)
 
+    # `t` is passed positionally by the generated `TLObject.read(b, Int)` dispatch and
+    #  has a default, so the override stays call-compatible; `ty` still rejects any
+    #  extra named parameter against `*args`.
     @classmethod
-    def read(cls, data: BytesIO, t: Any = None, *args: Any) -> List:
+    def read(cls, data: BytesIO, t: Any = None, *args: Any) -> List:  # ty: ignore[invalid-method-override]
         count = Int.read(data)
         left = len(data.read())
         size = (left / count) if count else 0

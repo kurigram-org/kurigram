@@ -21,7 +21,7 @@ from __future__ import annotations as _annotations
 from typing import TYPE_CHECKING
 
 import pyrogram
-from pyrogram import raw, types, utils
+from pyrogram import raw, types
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
@@ -78,7 +78,7 @@ class GetPinnedStories:
             chats = {i.id: i for i in r.chats}
 
             if isinstance(peer, raw.types.InputPeerChannel):
-                peer_id = utils.get_raw_peer_id(peer)
+                peer_id = peer.channel_id
                 if peer_id not in r.chats:
                     channel = await self.invoke(raw.functions.channels.GetChannels(id=[peer]))
                     chats.update({peer_id: channel.chats[0]})

@@ -45,6 +45,14 @@ _EXEMPTIONS: Final[dict[tuple[str, str], str]] = {
         "pyrogram/types/messages_and_media/message.py",
         "reply_markup",
     ): "`object` is the not-specified sentinel, so `None` is free to mean remove the markup.",
+    (
+        "pyrogram/storage/storage.py",
+        "value",
+    ): "`object` is the not-specified sentinel, so `None` is free to mean clear the stored value.",
+    (
+        "pyrogram/storage/sqlite_storage.py",
+        "value",
+    ): "`object` is the not-specified sentinel, so `None` is free to mean clear the stored value.",
 }
 
 

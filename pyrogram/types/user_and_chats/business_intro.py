@@ -52,7 +52,7 @@ class BusinessIntro(Object):
         self.sticker = sticker
 
     @staticmethod
-    async def _parse(client, business_intro: raw.types.BusinessIntro) -> BusinessIntro:
+    async def _parse(client, business_intro: raw.types.BusinessIntro) -> BusinessIntro | None:
         if not business_intro:
             return None
 

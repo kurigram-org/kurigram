@@ -29,8 +29,10 @@ if TYPE_CHECKING:
 class Int(bytes, TLObject):
     SIZE = 4
 
+    # `signed` has a default, so the override stays call-compatible with the base's
+    #  `*args`; `ty` still rejects any extra named parameter against `*args`.
     @classmethod
-    def read(cls, data: BytesIO, signed: bool = True, *args: Any) -> int:
+    def read(cls, data: BytesIO, signed: bool = True, *args: Any) -> int:  # ty: ignore[invalid-method-override]
         return int.from_bytes(data.read(cls.SIZE), "little", signed=signed)
 
     def __new__(cls, value: int, signed: bool = True) -> bytes:

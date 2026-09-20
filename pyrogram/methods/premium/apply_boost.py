@@ -19,15 +19,14 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
-from pyrogram import types
+from pyrogram import raw, types
 
 
 class ApplyBoost:
     async def apply_boost(
         self: pyrogram.Client,
         chat_id: int | str,
-    ) -> bool:
+    ) -> types.MyBoost:
         """Apply boost
 
         .. include:: /_includes/usable-by/users.rst

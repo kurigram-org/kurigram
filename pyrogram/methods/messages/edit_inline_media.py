@@ -24,12 +24,9 @@ import os
 import re
 from pathlib import Path
 
-
 import pyrogram
-from pyrogram import raw
-from pyrogram import types
-from pyrogram import utils
-from pyrogram.errors import RPCError, MediaEmpty
+from pyrogram import raw, types, utils
+from pyrogram.errors import MediaEmpty, RPCError
 from pyrogram.file_id import FileType
 
 
@@ -92,7 +89,12 @@ class EditInlineMedia:
         if isinstance(media.media, os.PathLike) and not is_uploaded_file:
             raise FileNotFoundError(f"No such file or directory: {media.media}")
 
-        is_external_url = not is_uploaded_file and re.match("^https?://", media.media)
+        # Only a `str` can name an external URL.
+        is_external_url = bool(
+            not is_uploaded_file
+            and isinstance(media.media, str)
+            and re.match("^https?://", media.media)
+        )
 
         if is_bytes_io and not hasattr(media.media, "name"):
             media.media.name = "media"
@@ -254,3 +256,6 @@ class EditInlineMedia:
                 if isinstance(e, MediaEmpty):
                     # Must wait due to a server race condition
                     await asyncio.sleep(1)
+
+        # Unreachable: the final retry either returns or re-raises above.
+        raise MediaEmpty

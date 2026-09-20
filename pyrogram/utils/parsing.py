@@ -18,14 +18,19 @@
 
 from __future__ import annotations as _annotations
 
-from enum import Enum
-from typing import Any
+from typing import TypeVar
+
+ParsedType = TypeVar("ParsedType")
 
 
-class AutoName(Enum):
-    @staticmethod
-    def _generate_next_value_(name: str, start: int, count: int, last_values: list[Any]) -> str:
-        return name.lower()
+def require_parsed(value: ParsedType | None) -> ParsedType:
+    """Unwrap a ``_parse`` result that the calling context guarantees to be present.
 
-    def __repr__(self):
-        return f"pyrogram.enums.{self}"
+    The ``_parse`` helpers return ``None`` for empty raw objects (``UserEmpty``,
+    ``ChatEmpty``, ...). Where Telegram must return the full object, a ``None``
+    means a broken response and is raised instead of leaked to the caller.
+    """
+    if value is None:
+        raise ValueError("Telegram returned an empty object where a full one was expected")
+
+    return value

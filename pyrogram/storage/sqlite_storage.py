@@ -468,32 +468,32 @@ class SQLiteStorage(Storage):
     # `object` (the class, not an instance) is the sentinel for "no value passed"
     #  (read the column instead of writing to it), so every accessor's parameter type
     #  has to include it alongside the column's real type.
-    async def dc_id(self, value: int | type[object] = object):
+    async def dc_id(self, value: int | None | type[object] = object) -> int | None:
         return await self._accessor("sessions", "dc_id", value)
 
-    async def server_address(self, value: str | type[object] = object):
+    async def server_address(self, value: str | None | type[object] = object) -> str | None:
         return await self._accessor("sessions", "server_address", value)
 
-    async def port(self, value: int | type[object] = object):
+    async def port(self, value: int | None | type[object] = object) -> int | None:
         return await self._accessor("sessions", "port", value)
 
-    async def api_id(self, value: int | type[object] = object):
+    async def api_id(self, value: int | None | type[object] = object) -> int | None:
         return await self._accessor("sessions", "api_id", value)
 
-    async def test_mode(self, value: bool | type[object] = object):
+    async def test_mode(self, value: bool | None | type[object] = object) -> bool | None:
         return await self._accessor("sessions", "test_mode", value)
 
-    async def auth_key(self, value: bytes | type[object] = object):
+    async def auth_key(self, value: bytes | None | type[object] = object) -> bytes | None:
         return await self._accessor("sessions", "auth_key", value)
 
-    async def date(self, value: int | type[object] = object):
+    async def date(self, value: int | None | type[object] = object) -> int | None:
         return await self._accessor("sessions", "date", value)
 
-    async def user_id(self, value: int | type[object] = object):
+    async def user_id(self, value: int | None | type[object] = object) -> int | None:
         return await self._accessor("sessions", "user_id", value)
 
-    async def is_bot(self, value: bool | type[object] = object):
+    async def is_bot(self, value: bool | None | type[object] = object) -> bool | None:
         return await self._accessor("sessions", "is_bot", value)
 
-    async def version(self, value: int | type[object] = object):
+    async def version(self, value: int | None | type[object] = object) -> int | None:
         return await self._accessor("version", "number", value)

@@ -37,8 +37,8 @@ class GzipPacked(TLObject):
     def __init__(self, packed_data: TLObject):
         self.packed_data = packed_data
 
-    @staticmethod
-    def read(data: BytesIO, *args: Any) -> GzipPacked:
+    @classmethod
+    def read(cls, data: BytesIO, *args: Any) -> GzipPacked:
         # Return the Object itself instead of a GzipPacked wrapping it
         return cast("GzipPacked", TLObject.read(BytesIO(decompress(Bytes.read(data)))))
 

@@ -38,8 +38,8 @@ class Message(TLObject):
         self.length = length
         self.body = body
 
-    @staticmethod
-    def read(data: BytesIO, *args: Any) -> Message:
+    @classmethod
+    def read(cls, data: BytesIO, *args: Any) -> Message:
         msg_id = Long.read(data)
         seq_no = Int.read(data)
         length = Int.read(data)

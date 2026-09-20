@@ -56,9 +56,9 @@ class TCPIntermediatePadded(TCP):
             await super().send(INTERMEDIATE_PADDED_OBFUSCATE_TAG, wait_for_marker=False)
         self.marker_event.set()
 
-    async def send(self, data: bytes, *args) -> None:
+    async def send(self, data: bytes, wait_for_marker: bool = True) -> None:
         padding = os.urandom(os.urandom(1)[0] & 0x0F)
-        await super().send(pack("<i", len(data) + len(padding)) + data + padding)
+        await super().send(pack("<i", len(data) + len(padding)) + data + padding, wait_for_marker)
 
     async def recv(self, length: int = 0) -> bytes | None:
         length = await super().recv(4)

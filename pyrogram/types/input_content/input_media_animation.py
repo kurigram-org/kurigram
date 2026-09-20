@@ -33,9 +33,10 @@ from .input_media import InputMedia
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from pyrogram._typing import PathType
+
     from ... import enums
     from ..messages_and_media import MessageEntity
-    from pyrogram._typing import PathType
 
 
 class InputMediaAnimation(InputMedia):
@@ -160,6 +161,11 @@ class InputMediaAnimation(InputMedia):
 
         if isinstance(self.media, os.PathLike):
             raise FileNotFoundError(f"No such file or directory: {self.media}")
+
+        # Only a `str` can name a URL or a file id; anything else was consumed or
+        #  rejected above.
+        if not isinstance(self.media, str):
+            raise TypeError(f"media must be a path, URL, or file id, got: {self.media!r}")
 
         if re.match("^https?://", self.media):
             return raw.types.InputMediaDocumentExternal(

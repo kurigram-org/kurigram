@@ -49,12 +49,13 @@ class TCPFull(TCP):
         self.seq_no = 0
         self.marker_event.set()
 
-    async def send(self, data: bytes, *args) -> None:
+    # This transport never waited for the marker, so `False` stays its default.
+    async def send(self, data: bytes, wait_for_marker: bool = False) -> None:
         data = pack("<II", len(data) + 12, self.seq_no) + data
         data += pack("<I", crc32(data))
         self.seq_no += 1
 
-        await super().send(data, wait_for_marker=False)
+        await super().send(data, wait_for_marker)
 
     async def recv(self, length: int = 0) -> bytes | None:
         length_bytes = await super().recv(4)

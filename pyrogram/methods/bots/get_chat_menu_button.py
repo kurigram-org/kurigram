@@ -19,8 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
-from pyrogram import types
+from pyrogram import raw, types
 
 
 class GetChatMenuButton:
@@ -57,3 +56,5 @@ class GetChatMenuButton:
 
         if isinstance(r, raw.types.BotMenuButton):
             return types.MenuButtonWebApp(text=r.text, web_app=types.WebAppInfo(url=r.url))
+
+        raise ValueError(f"Unknown menu button type {r.__class__.__name__}")

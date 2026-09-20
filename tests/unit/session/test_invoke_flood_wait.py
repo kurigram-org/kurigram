@@ -19,11 +19,15 @@
 from __future__ import annotations as _annotations
 
 import asyncio
+from typing import TYPE_CHECKING
 
 import pytest
 
 from pyrogram.errors import FloodWait
 from pyrogram.session.session import Session
+
+if TYPE_CHECKING:
+    from pyrogram.raw.core import TLObject
 
 
 class FakeClient:
@@ -40,7 +44,12 @@ class _Session(Session):
         self.seconds = seconds
         self.send_calls = 0
 
-    async def send(self, data, timeout=Session.WAIT_TIMEOUT):
+    async def send(
+        self,
+        data: TLObject,
+        wait_response: bool = True,
+        timeout: float = Session.WAIT_TIMEOUT,
+    ) -> TLObject:
         self.send_calls += 1
         raise FloodWait(self.seconds)
 

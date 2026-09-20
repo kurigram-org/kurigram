@@ -19,14 +19,14 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw
 
 
 class ExportChatInviteLink:
     async def export_chat_invite_link(
         self: pyrogram.Client,
         chat_id: int | str,
-    ) -> types.ChatInviteLink:
+    ) -> str:
         """Generate a new primary invite link for a chat; any previously generated primary link is revoked.
 
         You must be an administrator in the chat for this to work and must have the appropriate admin rights.
