@@ -87,7 +87,7 @@ Thank you for supporting Kurigram ❤️
 - **Ready**: Install Kurigram with pip and start building your applications right away.
 - **Easy**: Makes the Telegram API simple and intuitive, while still allowing advanced usages.
 - **Elegant**: Low-level details are abstracted and re-presented in a more convenient way.
-- **Fast**: Boosted up by [TgCrypto](https://github.com/pyrogram/tgcrypto), a high-performance cryptography library written in C.
+- **Fast**: Boosted up by [WarpCrypto](https://github.com/rjriajul/WarpCrypto), a high-performance cryptography library written in Rust.
 - **Type-hinted**: Types and methods are all type-hinted, enabling excellent editor support.
 - **Async**: Fully asynchronous (also usable synchronously if wanted, for convenience).
 - **Powerful**: Full access to Telegram's API to execute any official client action and more.
@@ -109,7 +109,7 @@ pip install https://github.com/kurigram-org/kurigram/archive/dev.zip --force-rei
 Optional dependencies
 
 ``` bash
-pip install kurigram[fast]     # TgCrypto and uvloop for better performance
+pip install kurigram[fast]     # WarpCrypto and uvloop for better performance
 pip install kurigram[qrcode]   # QR code login support
 ```
 

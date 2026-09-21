@@ -71,10 +71,7 @@ Community = "https://t.me/kurigram_chat"
 
 [project.optional-dependencies]
 fast = [
-    # 1.2.1 shipped no sdist and no wheel past `cp38`, so it cannot be installed on a
-    #  current interpreter at all, while 1.2.0 below it and 1.2.2 above it both can. The
-    #  floor sits above that hole rather than at the oldest working release.
-    "tgcrypto>=1.2.2",
+    "warpcrypto>=2.0.0; platform_python_implementation == 'CPython'",
     "uvloop>=0.21.0; sys_platform == 'darwin' or sys_platform == 'linux'",
 ]
 

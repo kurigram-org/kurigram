@@ -23,25 +23,30 @@ import logging
 log = logging.getLogger(__name__)
 
 try:
-    import tgcrypto  # ty: ignore[unresolved-import] - optional dependency, extra `fast`
+    try:
+        import warpcrypto as _backend  # ty: ignore[unresolved-import]
 
-    log.info("Using TgCrypto")
+        log.info("Using WarpCrypto")
+    except ImportError:
+        import tgcrypto as _backend  # ty: ignore[unresolved-import]
+
+        log.info("Using TgCrypto")
 
     def ige256_encrypt(data: bytes, key: bytes, iv: bytes) -> bytes:
-        return tgcrypto.ige256_encrypt(data, key, iv)
+        return _backend.ige256_encrypt(data, key, iv)
 
     def ige256_decrypt(data: bytes, key: bytes, iv: bytes) -> bytes:
-        return tgcrypto.ige256_decrypt(data, key, iv)
+        return _backend.ige256_decrypt(data, key, iv)
 
     def ctr256_encrypt(
         data: bytes, key: bytes, iv: bytearray, state: bytearray | None = None
     ) -> bytes:
-        return tgcrypto.ctr256_encrypt(data, key, iv, state or bytearray(1))
+        return _backend.ctr256_encrypt(data, key, iv, state or bytearray(1))
 
     def ctr256_decrypt(
         data: bytes, key: bytes, iv: bytearray, state: bytearray | None = None
     ) -> bytes:
-        return tgcrypto.ctr256_decrypt(data, key, iv, state or bytearray(1))
+        return _backend.ctr256_decrypt(data, key, iv, state or bytearray(1))
 
     def xor(a: bytes, b: bytes) -> bytes:
         return int.to_bytes(
@@ -53,7 +58,7 @@ except ImportError:
     import pyaes
 
     log.warning(
-        "TgCrypto is missing! "
+        "Neither WarpCrypto nor TgCrypto is installed! "
         "Pyrogram will work the same, but at a much slower speed. "
         "More info: https://docs.pyrogram.org/topics/speedups"
     )
