@@ -49,7 +49,7 @@ class UploadStickerFile:
                 Format of the sticker.
 
         Returns:
-            :obj:`~pyrogram.raw.types.InputDocument`: A uploaded sticker object is returned.
+            :obj:`~pyrogram.types.File`: A uploaded sticker object is returned.
         """
         sticker_set_item = await types.InputSticker(
             sticker=sticker,
