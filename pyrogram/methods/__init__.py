@@ -19,8 +19,8 @@
 from .account import Account
 from .advanced import Advanced
 from .auth import Auth
-from .business import Business
 from .bots import Bots
+from .business import Business
 from .chats import Chats
 from .contacts import Contacts
 from .decorators import Decorators
@@ -31,8 +31,9 @@ from .password import Password
 from .payments import Payments
 from .phone import Phone
 from .premium import Premium
-from .users import Users
+from .stickers import Stickers
 from .stories import Stories
+from .users import Users
 from .utilities import Utilities
 
 
@@ -40,20 +41,21 @@ class Methods(
     Account,
     Advanced,
     Auth,
-    Business,
     Bots,
+    Business,
+    Chats,
     Contacts,
+    Decorators,
+    Folders,
+    InviteLinks,
+    Messages,
     Password,
     Payments,
     Phone,
     Premium,
-    Chats,
-    Users,
+    Stickers,
     Stories,
-    Messages,
-    Decorators,
-    Folders,
+    Users,
     Utilities,
-    InviteLinks,
 ):
     pass

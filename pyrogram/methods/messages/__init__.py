@@ -44,7 +44,6 @@ from .forward_messages import ForwardMessages
 from .get_available_effects import GetAvailableEffects
 from .get_chat_history import GetChatHistory
 from .get_chat_history_count import GetChatHistoryCount
-from .get_custom_emoji_stickers import GetCustomEmojiStickers
 from .get_direct_messages_chat_topic_history import GetDirectMessagesChatTopicHistory
 from .get_discussion_message import GetDiscussionMessage
 from .get_discussion_replies import GetDiscussionReplies
@@ -53,7 +52,6 @@ from .get_main_web_app import GetMainWebApp
 from .get_media_group import GetMediaGroup
 from .get_messages import GetMessages
 from .get_scheduled_messages import GetScheduledMessages
-from .get_stickers import GetStickers
 from .get_user_personal_chat_messages import GetUserPersonalChatMessages
 from .get_web_app_link_url import GetWebAppLinkUrl
 from .get_web_app_url import GetWebAppUrl
@@ -130,7 +128,6 @@ class Messages(
     GetMediaGroup,
     GetMessages,
     GetScheduledMessages,
-    GetStickers,
     GetUserPersonalChatMessages,
     GetWebAppLinkUrl,
     GetWebAppUrl,
@@ -197,7 +194,6 @@ class Messages(
     SummarizeMessage,
     TranslateMessageText,
     TranslateText,
-    GetCustomEmojiStickers,
     GetDirectMessagesChatTopicHistory,
 ):
     pass

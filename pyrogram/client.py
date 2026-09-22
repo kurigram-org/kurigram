@@ -28,7 +28,6 @@ import re
 import shutil
 import sys
 import time
-from collections import OrderedDict
 from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from hashlib import sha256
@@ -239,6 +238,10 @@ class Client(Methods):
             Set the maximum size of the topic cache.
             Defaults to 1000.
 
+        max_sticker_set_name_cache_size (``int``, *optional*):
+            Set the maximum size of the sticker set name cache.
+            Defaults to 250.
+
         storage_engine (:obj:`~pyrogram.storage.Storage`, *optional*):
             Pass an instance of your own implementation of session storage engine.
             Useful when you want to store your session in databases like Mongo, Redis, etc.
@@ -304,6 +307,7 @@ class Client(Methods):
     MAX_CONCURRENT_TRANSMISSIONS = 1
     MAX_MESSAGE_CACHE_SIZE = 1000
     MAX_TOPIC_CACHE_SIZE = 1000
+    MAX_STICKER_SET_NAME_CACHE_SIZE = 250
 
     mimetypes = MimeTypes()
     with (Path(__file__).parent / "mime_types.txt").open(encoding="utf-8") as mime_types:
@@ -341,6 +345,7 @@ class Client(Methods):
         max_concurrent_transmissions: int = MAX_CONCURRENT_TRANSMISSIONS,
         max_message_cache_size: int = MAX_MESSAGE_CACHE_SIZE,
         max_topic_cache_size: int = MAX_TOPIC_CACHE_SIZE,
+        max_sticker_set_name_cache_size: int = MAX_STICKER_SET_NAME_CACHE_SIZE,
         storage_engine: Storage | None = None,
         client_platform: enums.ClientPlatform = enums.ClientPlatform.OTHER,
         link_preview_options: LinkPreviewOptions | None = None,
@@ -384,6 +389,7 @@ class Client(Methods):
         self.max_concurrent_transmissions = max_concurrent_transmissions
         self.max_message_cache_size = max_message_cache_size
         self.max_topic_cache_size = max_topic_cache_size
+        self.max_sticker_set_name_cache_size = max_sticker_set_name_cache_size
         self.client_platform = client_platform
         self.link_preview_options = link_preview_options
         self.fetch_replies = fetch_replies
@@ -441,8 +447,9 @@ class Client(Methods):
 
         self.message_split_ranges: list[raw.base.MessageRange] | None = None
 
-        self.message_cache = Cache(self.max_message_cache_size)
-        self.topic_cache = Cache(self.max_topic_cache_size)
+        self.message_cache = utils.Cache(self.max_message_cache_size)
+        self.topic_cache = utils.Cache(self.max_topic_cache_size)
+        self.sticker_set_name_cache = utils.Cache(self.max_sticker_set_name_cache_size)
 
         # Sometimes, for some reason, the server will stop sending updates and will only respond to pings.
         # This watchdog will invoke updates.GetState in order to wake up the server and enable it sending updates again
@@ -494,6 +501,7 @@ class Client(Methods):
 
         self.message_cache.reset_lock()
         self.topic_cache.reset_lock()
+        self.sticker_set_name_cache.reset_lock()
 
     async def updates_watchdog(self):
         while True:
@@ -1703,46 +1711,3 @@ class Client(Methods):
 
     def guess_extension(self, mime_type: str) -> str | None:
         return self.mimetypes.guess_extension(mime_type)
-
-
-class Cache:
-    def __init__(self, capacity: int):
-        if capacity <= 0:
-            raise ValueError("capacity must be greater than 0")
-
-        self.capacity = capacity
-        self._cache: OrderedDict[Any, Any] = OrderedDict()
-        self._lock = asyncio.Lock()
-
-    # Rebuilds the lock and keeps what is cached. Why it has to be rebuilt at all is on
-    #  `Client._rebuild_loop_bound_state`.
-    def reset_lock(self) -> None:
-        self._lock = asyncio.Lock()
-
-    def __len__(self) -> int:
-        return len(self._cache)
-
-    def __contains__(self, key: Any) -> bool:
-        return key in self._cache
-
-    def __bool__(self) -> bool:
-        return bool(self._cache)
-
-    def __repr__(self) -> str:
-        return f"{type(self).__name__}(capacity={self.capacity}, size={len(self)})"
-
-    async def get(self, key: Any, default: Any = None) -> Any:
-        async with self._lock:
-            if key not in self._cache:
-                return default
-
-            self._cache.move_to_end(key)
-            return self._cache[key]
-
-    async def set(self, key: Any, value: Any) -> None:
-        async with self._lock:
-            self._cache[key] = value
-            self._cache.move_to_end(key)
-
-            if len(self._cache) > self.capacity:
-                self._cache.popitem(last=False)
