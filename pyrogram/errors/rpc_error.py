@@ -101,6 +101,10 @@ class RPCError(Exception):
     ``int`` | ``str`` | ``None``: What Telegram embedded in the message of a known error: the
     number ``FLOOD_WAIT_42`` carries, or the text after one of the verification prefixes.
     ``None`` when the message carries no parameter, and on every unknown error.
+
+    On an error the library raises itself rather than reading off the wire, the identifier the
+    call was made with: :meth:`~pyrogram.Client.get_user` raises ``PeerIdInvalid(value=42)``
+    for an id that belongs to no user, and ``42`` is what names it here.
     """
 
     raw: raw.types.RpcError | None

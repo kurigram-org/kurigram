@@ -44,6 +44,7 @@ from .get_chat_members import GetChatMembers
 from .get_chat_members_count import GetChatMembersCount
 from .get_chat_online_count import GetChatOnlineCount
 from .get_chat_settings import GetChatSettings
+from .get_chats import GetChats
 from .get_chats_for_folder_invite_link import GetChatsForFolderInviteLink
 from .get_dialogs import GetDialogs
 from .get_dialogs_count import GetDialogsCount
@@ -109,6 +110,7 @@ from .unpin_all_forum_topic_messages import (
 
 class Chats(
     GetChat,
+    GetChats,
     GetChatsForFolderInviteLink,
     ReopenGeneralForumTopic,
     UnhideGeneralForumTopic,

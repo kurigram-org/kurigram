@@ -284,6 +284,7 @@ def pyrogram_api():
             send_checklist
             delete_messages
             get_available_effects
+            get_message
             get_messages
             get_scheduled_messages
             get_stickers
@@ -361,6 +362,7 @@ def pyrogram_api():
             process_chat_has_protected_content_disable_request
             unpin_all_chat_messages
             get_chat
+            get_chats
             get_chat_member
             get_chat_members
             get_chat_members_count
@@ -433,6 +435,7 @@ def pyrogram_api():
         "users": """
         Users
             get_me
+            get_user
             get_users
             get_chat_photos
             get_chat_audios

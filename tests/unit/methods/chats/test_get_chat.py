@@ -24,17 +24,22 @@ from typing import Final
 import pytest
 
 from pyrogram import raw
+from pyrogram.errors import PeerIdInvalid
 from pyrogram.methods.chats.get_chat import GetChat
+from pyrogram.methods.chats.get_chats import GetChats
 
 _CHANNEL_ID: Final = 42
 
 
-class FakeClient(GetChat):
-    """A client whose channels.GetChannels answers with a sliced result."""
+class FakeClient(GetChat, GetChats):
+    """A client whose channels.GetChannels answers with the given chats, sliced."""
 
     INVITE_LINK_RE = re.compile(
         r"^(?:https?://)?(?:www\.)?(?:t(?:elegram)?\.(?:org|me|dog)/(?:joinchat/|\+))([\w-]+)$"
     )
+
+    def __init__(self, chats: list[raw.base.Chat]) -> None:
+        self.chats = chats
 
     async def resolve_peer(self, peer_id):
         return raw.types.InputPeerChannel(channel_id=_CHANNEL_ID, access_hash=0)
@@ -43,18 +48,20 @@ class FakeClient(GetChat):
         self, query: raw.functions.channels.GetChannels
     ) -> raw.types.messages.ChatsSlice:
         return raw.types.messages.ChatsSlice(
-            count=1,
-            chats=[
-                raw.types.Channel(
-                    id=_CHANNEL_ID,
-                    title="Channel 42",
-                    photo=raw.types.ChatPhotoEmpty(),
-                    date=0,
-                    usernames=[],
-                    restriction_reason=[],
-                )
-            ],
+            count=len(self.chats),
+            chats=self.chats,
         )
+
+
+def a_channel() -> raw.types.Channel:
+    return raw.types.Channel(
+        id=_CHANNEL_ID,
+        title="Channel 42",
+        photo=raw.types.ChatPhotoEmpty(),
+        date=0,
+        usernames=[],
+        restriction_reason=[],
+    )
 
 
 @pytest.mark.asyncio
@@ -64,7 +71,21 @@ async def test_a_sliced_channel_result_is_resolved() -> None:
     #  subscripting the raw response itself, which crashed with TypeError for
     #  ChatsSlice (it isn't a list; the chats live under its `.chats` attribute,
     #  same as on messages.Chats).
-    chat = await FakeClient().get_chat(-_CHANNEL_ID, force_full=False)
+    chat = await FakeClient([a_channel()]).get_chat(-_CHANNEL_ID, force_full=False)
 
     assert chat.id == -1000000000000 - _CHANNEL_ID
     assert chat.title == "Channel 42"
+
+
+@pytest.mark.asyncio
+async def test_a_chat_this_account_can_no_longer_see_raises() -> None:
+    # `chatEmpty` is what the server answers for a chat the account has lost access to, and
+    #  `Chat._parse_chat()` turns it into `None`. The caller asked about one chat, so there is
+    #  nothing to hand back and nothing it could do with a `None` but carry it until it crashes.
+    with pytest.raises(PeerIdInvalid) as raised:
+        await FakeClient([raw.types.ChatEmpty(id=_CHANNEL_ID)]).get_chat(
+            -_CHANNEL_ID,
+            force_full=False,
+        )
+
+    assert raised.value.value == -_CHANNEL_ID

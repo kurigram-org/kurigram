@@ -51,6 +51,7 @@ from .get_discussion_replies import GetDiscussionReplies
 from .get_discussion_replies_count import GetDiscussionRepliesCount
 from .get_main_web_app import GetMainWebApp
 from .get_media_group import GetMediaGroup
+from .get_message import GetMessage
 from .get_messages import GetMessages
 from .get_scheduled_messages import GetScheduledMessages
 from .get_stickers import GetStickers
@@ -128,6 +129,7 @@ class Messages(
     ForwardMessages,
     GetAvailableEffects,
     GetMediaGroup,
+    GetMessage,
     GetMessages,
     GetScheduledMessages,
     GetStickers,

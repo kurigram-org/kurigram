@@ -26,6 +26,7 @@ from .get_chat_photos_count import GetChatPhotosCount
 from .get_common_chats import GetCommonChats
 from .get_default_emoji_statuses import GetDefaultEmojiStatuses
 from .get_me import GetMe
+from .get_user import GetUser
 from .get_users import GetUsers
 from .set_emoji_status import SetEmojiStatus
 from .set_personal_channel import SetPersonalChannel
@@ -47,6 +48,7 @@ class Users(
     DeleteProfilePhotos,
     GetChatAudiosCount,
     GetChatAudios,
+    GetUser,
     GetUsers,
     GetMe,
     SetUsername,
