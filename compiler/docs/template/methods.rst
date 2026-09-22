@@ -60,6 +60,19 @@ Messages
 
     {messages}
 
+Stickers
+--------
+
+.. autosummary::
+    :nosignatures:
+
+    {stickers}
+
+.. toctree::
+    :hidden:
+
+    {stickers}
+
 Folders
 -------
 

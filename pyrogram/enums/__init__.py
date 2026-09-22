@@ -59,9 +59,11 @@ from .suggested_post_state import SuggestedPostState
 from .top_chat_category import TopChatCategory
 from .upgraded_gift_origin import UpgradedGiftOrigin
 from .user_status import UserStatus
+from .sticker_format import StickerFormat
 
 __all__ = [
     "BlockList",
+    "StickerFormat",
     "BusinessSchedule",
     "ButtonStyle",
     "ChatAction",

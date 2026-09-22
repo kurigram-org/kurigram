@@ -49,6 +49,7 @@ from .document import Document
 from .ephemeral_message_parameters import EphemeralMessageParameters
 from .external_reply_info import ExternalReplyInfo
 from .fact_check import FactCheck
+from .file import File
 from .formatted_text import FormattedText
 from .forum_topic import ForumTopic
 from .forum_topic_closed import ForumTopicClosed
@@ -180,6 +181,7 @@ from .saved_credentials import SavedCredentials
 from .screenshot_taken import ScreenshotTaken
 from .star_amount import StarAmount
 from .sticker import Sticker
+from .sticker_set import StickerSet
 from .story import Story
 from .story_view import StoryView
 from .stripped_thumbnail import StrippedThumbnail
@@ -247,6 +249,7 @@ __all__ = [
     "CommunityChatJoined",
     "CommunityChatRemoved",
     "Contact",
+    "StickerSet",
     "ContactRegistered",
     "CraftGiftResult",
     "CraftGiftResultFail",
@@ -258,6 +261,7 @@ __all__ = [
     "EphemeralMessageParameters",
     "ExternalReplyInfo",
     "FactCheck",
+    "File",
     "FormattedText",
     "ForumTopic",
     "ForumTopicClosed",

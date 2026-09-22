@@ -30,6 +30,7 @@ from .input_credentials_google_pay import InputCredentialsGooglePay
 from .input_credentials_new import InputCredentialsNew
 from .input_credentials_saved import InputCredentialsSaved
 from .input_invoice import InputInvoice
+from .input_sticker import InputSticker
 from .input_invoice_message import InputInvoiceMessage
 from .input_invoice_message_content import InputInvoiceMessageContent
 from .input_invoice_name import InputInvoiceName
@@ -104,6 +105,7 @@ __all__ = [
     "InputChatPhotoPrevious",
     "InputChatPhotoStatic",
     "InputChecklist",
+    "InputSticker",
     "InputContactMessageContent",
     "InputCredentials",
     "InputCredentialsApplePay",

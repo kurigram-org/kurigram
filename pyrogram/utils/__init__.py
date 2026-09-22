@@ -24,6 +24,7 @@ from .amounts import (
     get_premium_duration_month_count,
     to_nano,
 )
+from .cache import Cache
 from .console import ainput
 from .crypto import btoi, compute_password_check, compute_password_hash, itob, sha256, xor
 from .datetimes import datetime_to_timestamp, max_datetime, timestamp_to_datetime, zero_datetime
@@ -53,6 +54,7 @@ from .peers import (
 from .text import get_first_url, parse_text_entities, parse_text_with_entities, split_text
 
 __all__ = [
+    "Cache",
     "MAX_CHANNEL_ID",
     "MAX_CHAT_ID",
     "MAX_MONOFORUM_CHANNEL_ID",
