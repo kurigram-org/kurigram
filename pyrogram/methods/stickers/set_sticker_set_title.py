@@ -18,46 +18,38 @@
 
 from __future__ import annotations as _annotations
 
-import logging
 
 import pyrogram
-from pyrogram import raw
-from pyrogram import types
-
-log = logging.getLogger(__name__)
+from pyrogram import raw, types
 
 
-class GetStickers:
-    async def get_stickers(self: pyrogram.Client, short_name: str) -> list[types.Sticker]:
-        """Get all stickers from set by short name.
+class SetStickerSetTitle:
+    async def set_sticker_set_title(
+        self: pyrogram.Client, name: str, title: str
+    ) -> types.StickerSet:
+        """Use this method to set the title of a created sticker set.
 
         .. include:: /_includes/usable-by/users-bots.rst
 
         Parameters:
-            short_name (``str``):
-                Short name of the sticker set, serves as the unique identifier for the sticker set.
+            name (``str``):
+                Name of the sticker set.
+
+            title (``str``):
+                Sticker set title, 1-64 characters.
 
         Returns:
-            List of :obj:`~pyrogram.types.Sticker`: A list of stickers is returned.
+            :obj:`~pyrogram.types.StickerSet`: A updated sticker set object is returned.
 
         Example:
             .. code-block:: python
 
-                # Get all stickers by short name
-                await app.get_stickers("short_name")
-
-        Raises:
-            ValueError: In case of invalid arguments.
+                await app.set_sticker_set_title("my_sticker_set", "New title")
         """
-        sticker_set = await self.invoke(
-            raw.functions.messages.GetStickerSet(
-                stickerset=raw.types.InputStickerSetShortName(short_name=short_name), hash=0
+        r = await self.invoke(
+            raw.functions.stickers.RenameStickerSet(
+                stickerset=raw.types.InputStickerSetShortName(short_name=name), title=title
             )
         )
 
-        return types.List(
-            [
-                await types.Sticker._parse(self, doc, {type(a): a for a in doc.attributes})
-                for doc in sticker_set.documents
-            ]
-        )
+        return await types.StickerSet._parse(self, r)

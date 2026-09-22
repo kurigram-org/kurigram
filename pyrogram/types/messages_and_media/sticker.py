@@ -138,21 +138,19 @@ class Sticker(Object):
         self.thumbs = thumbs
         self.raw = raw
 
-    cache = {}
-
     @staticmethod
-    async def _get_sticker_set_name(invoke, input_sticker_set_id):
+    async def _get_sticker_set_name(client: pyrogram.Client, input_sticker_set_id: tuple[int, int]):
         try:
             set_id = input_sticker_set_id[0]
             set_access_hash = input_sticker_set_id[1]
 
-            name = Sticker.cache.get((set_id, set_access_hash), None)
+            name = await client.sticker_set_name_cache.get((set_id, set_access_hash))
 
             if name is not None:
                 return name
 
             name = (
-                await invoke(
+                await client.invoke(
                     raw.functions.messages.GetStickerSet(
                         stickerset=raw.types.InputStickerSetID(
                             id=set_id, access_hash=set_access_hash
@@ -162,11 +160,7 @@ class Sticker(Object):
                 )
             ).set.short_name
 
-            Sticker.cache[(set_id, set_access_hash)] = name
-
-            if len(Sticker.cache) > 250:
-                for _ in range(50):
-                    Sticker.cache.pop(next(iter(Sticker.cache)))
+            await client.sticker_set_name_cache.set((set_id, set_access_hash), name)
 
             return name
         except StickersetInvalid:
@@ -212,7 +206,7 @@ class Sticker(Object):
 
             if isinstance(sticker_set, raw.types.InputStickerSetID):
                 input_sticker_set_id = (sticker_set.id, sticker_set.access_hash)
-                set_name = await Sticker._get_sticker_set_name(client.invoke, input_sticker_set_id)
+                set_name = await Sticker._get_sticker_set_name(client, input_sticker_set_id)
 
         if sticker.video_thumbs:
             videos: list[raw.types.VideoSize] = []

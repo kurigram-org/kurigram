@@ -286,7 +286,6 @@ def pyrogram_api():
             get_available_effects
             get_messages
             get_scheduled_messages
-            get_stickers
             get_user_personal_chat_messages
             get_web_app_link_url
             get_web_app_url
@@ -318,7 +317,6 @@ def pyrogram_api():
             get_discussion_replies
             get_discussion_replies_count
             get_main_web_app
-            get_custom_emoji_stickers
             get_direct_messages_chat_topic_history
             delete_direct_messages_chat_topic_history
             set_direct_messages_chat_topic_is_marked_as_unread
@@ -334,6 +332,37 @@ def pyrogram_api():
             add_poll_option
             delete_poll_option
             summarize_message
+        """,
+        "stickers": """
+        Stickers
+            add_recent_sticker
+            remove_recent_sticker
+            get_recent_stickers
+            clear_recent_stickers
+            get_favorite_stickers
+            add_favorite_sticker
+            remove_favorite_sticker
+            reorder_installed_sticker_sets
+            get_owned_sticker_sets
+            add_sticker_to_set
+            change_sticker_set
+            create_new_sticker_set
+            delete_sticker_from_set
+            delete_sticker_set
+            get_custom_emoji_stickers
+            get_sticker_set
+            get_suggested_sticker_set_name
+            replace_sticker_in_set
+            search_sticker_sets
+            search_stickers
+            set_custom_emoji_sticker_set_thumbnail
+            set_sticker_set_thumbnail
+            set_sticker_emoji_list
+            set_sticker_keywords
+            set_sticker_mask_position
+            set_sticker_position_in_set
+            set_sticker_set_title
+            upload_sticker_file
         """,
         "folders": """
         Folders
@@ -783,6 +812,7 @@ def pyrogram_api():
             Document
             ExternalReplyInfo
             FactCheck
+            File
             FormattedText
             ForumTopic
             ForumTopicClosed
@@ -796,6 +826,7 @@ def pyrogram_api():
             Voice
             VideoNote
             Contact
+            StickerSet
             CraftGiftResult
             CraftGiftResultSuccess
             CraftGiftResultFail
@@ -1042,6 +1073,7 @@ def pyrogram_api():
             InputCredentialsSaved
             InputInvoice
             InputInvoiceMessage
+            InputSticker
             InputInvoiceMessageContent
             InputInvoiceName
             InputLocationMessageContent
