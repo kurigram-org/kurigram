@@ -22,7 +22,12 @@ import ast
 import pathlib
 from typing import TYPE_CHECKING, Final
 
-from tests.guards.name_resolution import REPOSITORY_ROOT, hand_written_files, is_generated
+from tests.guards.name_resolution import (
+    REPOSITORY_ROOT,
+    hand_written_files,
+    is_generated,
+    source_of,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -103,7 +108,7 @@ def optional_parameters_that_do_not_default_to_none() -> list[tuple[str, int, st
 
     for path in hand_written_files():
         relative = path.relative_to(REPOSITORY_ROOT).as_posix()
-        tree = ast.parse(path.read_text(), filename=relative)
+        tree = ast.parse(source_of(path), filename=relative)
 
         for node in ast.walk(tree):
             if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):

@@ -702,10 +702,10 @@ def pyrogram_api():
     shutil.rmtree(root, ignore_errors=True)
     os.mkdir(root)
 
-    with open(HOME + "/template/methods.rst") as f:
+    with open(HOME + "/template/methods.rst", encoding="utf-8") as f:
         template = f.read()
 
-    with open(root + "/index.rst", "w") as f:
+    with open(root + "/index.rst", "w", encoding="utf-8") as f:
         fmt_keys = {}
 
         for k, v in categories.items():
@@ -713,7 +713,7 @@ def pyrogram_api():
             fmt_keys.update({k: "\n    ".join(f"{m} <{m}>" for m in methods)})
 
             for method in methods:
-                with open(root + f"/{method}.rst", "w") as f2:
+                with open(root + f"/{method}.rst", "w", encoding="utf-8") as f2:
                     title = f"{method}()"
 
                     f2.write(title + "\n" + "=" * len(title) + "\n\n")
@@ -722,7 +722,7 @@ def pyrogram_api():
             functions = ["idle", "compose"]
 
             for func in functions:
-                with open(root + f"/{func}.rst", "w") as f2:
+                with open(root + f"/{func}.rst", "w", encoding="utf-8") as f2:
                     title = f"{func}()"
 
                     f2.write(title + "\n" + "=" * len(title) + "\n\n")
@@ -1180,10 +1180,10 @@ def pyrogram_api():
     shutil.rmtree(root, ignore_errors=True)
     os.mkdir(root)
 
-    with open(HOME + "/template/types.rst") as f:
+    with open(HOME + "/template/types.rst", encoding="utf-8") as f:
         template = f.read()
 
-    with open(root + "/index.rst", "w") as f:
+    with open(root + "/index.rst", "w", encoding="utf-8") as f:
         fmt_keys = {}
 
         for k, v in categories.items():
@@ -1193,7 +1193,7 @@ def pyrogram_api():
 
             # noinspection PyShadowingBuiltins
             for type in types:
-                with open(root + f"/{type}.rst", "w") as f2:
+                with open(root + f"/{type}.rst", "w", encoding="utf-8") as f2:
                     title = type
 
                     f2.write(title + "\n" + "=" * len(title) + "\n\n")
@@ -1401,10 +1401,10 @@ def pyrogram_api():
     shutil.rmtree(root, ignore_errors=True)
     os.mkdir(root)
 
-    with open(HOME + "/template/bound-methods.rst") as f:
+    with open(HOME + "/template/bound-methods.rst", encoding="utf-8") as f:
         template = f.read()
 
-    with open(root + "/index.rst", "w") as f:
+    with open(root + "/index.rst", "w", encoding="utf-8") as f:
         fmt_keys = {}
 
         for k, v in categories.items():
@@ -1424,7 +1424,7 @@ def pyrogram_api():
 
             # noinspection PyShadowingBuiltins
             for bm in bound_methods:
-                with open(root + f"/{bm}.rst", "w") as f2:
+                with open(root + f"/{bm}.rst", "w", encoding="utf-8") as f2:
                     title = f"{bm}()"
 
                     f2.write(title + "\n" + "=" * len(title) + "\n\n")
@@ -1486,10 +1486,10 @@ def pyrogram_api():
     shutil.rmtree(root, ignore_errors=True)
     os.mkdir(root)
 
-    with open(HOME + "/template/enums.rst") as f:
+    with open(HOME + "/template/enums.rst", encoding="utf-8") as f:
         template = f.read()
 
-    with open(root + "/cleanup.html", "w") as f:
+    with open(root + "/cleanup.html", "w", encoding="utf-8") as f:
         f.write("""<script>
   document
     .querySelectorAll("em.property")
@@ -1500,7 +1500,7 @@ def pyrogram_api():
     .forEach((elem, i) => [0, 1].includes(i) ? true : elem.remove())
 </script>""")
 
-    with open(root + "/index.rst", "w") as f:
+    with open(root + "/index.rst", "w", encoding="utf-8") as f:
         fmt_keys = {}
 
         for k, v in categories.items():
@@ -1512,7 +1512,7 @@ def pyrogram_api():
 
             # noinspection PyShadowingBuiltins
             for enum in enums:
-                with open(root + f"/{enum}.rst", "w") as f2:
+                with open(root + f"/{enum}.rst", "w", encoding="utf-8") as f2:
                     title = enum
 
                     f2.write(title + "\n" + "=" * len(title) + "\n\n")

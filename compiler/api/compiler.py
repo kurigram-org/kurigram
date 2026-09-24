@@ -62,7 +62,7 @@ namespaces_to_constructors = {}
 namespaces_to_functions = {}
 
 try:
-    with open("docs.json") as f:
+    with open("docs.json", encoding="utf-8") as f:
         docs = json.load(f)
 except FileNotFoundError:
     docs = {"type": {}, "constructor": {}, "method": {}}
@@ -240,15 +240,15 @@ def start(format: bool = False):
     shutil.rmtree(DESTINATION_PATH / "base", ignore_errors=True)
 
     with (
-        open(HOME_PATH / "source/auth_key.tl") as f1,
-        open(HOME_PATH / "source/sys_msgs.tl") as f2,
-        open(HOME_PATH / "source/main_api.tl") as f3,
+        open(HOME_PATH / "source/auth_key.tl", encoding="utf-8") as f1,
+        open(HOME_PATH / "source/sys_msgs.tl", encoding="utf-8") as f2,
+        open(HOME_PATH / "source/main_api.tl", encoding="utf-8") as f3,
     ):
         schema = (f1.read() + f2.read() + f3.read()).splitlines()
 
     with (
-        open(HOME_PATH / "template/type.txt") as f1,
-        open(HOME_PATH / "template/combinator.txt") as f2,
+        open(HOME_PATH / "template/type.txt", encoding="utf-8") as f1,
+        open(HOME_PATH / "template/combinator.txt", encoding="utf-8") as f2,
     ):
         type_tmpl = f1.read()
         combinator_tmpl = f2.read()
@@ -396,7 +396,7 @@ def start(format: bool = False):
                 f"            " + references
             )
 
-        with open(dir_path / f"{snake(module)}.py", "w") as f:
+        with open(dir_path / f"{snake(module)}.py", "w", encoding="utf-8") as f:
             f.write(
                 type_tmpl.format(
                     notice=notice,
@@ -649,7 +649,7 @@ def start(format: bool = False):
         if module == "Updates":
             module = "UpdatesT"
 
-        with open(dir_path / f"{snake(module)}.py", "w") as f:
+        with open(dir_path / f"{snake(module)}.py", "w", encoding="utf-8") as f:
             f.write(compiled_combinator)
 
         d = namespaces_to_constructors if c.section == "types" else namespaces_to_functions
@@ -660,7 +660,9 @@ def start(format: bool = False):
         d[c.namespace].append(c.name)
 
     for namespace, types in namespaces_to_types.items():
-        with open(DESTINATION_PATH / "base" / namespace / "__init__.py", "w") as f:
+        with open(
+            DESTINATION_PATH / "base" / namespace / "__init__.py", "w", encoding="utf-8"
+        ) as f:
             f.write(f"{notice}\n\n")
             f.write(f"{WARNING}\n\n")
 
@@ -676,7 +678,9 @@ def start(format: bool = False):
                 f.write(f"from . import {', '.join(filter(bool, namespaces_to_types))}")
 
     for namespace, types in namespaces_to_constructors.items():
-        with open(DESTINATION_PATH / "types" / namespace / "__init__.py", "w") as f:
+        with open(
+            DESTINATION_PATH / "types" / namespace / "__init__.py", "w", encoding="utf-8"
+        ) as f:
             f.write(f"{notice}\n\n")
             f.write(f"{WARNING}\n\n")
 
@@ -692,7 +696,9 @@ def start(format: bool = False):
                 f.write(f"from . import {', '.join(filter(bool, namespaces_to_constructors))}\n")
 
     for namespace, types in namespaces_to_functions.items():
-        with open(DESTINATION_PATH / "functions" / namespace / "__init__.py", "w") as f:
+        with open(
+            DESTINATION_PATH / "functions" / namespace / "__init__.py", "w", encoding="utf-8"
+        ) as f:
             f.write(f"{notice}\n\n")
             f.write(f"{WARNING}\n\n")
 
