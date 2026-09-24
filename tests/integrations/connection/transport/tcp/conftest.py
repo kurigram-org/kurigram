@@ -107,25 +107,25 @@ def _mtproxy_link_parameters() -> _LinkParams:
     but with pytest's own "got empty parameter set", which names no variable to
     go and set.
     """
-    links = os.environ.get("MTPROXY_TEST_LINKS", "").split()
+    configured_links = os.environ.get("MTPROXY_TEST_LINKS", "").split()
 
-    if not links:
+    if not configured_links:
         return _LinkParams(
             links=[None],
             ids=["unset"],
         )
 
-    configured: list[str | None] = []
+    links: list[str | None] = []
     ids: list[str] = []
 
-    for link in links:
+    for link in configured_links:
         proxy = normalize_proxy(link)
-        configured.append(link)
+        links.append(link)
         # The link carries the secret, so the id names the address alone.
         ids.append(f"{proxy.hostname}:{proxy.port}")
 
     return _LinkParams(
-        links=configured,
+        links=links,
         ids=ids,
     )
 
