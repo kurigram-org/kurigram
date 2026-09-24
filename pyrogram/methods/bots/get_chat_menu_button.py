@@ -57,4 +57,4 @@ class GetChatMenuButton:
         if isinstance(r, raw.types.BotMenuButton):
             return types.MenuButtonWebApp(text=r.text, web_app=types.WebAppInfo(url=r.url))
 
-        raise ValueError(f"Unknown menu button type {r.__class__.__name__}")
+        raise TypeError(f"Unknown menu button type {r.__class__.__name__}")
