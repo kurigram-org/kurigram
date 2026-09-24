@@ -25,9 +25,9 @@ import pytest
 
 from pyrogram import raw
 from pyrogram.utils.peers import (
-    _PEERS_WITH_A_CHANNEL_ID,
-    _PEERS_WITH_A_CHAT_ID,
-    _PEERS_WITH_A_USER_ID,
+    PEERS_WITH_A_CHANNEL_ID,
+    PEERS_WITH_A_CHAT_ID,
+    PEERS_WITH_A_USER_ID,
     get_peer_id,
     get_raw_peer_id,
 )
@@ -137,9 +137,9 @@ def test_get_peer_id_rejects_a_peer_without_an_id() -> None:
 @pytest.mark.parametrize(
     ("attribute", "peers"),
     [
-        pytest.param("user_id", _PEERS_WITH_A_USER_ID, id="user"),
-        pytest.param("chat_id", _PEERS_WITH_A_CHAT_ID, id="chat"),
-        pytest.param("channel_id", _PEERS_WITH_A_CHANNEL_ID, id="channel"),
+        pytest.param("user_id", PEERS_WITH_A_USER_ID, id="user"),
+        pytest.param("chat_id", PEERS_WITH_A_CHAT_ID, id="chat"),
+        pytest.param("channel_id", PEERS_WITH_A_CHANNEL_ID, id="channel"),
     ],
 )
 def test_peer_tuples_match_the_schema(

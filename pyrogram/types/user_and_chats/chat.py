@@ -1115,9 +1115,9 @@ class Chat(Object):
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
     ):
-        if isinstance(peer, (raw.types.PeerUser, raw.types.InputPeerUser)):
+        if isinstance(peer, utils.PEERS_WITH_A_USER_ID):
             return await Chat._parse_user_chat(client, users.get(peer.user_id))
-        elif isinstance(peer, (raw.types.PeerChat, raw.types.InputPeerChat)):
+        elif isinstance(peer, utils.PEERS_WITH_A_CHAT_ID):
             return await Chat._parse_chat_chat(client, chats.get(peer.chat_id))
         else:
             return await Chat._parse_channel_chat(client, chats.get(peer.channel_id))
