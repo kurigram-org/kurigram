@@ -106,6 +106,12 @@ def qualified_name(qualtype: str) -> str:
 # noinspection PyShadowingBuiltins, PyShadowingNames
 def get_return_type_hint(qualtype: str) -> str:
     """Get return type hint for generic TLObject"""
+    # `X` is the schema's own type variable, declared `{X:Type}` and bound by the `!X` argument:
+    #  the function returns whatever the query it wraps returns. `ReturnType` names a real object
+    #  the generated module imports, so unlike the branches below it is not quoted.
+    if qualtype == "X":
+        return "ReturnType"
+
     if qualtype.startswith("Vector"):
         element = qualified_name(vector_element(qualtype))
         hint = f"list[raw.base.{element}]"
@@ -140,8 +146,13 @@ def get_type_hint(type: str) -> str:
         else:  # bytes and object
             type = "bytes"
 
-    if type in ["Object", "!X"]:
+    if type == "Object":
         return "TLObject"
+
+    # The query a schema-generic function wraps. Carrying the variable here is what binds it,
+    #  so `InvokeWithoutUpdates(query=GetHistory(...))` is a `TLObject` of the query's own type.
+    if type == "!X":
+        return "TLObject[ReturnType]"
 
     if re.match("^vector", type, re.I):
         is_core = True
@@ -622,6 +633,9 @@ def start(format: bool = False):
         else:
             generic_type = ""
 
+        # Only a schema-generic function writes `ReturnType`, so only its module imports it.
+        return_type_import = ", ReturnType" if c.qualtype == "X" else ""
+
         compiled_combinator = combinator_tmpl.format(
             notice=notice,
             warning=WARNING,
@@ -636,6 +650,7 @@ def start(format: bool = False):
             write_types=write_types,
             return_arguments=return_arguments,
             generic_type=generic_type,
+            return_type_import=return_type_import,
         )
 
         directory = "types" if c.section == "types" else c.section

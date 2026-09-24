@@ -63,10 +63,19 @@ class AnimatedChatPhoto(Object):
         if not photo.video_sizes:
             return None
 
-        video_size = max(
-            [v for v in photo.video_sizes if isinstance(v, raw.types.VideoSize)],
-            key=lambda v: v.w * v.h,
-        )
+        # `VideoSize` is a union, and `videoSizeEmojiMarkup` / `videoSizeStickerMarkup` carry no
+        #  dimensions, so a photo built only from markup entries filters down to nothing here.
+        #  https://core.telegram.org/type/VideoSize
+        video_sizes = [
+            video_size
+            for video_size in photo.video_sizes
+            if isinstance(video_size, raw.types.VideoSize)
+        ]
+
+        if not video_sizes:
+            return None
+
+        video_size = max(video_sizes, key=lambda video_size: video_size.w * video_size.h)
 
         return AnimatedChatPhoto(
             length=video_size.w,

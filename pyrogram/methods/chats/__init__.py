@@ -36,6 +36,7 @@ from .delete_message_reaction import DeleteMessageReaction
 from .delete_supergroup import DeleteSupergroup
 from .delete_user_history import DeleteUserHistory
 from .edit_folder import EditFolder
+from .edit_folder_invite_link import EditFolderInviteLink
 from .edit_forum_topic import EditForumTopic, EditGeneralForumTopic
 from .get_chat import GetChat
 from .get_chat_event_log import GetChatEventLog
@@ -145,6 +146,7 @@ class Chats(
     SetChatAccentColor,
     SetChatProfileAccentColor,
     EditFolder,
+    EditFolderInviteLink,
     GetDialogs,
     GetDirectMessagesTopicsByID,
     GetDirectMessagesTopics,

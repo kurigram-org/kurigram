@@ -29,7 +29,7 @@ from .get_me import GetMe
 from .get_users import GetUsers
 from .set_emoji_status import SetEmojiStatus
 from .set_personal_channel import SetPersonalChannel
-from .set_profile_photo import SetProfilePhoto
+from .set_profile_photo import SetBotProfilePhoto, SetProfilePhoto
 from .set_username import SetUsername
 from .unblock_user import UnblockUser
 from .update_birthday import UpdateBirthday
@@ -43,6 +43,7 @@ class Users(
     GetCommonChats,
     GetChatPhotos,
     SetPersonalChannel,
+    SetBotProfilePhoto,
     SetProfilePhoto,
     DeleteProfilePhotos,
     GetChatAudiosCount,

@@ -92,17 +92,27 @@ def deprecated_in(module: ModuleType) -> set[str]:
 
 # Read the call rather than the source text: `ruff format` joins a call that fits on one line,
 #  and a regex looking for `name=name` on a line of its own then reports the name as dropped.
-def forwarded_by(shortcut: Shortcut) -> set[str]:
-    """Every name the shortcut hands straight on, written `name=name` in a call it makes."""
+def keywords_of(shortcut: Shortcut) -> Iterator[ast.keyword]:
+    """Every keyword argument of every call the shortcut makes."""
     source = textwrap.dedent(inspect.getsource(getattr(types.Message, shortcut.name)))
 
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.Call):
+            yield from node.keywords
+
+
+def forwarded_by(shortcut: Shortcut) -> set[str]:
+    """Every name the shortcut hands straight on, written `name=name` in a call it makes."""
     return {
         keyword.arg
-        for node in ast.walk(ast.parse(source))
-        if isinstance(node, ast.Call)
-        for keyword in node.keywords
+        for keyword in keywords_of(shortcut)
         if isinstance(keyword.value, ast.Name) and keyword.arg == keyword.value.id
     }
+
+
+def passed_by(shortcut: Shortcut) -> set[str]:
+    """Every keyword the shortcut passes on, whatever the value is built from."""
+    return {keyword.arg for keyword in keywords_of(shortcut) if keyword.arg is not None}
 
 
 def parameters_the_caller_must_supply(shortcut: Shortcut) -> list[str]:
@@ -146,3 +156,18 @@ def test_a_shortcut_forwards_everything_it_accepts(shortcut: Shortcut) -> None:
     dropped = [name for name in accepted if name in wanted and name not in forwarded]
 
     assert not dropped
+
+
+@pytest.mark.parametrize("shortcut", _SHORTCUTS, ids=[shortcut.name for shortcut in _SHORTCUTS])
+def test_a_shortcut_fills_everything_its_docstring_claims_it_fills(shortcut: Shortcut) -> None:
+    # A bullet is what excuses a name from both checks above, so a bullet the call never passes
+    #  hides the gap rather than reporting it. `reply_rich` and `answer_rich` both listed
+    #  `business_connection_id` while neither passed it, and the suite stayed green.
+    accepted = set(inspect.signature(getattr(Client, shortcut.target_name)).parameters)
+    passed = passed_by(shortcut)
+
+    unfilled = sorted(
+        name for name in filled_from_self(shortcut) if name in accepted and name not in passed
+    )
+
+    assert not unfilled

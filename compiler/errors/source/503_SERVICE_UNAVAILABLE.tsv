@@ -1,4 +1,5 @@
 id	message
 ApiCallError	Telegram is having internal problems. Please try again later.
+MSG_WAIT_TIMEOUT	Spent too much time waiting for a previous query in the invokeAfterMsg request queue, aborting!
 Timedout	Telegram is having internal problems. Please try again later.
-Timeout	Telegram is having internal problems. Please try again later.
+Timeout	Timeout while fetching data.

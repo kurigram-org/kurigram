@@ -140,8 +140,10 @@ def test_every_error_in_the_table_reports_the_code_it_came_from() -> None:
 
             normalised = re.sub(r"_\d+", "_X", error_id)
 
-            # `FILE_PART_0_MISSING` normalises to `FILE_PART_X_MISSING`, so nothing ever resolves
-            # to it. It is a row of the table no answer can reach, not a class to check.
+            # A row whose id normalises to another row of the same table can never be reached:
+            #  `_split_error_message` rewrites the message before the lookup, so the answer always
+            #  resolves to the normalised row. No table carries one today - `FILE_PART_0_MISSING`
+            #  was the last and was dropped - and this keeps the next one out of `checked`.
             if normalised != error_id and normalised in table:
                 skipped += 1
                 continue

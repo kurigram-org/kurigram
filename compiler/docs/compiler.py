@@ -438,6 +438,7 @@ def pyrogram_api():
             set_upgraded_gift_colors
             update_chat_notifications
             create_folder_invite_link
+            edit_folder_invite_link
             get_chats_for_folder_invite_link
             get_folders
             create_folder
@@ -468,6 +469,7 @@ def pyrogram_api():
             get_chat_photos_count
             get_chat_audios_count
             set_profile_photo
+            set_bot_profile_photo
             set_personal_channel
             delete_profile_photos
             set_username
