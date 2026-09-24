@@ -71,8 +71,9 @@ class Api:
         for _ in range(count):
             yield asyncio.get_running_loop()
 
-    # `shout` and `spell` reach their own loop the way `Session.send` does
-    #  (`pyrogram/session/session.py:349`), so running them anywhere else raises.
+    # `shout` and `spell` await through the stored `_loop`, so running them on any other
+    #  loop raises. A real client's coroutines are loop-bound the same way, through the
+    #  `asyncio` primitives that `Client._rebuild_loop_bound_state` rebuilds.
     async def shout(self, text: str) -> str:
         return await self._loop.run_in_executor(self.executor, str.upper, text)
 

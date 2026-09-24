@@ -28,7 +28,7 @@ class SetBotName:
         name: str,
         language_code: str = "",
         for_my_bot: int | str | None = None,
-    ) -> str:
+    ) -> bool:
         """Use this method to get the current / owned bot name for the given user language.
 
         .. note::

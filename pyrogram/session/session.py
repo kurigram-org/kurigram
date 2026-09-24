@@ -170,7 +170,7 @@ class Session:
         self.restart_lock = asyncio.Lock()
 
         # Never cleared: a stopped session is replaced rather than started again, since
-        #  every caller that stops one then asks for a new one (`pyrogram/client.py:1428`).
+        #  every caller that stops one then asks `Client.get_session()` to build a fresh one.
         self._must_stay_stopped: bool = False
 
     @property
@@ -723,7 +723,16 @@ class Session:
 
                 await asyncio.sleep(amount)
             except (OSError, InternalServerError, ServiceUnavailable) as e:
-                log.warning('[%s] Retrying "%s" due to: %s', attempt, query_name, str(e) or repr(e))
+                # `TCP.send` raises a bare `TimeoutError`, an `OSError` whose `str()` is
+                #  empty, so without the `repr` fallback the line would end at "due to: ".
+                #  `pyrogram/connection/transport/tcp/tcp.py:505`.
+                log.warning(
+                    '[%s] Retrying "%s" (attempt %s) due to: %s',
+                    self.client.name,
+                    query_name,
+                    attempt,
+                    str(e) or repr(e),
+                )
 
                 await asyncio.sleep(retry_delay)
 
