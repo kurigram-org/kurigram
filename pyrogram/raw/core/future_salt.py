@@ -19,13 +19,10 @@
 from __future__ import annotations as _annotations
 
 from io import BytesIO
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from .primitives.int import Int, Long
 from .tl_object import TLObject
-
-if TYPE_CHECKING:
-    from typing_extensions import Self
 
 
 class FutureSalt(TLObject):
@@ -41,7 +38,7 @@ class FutureSalt(TLObject):
         self.salt = salt
 
     @classmethod
-    def read(cls, data: BytesIO, *args: Any) -> Self:
+    def read(cls, data: BytesIO, *args: Any) -> FutureSalt:
         valid_since = Int.read(data)
         valid_until = Int.read(data)
         salt = Long.read(data)
