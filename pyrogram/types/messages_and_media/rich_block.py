@@ -114,7 +114,6 @@ class RichBlock(Object):
         rich_block: raw.base.PageBlock,
         photos: dict[int, raw.base.Photo] | None = None,
         documents: dict[int, raw.base.Document] | None = None,
-        part: bool | None = None,
         users: dict[int, raw.base.User] | None = None,
         chats: dict[int, raw.base.Chat] | None = None,
     ) -> RichBlock:
@@ -171,9 +170,9 @@ class RichBlock(Object):
                 items=types.List(
                     [
                         await types.RichBlockListItem._parse_list_item(
-                            client, i, photos, documents, part, users, chats
+                            client, list_item, photos, documents, users, chats
                         )
-                        for i in rich_block.items
+                        for list_item in rich_block.items
                     ]
                 )
             )
@@ -182,9 +181,9 @@ class RichBlock(Object):
                 items=types.List(
                     [
                         await types.RichBlockListItem._parse_list_item(
-                            client, i, photos, documents, part, users, chats
+                            client, list_item, photos, documents, users, chats
                         )
-                        for i in rich_block.items
+                        for list_item in rich_block.items
                     ]
                 )
             )
@@ -193,9 +192,9 @@ class RichBlock(Object):
                 blocks=types.List(
                     [
                         await types.RichBlock._parse(
-                            client, i, photos, documents, part, users, chats
+                            client, nested_block, photos, documents, users, chats
                         )
-                        for i in rich_block.blocks
+                        for nested_block in rich_block.blocks
                     ]
                 ),
                 credit=await types.RichText._parse(client, rich_block.caption),
@@ -223,9 +222,9 @@ class RichBlock(Object):
                 blocks=types.List(
                     [
                         await types.RichBlock._parse(
-                            client, i, photos, documents, part, users, chats
+                            client, nested_block, photos, documents, users, chats
                         )
-                        for i in rich_block.items
+                        for nested_block in rich_block.items
                     ]
                 ),
                 caption=await types.RichBlockCaption._parse_caption(client, rich_block.caption),
@@ -235,9 +234,9 @@ class RichBlock(Object):
                 blocks=types.List(
                     [
                         await types.RichBlock._parse(
-                            client, i, photos, documents, part, users, chats
+                            client, nested_block, photos, documents, users, chats
                         )
-                        for i in rich_block.items
+                        for nested_block in rich_block.items
                     ]
                 ),
                 caption=await types.RichBlockCaption._parse_caption(client, rich_block.caption),
@@ -250,9 +249,9 @@ class RichBlock(Object):
                 blocks=types.List(
                     [
                         await types.RichBlock._parse(
-                            client, i, photos, documents, part, users, chats
+                            client, nested_block, photos, documents, users, chats
                         )
-                        for i in rich_block.blocks
+                        for nested_block in rich_block.blocks
                     ]
                 ),
                 is_open=rich_block.open,
@@ -565,16 +564,13 @@ class RichBlockListItem(RichBlock):
         list_item: raw.base.PageListItem | raw.base.PageListOrderedItem,
         photos: dict[int, raw.base.Photo] | None = None,
         documents: dict[int, raw.base.Document] | None = None,
-        part: bool | None = None,
         users: dict[int, raw.base.User] | None = None,
         chats: dict[int, raw.base.Chat] | None = None,
     ) -> RichBlockListItem | None:
         if isinstance(list_item, raw.types.PageListItemBlocks):
             blocks = types.List(
                 [
-                    await types.RichBlock._parse(
-                        client, block, photos, documents, part, users, chats
-                    )
+                    await types.RichBlock._parse(client, block, photos, documents, users, chats)
                     for block in list_item.blocks
                 ]
             )
@@ -597,9 +593,7 @@ class RichBlockListItem(RichBlock):
         elif isinstance(list_item, raw.types.PageListOrderedItemBlocks):
             blocks = types.List(
                 [
-                    await types.RichBlock._parse(
-                        client, block, photos, documents, part, users, chats
-                    )
+                    await types.RichBlock._parse(client, block, photos, documents, users, chats)
                     for block in list_item.blocks
                 ]
             )

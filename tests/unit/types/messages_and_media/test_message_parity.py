@@ -30,7 +30,8 @@ import inspect
 import re
 import sys
 import textwrap
-from typing import TYPE_CHECKING, Final, NamedTuple
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -41,7 +42,8 @@ if TYPE_CHECKING:
     from types import ModuleType
 
 
-class Shortcut(NamedTuple):
+@dataclass(frozen=True)
+class Shortcut:
     """A bound method on `Message` and the client method its docstring says it wraps."""
 
     name: str
@@ -69,7 +71,10 @@ def shortcuts() -> Iterator[Shortcut]:
         match = _TARGET.search(inspect.getdoc(vars(types.Message)[name]) or "")
 
         if match is not None:
-            yield Shortcut(name, match.group(1))
+            yield Shortcut(
+                name=name,
+                target_name=match.group(1),
+            )
 
 
 _SHORTCUTS: Final[list[Shortcut]] = list(shortcuts())

@@ -60,6 +60,14 @@ class Link(str):
     def __new__(cls, url, text, style):
         return str.__new__(cls, Link._format(url, text, style))
 
+    # `copy` and `pickle` rebuild the value with `cls.__new__(cls, *args)`, which raised
+    #  `Link.__new__() missing 2 required positional arguments: 'text' and 'style'`. The
+    #  `__slots__` come back through the default state restore, so no `__reduce__` is needed.
+    #  Three values instead of `str`'s one is the point, so the override is deliberate.
+    #  https://docs.python.org/3/library/pickle.html#object.__getnewargs__
+    def __getnewargs__(self) -> tuple[str, str, enums.ParseMode]:  # ty: ignore[invalid-method-override]
+        return self.url, self.text, self.style
+
     def __call__(self, other: str | None = None, *, style: str | None = None):
         return Link._format(self.url, other or self.text, style or self.style)
 

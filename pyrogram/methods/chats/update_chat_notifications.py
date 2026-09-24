@@ -39,6 +39,8 @@ class UpdateChatNotifications:
     ) -> bool:
         """Update the notification settings for the selected chat
 
+        .. include:: /_includes/usable-by/users.rst
+
         Parameters:
             chat_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the target chat.
@@ -46,14 +48,16 @@ class UpdateChatNotifications:
             mute (``bool``, *optional*):
                 Pass True if you want to mute chat.
 
-            until_date (:py:obj:`~datetime.datetime`, *optional*):
-                Date when the user will be unmuted. Works only if the mute parameter is set to True. Defaults to forever.
+            mute_until (:py:obj:`~datetime.datetime`, *optional*):
+                Date until which the chat stays muted.
+                Defaults to forever when mute is True, and to the epoch (not muted) otherwise.
 
             stories_muted (``bool``, *optional*):
-                N/A
+                Pass True to stop being notified about new stories posted by this chat.
+                Independent of mute, which covers messages only.
 
             stories_hide_sender (``bool``, *optional*):
-                N/A
+                Pass True to hide the poster's name in story notifications from this chat.
 
             show_previews (``bool``, *optional*):
                 If the text of the message shall be displayed in notification.
@@ -64,14 +68,16 @@ class UpdateChatNotifications:
         Example:
             .. code-block:: python
 
+                from datetime import timedelta
+
                 # Mute a chat permanently
                 await app.update_chat_notifications(chat_id, mute=True)
 
                 # Mute a chat for 10 minutes
                 await app.update_chat_notifications(
                     chat_id,
-                    mute=True
-                    mute_until=datetime.timedelta(minutes=10)
+                    mute=True,
+                    mute_until=timedelta(minutes=10)
                 )
 
                 # Unmute a chat
