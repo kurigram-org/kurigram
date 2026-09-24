@@ -19,10 +19,13 @@
 from __future__ import annotations as _annotations
 
 from io import BytesIO
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from .primitives.int import Int, Long
 from .tl_object import TLObject
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 
 class Message(TLObject):
@@ -39,13 +42,13 @@ class Message(TLObject):
         self.body = body
 
     @classmethod
-    def read(cls, data: BytesIO, *args: Any) -> Message:
+    def read(cls, data: BytesIO, *args: Any) -> Self:
         msg_id = Long.read(data)
         seq_no = Int.read(data)
         length = Int.read(data)
         body = data.read(length)
 
-        return Message(TLObject.read(BytesIO(body)), msg_id, seq_no, length)
+        return cls(TLObject.read(BytesIO(body)), msg_id, seq_no, length)
 
     def write(self, *args: Any) -> bytes:
         b = BytesIO()
