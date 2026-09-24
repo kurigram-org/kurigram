@@ -31,6 +31,9 @@ class Cache:
             raise ValueError("capacity must be greater than 0")
 
         self.capacity = capacity
+        # An `OrderedDict` rather than a `dict`: the eviction below needs `move_to_end`,
+        #  which `dict` has no equivalent of, and `popitem(last=False)` to drop the oldest
+        #  entry, where `dict.popitem()` drops the newest.
         self._cache: OrderedDict[Any, Any] = OrderedDict()
         self._lock = asyncio.Lock()
 

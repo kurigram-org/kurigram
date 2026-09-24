@@ -22,7 +22,6 @@ import asyncio
 import inspect
 import logging
 import threading
-from collections import OrderedDict
 from typing import Any
 
 import pyrogram
@@ -148,7 +147,7 @@ class Dispatcher:
         self.updates_queue: asyncio.Queue[
             tuple[raw.base.Update, dict[int, raw.base.User], dict[int, raw.base.Chat]] | None
         ] = asyncio.Queue()
-        self.groups: OrderedDict[int, list[Handler[Any]]] = OrderedDict()
+        self.groups: dict[int, list[Handler[Any]]] = {}
 
         # `add_handler` is called from whatever thread the caller happens to be on, and every
         #  writer below reads `groups`, copies it and rebinds the attribute. Without this two
@@ -404,7 +403,7 @@ class Dispatcher:
                 self.handler_worker_tasks.clear()
 
                 with self._groups_lock:
-                    self.groups = OrderedDict()
+                    self.groups = {}
 
             log.info("Stopped %s HandlerTasks", self.client.workers)
 
@@ -413,7 +412,7 @@ class Dispatcher:
             groups = self._copy_groups()
             groups.setdefault(group, []).append(handler)
 
-            self.groups = OrderedDict(sorted(groups.items()))
+            self.groups = dict(sorted(groups.items()))
 
     def remove_handler(self, handler: Handler[Any], group: int) -> None:
         with self._groups_lock:
@@ -428,9 +427,9 @@ class Dispatcher:
 
             self.groups = groups
 
-    def _copy_groups(self) -> OrderedDict[int, list[Handler[Any]]]:
+    def _copy_groups(self) -> dict[int, list[Handler[Any]]]:
         """A copy the registration methods edit, so a dispatching worker keeps the old one."""
-        return OrderedDict((group, list(handlers)) for group, handlers in self.groups.items())
+        return {group: list(handlers) for group, handlers in self.groups.items()}
 
     async def handler_worker(self) -> None:
         while True:

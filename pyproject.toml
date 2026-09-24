@@ -158,7 +158,7 @@ omit = [
 ]
 
 [tool.coverage.report]
-# No threshold, deliberately. The offline suite covers 54% of 24202 statements as of 2026-09-19,
+# No threshold, deliberately. The offline suite covers 55% of 24444 statements as of 2026-09-24,
 #  and a gate set at a number nobody has agreed to is raised until it stops firing, so `fail_under`
 #  waits for a number somebody has looked at and chosen.
 
