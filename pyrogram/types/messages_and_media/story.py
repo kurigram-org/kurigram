@@ -244,10 +244,7 @@ class Story(Object, Update):
                 )
                 peer_id = r[0].id
                 users.update({r[0].id: r[0]})
-        elif isinstance(
-            peer,
-            (raw.types.PeerUser, raw.types.InputPeerUser, raw.types.InputPeerUserFromMessage),
-        ):
+        elif isinstance(peer, utils.PEERS_WITH_A_USER_ID):
             peer_id = peer.user_id
 
             if peer_id not in users:
@@ -255,14 +252,7 @@ class Story(Object, Update):
                     raw.functions.users.GetUsers(id=[raw.types.InputPeerSelf(), peer])
                 )
                 users.update({i.id: i for i in r})
-        elif isinstance(
-            peer,
-            (
-                raw.types.PeerChannel,
-                raw.types.InputPeerChannel,
-                raw.types.InputPeerChannelFromMessage,
-            ),
-        ):
+        elif isinstance(peer, utils.PEERS_WITH_A_CHANNEL_ID):
             peer_id = peer.channel_id
 
             if peer_id not in chats:

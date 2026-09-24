@@ -56,7 +56,7 @@ class ChatShared(Object):
 
         peer = action.peers[0]
 
-        if isinstance(peer, (raw.types.PeerUser, raw.types.RequestedPeerUser)):
+        if isinstance(peer, utils.PEERS_WITH_A_USER_ID):
             return None
 
         peer_id = utils.get_peer_id(peer)
