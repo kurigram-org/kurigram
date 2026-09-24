@@ -1323,10 +1323,8 @@ def regex(pattern: str | Pattern, flags: int = 0) -> Filter:
     )
 
 
-# `Filter.__and__`/`__or__` intentionally shadow the `set` operators: `&`/`|` must keep
-#  combining filters even though the ids live in a `set` base.
-
-
+# `Filter.__and__`/`__or__` intentionally shadow the `set` operators here and in `chat` and
+#  `topic`: `&`/`|` must keep combining filters even though the ids live in a `set` base.
 # noinspection PyPep8Naming
 class user(Filter, set):  # ty: ignore[invalid-method-override]
     """Filter updates coming from one or more users.
@@ -1356,9 +1354,6 @@ class user(Filter, set):  # ty: ignore[invalid-method-override]
         if not self.isdisjoint(_ME_ALIASES) and sender.is_self:
             return True
         return bool(sender.id in self or (sender.username and sender.username.lower() in self))
-
-
-# Same intentional operator shadowing as `user` above.
 
 
 # noinspection PyPep8Naming
@@ -1401,9 +1396,6 @@ class chat(Filter, set):  # ty: ignore[invalid-method-override]
             and sender.is_self
             and chat_of_update.id == sender.id
         )
-
-
-# Same intentional operator shadowing as `user` above.
 
 
 # noinspection PyPep8Naming
