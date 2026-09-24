@@ -94,17 +94,14 @@ class GetDirectMessagesTopics:
             topics = []
 
             for topic in r.dialogs:
-                topics.append(
-                    utils.require_parsed(
-                        await types.DirectMessagesTopic._parse(
-                            client=self,
-                            topic=topic,
-                            messages=messages,
-                            users=users,
-                            chats=chats,
-                        )
-                    )
+                parsed_topic = await types.DirectMessagesTopic._parse(
+                    client=self,
+                    topic=topic,
+                    messages=messages,
+                    users=users,
+                    chats=chats,
                 )
+                topics.append(utils.require_parsed(parsed_topic))
 
             if not topics:
                 return
