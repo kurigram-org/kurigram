@@ -125,14 +125,13 @@ def hand_written_references() -> list[Reference]:
         for docstring, first_line in docstrings_of(path):
             for offset, line in enumerate(docstring.splitlines()):
                 for label, target in references_in(line):
-                    references.append(
-                        Reference(
-                            target=target,
-                            path=path,
-                            line=first_line + offset,
-                            label=label,
-                        )
+                    reference = Reference(
+                        target=target,
+                        path=path,
+                        line=first_line + offset,
+                        label=label,
                     )
+                    references.append(reference)
 
     return references
 
