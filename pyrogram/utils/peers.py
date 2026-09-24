@@ -90,18 +90,10 @@ def get_peer_id(peer: raw.base.Peer | raw.base.InputPeer | raw.base.RequestedPee
     if isinstance(peer, _PEERS_WITH_A_USER_ID):
         return peer.user_id
 
-    if isinstance(peer, (raw.types.PeerChat, raw.types.InputPeerChat, raw.types.RequestedPeerChat)):
+    if isinstance(peer, _PEERS_WITH_A_CHAT_ID):
         return -peer.chat_id
 
-    if isinstance(
-        peer,
-        (
-            raw.types.PeerChannel,
-            raw.types.InputPeerChannel,
-            raw.types.InputPeerChannelFromMessage,
-            raw.types.RequestedPeerChannel,
-        ),
-    ):
+    if isinstance(peer, _PEERS_WITH_A_CHANNEL_ID):
         return ZERO_CHANNEL_ID - peer.channel_id
 
     raise ValueError(f"Peer type invalid: {peer}")
