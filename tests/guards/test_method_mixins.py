@@ -25,7 +25,7 @@ omission is invisible until somebody calls the method and gets `AttributeError`.
 
 It has gone wrong twice. `EditFolderInviteLink` was written with a full docstring and never
 imported, so `Client.edit_folder_invite_link` did not exist while its three siblings did;
-`SetBotProfilePhoto` is the same defect and is still open, below.
+`SetBotProfilePhoto` was the same defect, fixed the same way.
 
 The sweep asks `issubclass` rather than "does some `__init__.py` name this class", because a
 class imported into the barrel and left off the bases list is the other half of the same
@@ -47,13 +47,10 @@ if TYPE_CHECKING:
 
 _MIXIN_ROOT: Final[pathlib.Path] = PACKAGE_ROOT / "methods"
 
-# `SetBotProfilePhoto` is unreachable for exactly the reason `EditFolderInviteLink` was, and
-#  `pyrogram/methods/users/set_profile_photo.py` is held by an open change this one is not to
-#  touch. Listed on 2026-09-19 so the suite stays green; `test_every_exemption_is_still_earned`
-#  fails the day it lands, so the entry cannot outlive the debt it records.
-_UNREACHABLE_MIXINS: Final[tuple[str, ...]] = (
-    "pyrogram.methods.users.set_profile_photo.SetBotProfilePhoto",
-)
+# A mixin left unreachable on purpose goes here by dotted name so the suite stays green;
+#  `test_every_exemption_is_still_earned` fails the day it is wired up, so an entry cannot
+#  outlive the debt it records.
+_UNREACHABLE_MIXINS: Final[tuple[str, ...]] = ()
 
 
 def defines_a_public_method(node: ast.ClassDef) -> bool:
