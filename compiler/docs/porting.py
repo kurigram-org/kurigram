@@ -35,13 +35,15 @@ from typing import Final, TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-# The last Pyrogram release, 2.0.106 of 2023-04-30, as it sits in this repository's own
-#  history. Reading the reference out of `git` rather than out of PyPI keeps the network off
-#  the documentation build and makes the provenance a sha. The public surface extracted from
-#  this commit is identical to the one extracted from the `pyrogram==2.0.106` wheel, across
-#  all three packages below.
-_REFERENCE_COMMIT: Final[str] = "efac17198b5fcaec1c2628c4bba0c288a4d617d4"
-_REFERENCE_VERSION: Final[str] = "2.0.106"
+# The reference is the last Pyrogram release, resolved from this repository's own tags:
+#  that project's releases all live in `v2.0.*` (the last is `v2.0.106`, 2023-04-30) and
+#  Kurigram's numbering starts at `v2.1.0`, so the pattern can never match one of ours.
+#  Reading the reference out of `git` rather than out of PyPI keeps the network off the
+#  documentation build; the surface extracted from the resolved commit is identical to the
+#  one extracted from the `pyrogram==2.0.106` wheel, across all three packages below.
+_REFERENCE_TAG_PATTERN: Final[str] = "v2.0.*"
+
+_GIT: Final[str] = "git"
 
 _PACKAGES: Final[tuple[str, ...]] = ("methods", "types", "enums")
 
@@ -81,6 +83,12 @@ _REMOVED: Final[Mapping[str, str]] = {
 _INTERNAL_METHODS: Final[frozenset[str]] = frozenset({"read", "write"})
 
 _ENCODING: Final[str] = "utf-8"
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class ReferenceRelease:
+    version: str
+    commit: str
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -231,10 +239,41 @@ def _read_module(*, surface: Surface, source: str, path: str) -> None:
             )
 
 
-def _read_reference() -> Surface:
+def _resolve_reference() -> ReferenceRelease:
+    """The last Pyrogram release, resolved from this repository's own tags."""
+    tags = subprocess.run(
+        [_GIT, "tag", "--list", _REFERENCE_TAG_PATTERN, "--sort=version:refname"],
+        capture_output=True,
+        check=True,
+        text=True,
+    ).stdout.split()
+
+    if not tags:
+        raise SystemExit(
+            f"no tag matches `{_REFERENCE_TAG_PATTERN}`, so the reference release cannot be "
+            "resolved. A shallow or `--no-tags` clone is the usual cause: fetch the tags "
+            "(`git fetch --tags`) and rerun."
+        )
+
+    tag = tags[-1]
+
+    commit = subprocess.run(
+        [_GIT, "rev-parse", f"{tag}^{{}}"],
+        capture_output=True,
+        check=True,
+        text=True,
+    ).stdout.strip()
+
+    return ReferenceRelease(
+        version=tag.removeprefix("v"),
+        commit=commit,
+    )
+
+
+def _read_reference(commit: str) -> Surface:
     """The reference surface, streamed straight out of `git archive`."""
     archive = subprocess.run(
-        ["git", "archive", _REFERENCE_COMMIT, *(f"pyrogram/{name}" for name in _PACKAGES)],
+        [_GIT, "archive", commit, *(f"pyrogram/{name}" for name in _PACKAGES)],
         capture_output=True,
         check=True,
     ).stdout
@@ -277,7 +316,7 @@ def _read_tree() -> Surface:
 
 def _git_show(*, commit: str, path: str) -> str:
     return subprocess.run(
-        ["git", "show", f"{commit}:{path}"],
+        [_GIT, "show", f"{commit}:{path}"],
         capture_output=True,
         check=True,
         text=True,
@@ -518,15 +557,17 @@ def _wire_into_toctree() -> None:
 
 
 def start() -> None:
-    reference = _read_reference()
+    release = _resolve_reference()
+
+    reference = _read_reference(release.commit)
     here = _read_tree()
 
     page = _TEMPLATE.read_text(encoding=_ENCODING).format(
-        reference_version=_REFERENCE_VERSION,
-        reference_commit=_REFERENCE_COMMIT[:8],
+        reference_version=release.version,
+        reference_commit=release.commit[:8],
         reference_layer=_layer_of(
             _git_show(
-                commit=_REFERENCE_COMMIT,
+                commit=release.commit,
                 path=_SCHEMA_PATH,
             ),
         ),
