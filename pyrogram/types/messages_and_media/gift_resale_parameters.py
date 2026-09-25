@@ -52,11 +52,10 @@ class GiftResaleParameters(Object):
 
     @staticmethod
     def _parse(
-        resell_amount: list[raw.base.StarsAmount], ton_only: bool
-    ) -> GiftResaleParameters | None:
-        if not resell_amount:
-            return None
-
+        resell_amount: list[raw.base.StarsAmount],
+        *,
+        ton_only: bool | None,
+    ) -> GiftResaleParameters:
         star_count = None
         toncoin_cent_count = None
 

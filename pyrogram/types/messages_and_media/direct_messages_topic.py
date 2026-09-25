@@ -88,13 +88,10 @@ class DirectMessagesTopic(Object):
         messages: dict | None = None,
         users: dict[int, raw.base.User] | None = None,
         chats: dict[int, raw.base.Chat] | None = None,
-    ) -> DirectMessagesTopic | None:
+    ) -> DirectMessagesTopic:
         messages = messages or {}
         users = users or {}
         chats = chats or {}
-
-        if not topic:
-            return None
 
         raw_user = users.get(topic.peer.user_id)
 

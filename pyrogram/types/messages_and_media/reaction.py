@@ -20,6 +20,7 @@ from __future__ import annotations as _annotations
 
 import pyrogram
 from pyrogram import raw
+from pyrogram.errors import EmptyObjectError
 
 from ..object import Object
 
@@ -66,7 +67,7 @@ class Reaction(Object):
     # `None` input and `ReactionEmpty` both mean "no reaction", so the optional
     #  contract is the real one: `StoryView` already passes a maybe-missing value.
     @staticmethod
-    def _parse(client: pyrogram.Client, reaction: raw.base.Reaction | None) -> Reaction | None:
+    def _parse(client: pyrogram.Client, reaction: raw.base.Reaction) -> Reaction:
         if isinstance(reaction, raw.types.ReactionEmoji):
             return Reaction(client=client, emoji=reaction.emoticon)
 
@@ -76,16 +77,11 @@ class Reaction(Object):
         if isinstance(reaction, raw.types.ReactionPaid):
             return Reaction(client=client, is_paid=True)
 
-        return None
+        raise EmptyObjectError(reaction)
 
     @staticmethod
     def _parse_count(client: pyrogram.Client, reaction_count: raw.base.ReactionCount) -> Reaction:
         reaction = Reaction._parse(client, reaction_count.reaction)
-
-        # A `ReactionCount` always carries a concrete reaction, never an empty one.
-        if reaction is None:
-            raise ValueError("The reaction count carries no reaction")
-
         reaction.count = reaction_count.count
         reaction.chosen_order = reaction_count.chosen_order
 

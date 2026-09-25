@@ -48,10 +48,7 @@ class RestrictionReason(Object):
         self.text = text
 
     @staticmethod
-    def _parse(restriction_reason: raw.types.RestrictionReason) -> RestrictionReason | None:
-        if not restriction_reason:
-            return None
-
+    def _parse(restriction_reason: raw.types.RestrictionReason) -> RestrictionReason:
         return RestrictionReason(
             platform=restriction_reason.platform,
             reason=restriction_reason.reason,

@@ -510,11 +510,17 @@ class Gift(Object):
             title=star_gift.title,
             available_resale_count=star_gift.availability_resale,
             user_limits=types.GiftPurchaseLimit._parse(
-                star_gift.per_user_total, star_gift.per_user_remains
-            ),
+                star_gift.per_user_total,
+                remains=star_gift.per_user_remains,
+            )
+            if star_gift.per_user_total is not None and star_gift.per_user_total > 0
+            else None,
             overall_limits=types.GiftPurchaseLimit._parse(
-                star_gift.availability_total, star_gift.availability_remains
-            ),
+                star_gift.availability_total,
+                remains=star_gift.availability_remains,
+            )
+            if star_gift.availability_total is not None and star_gift.availability_total > 0
+            else None,
             is_auction=star_gift.auction,
             is_limited=star_gift.limited,
             is_sold_out=star_gift.sold_out,
@@ -528,7 +534,9 @@ class Gift(Object):
             publisher_chat=await types.Chat._parse_chat(client, raw_publisher_chat)
             if raw_publisher_chat is not None
             else None,
-            auction_info=types.GiftAuction._parse(star_gift),
+            auction_info=types.GiftAuction._parse(star_gift, auction_slug=star_gift.auction_slug)
+            if star_gift.auction_slug
+            else None,
             unique_gift_variant_count=star_gift.upgrade_variants,
             minimum_resell_star_count=star_gift.resell_min_stars,
             raw=star_gift,
@@ -608,8 +616,11 @@ class Gift(Object):
             else None,
             regular_gift_id=star_gift.gift_id,
             resale_parameters=types.GiftResaleParameters._parse(
-                star_gift.resell_amount, star_gift.resale_ton_only
-            ),
+                star_gift.resell_amount,
+                ton_only=star_gift.resale_ton_only,
+            )
+            if star_gift.resell_amount
+            else None,
             total_upgraded_count=star_gift.availability_issued,
             used_theme_chat_id=utils.get_peer_id(star_gift.theme_peer)
             if star_gift.theme_peer

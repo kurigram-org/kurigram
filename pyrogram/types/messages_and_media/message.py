@@ -1529,7 +1529,9 @@ class Message(Object, Update):
             community_chat_added=community_chat_added,
             community_chat_removed=community_chat_removed,
             community_chat_joined=community_chat_joined,
-            reactions=await types.MessageReactions._parse(client, message.reactions, users, chats),
+            reactions=await types.MessageReactions._parse(client, message.reactions, users, chats)
+            if message.reactions is not None
+            else None,
             business_connection_id=business_connection_id,
             raw=message,
             client=client,
@@ -1668,7 +1670,9 @@ class Message(Object, Update):
         forward_header = message.fwd_from
         forward_origin = None
 
-        if forward_header:
+        if forward_header is not None and (
+            forward_header.from_id or forward_header.from_name or forward_header.imported
+        ):
             forward_origin = await types.MessageOrigin._parse(
                 client,
                 forward_header,
@@ -1724,7 +1728,9 @@ class Message(Object, Update):
                 photo = types.Photo._parse(client, media.photo, media.ttl_seconds)
                 has_media_spoiler = media.spoiler
             elif isinstance(media, raw.types.MessageMediaGeo):
-                location = types.Location._parse(media.geo)
+                if isinstance(media.geo, raw.types.GeoPoint):
+                    location = types.Location._parse(media.geo)
+
                 media_type = enums.MessageMediaType.LOCATION
             elif isinstance(media, raw.types.MessageMediaGeoLive):
                 location = types.Location._parse(media)
@@ -1813,7 +1819,9 @@ class Message(Object, Update):
                         media_type = enums.MessageMediaType.DOCUMENT
             elif isinstance(media, raw.types.MessageMediaWebPage):
                 media_type = enums.MessageMediaType.WEB_PAGE
-                web_page = types.WebPage._parse(client, media)
+
+                if not isinstance(media.webpage, raw.types.WebPageNotModified):
+                    web_page = types.WebPage._parse(client, media)
             elif isinstance(media, raw.types.MessageMediaPoll):
                 poll = await types.Poll._parse(
                     client,
@@ -1841,11 +1849,24 @@ class Message(Object, Update):
                 media_type = enums.MessageMediaType.UNSUPPORTED
                 media = None
 
-        link_preview_options = types.LinkPreviewOptions._parse(
-            media,
-            getattr(getattr(media, "webpage", None), "url", utils.get_first_url(message.message)),
-            message.invert_media,
-        )
+        link_preview_options: types.LinkPreviewOptions | None = None
+        preview_web_page = getattr(media, "webpage", None)
+        preview_url = getattr(preview_web_page, "url", utils.get_first_url(message.message))
+
+        if isinstance(media, raw.types.MessageMediaWebPage) and not isinstance(
+            media.webpage,
+            raw.types.WebPageNotModified,
+        ):
+            link_preview_options = types.LinkPreviewOptions._parse(
+                media,
+                invert_media=message.invert_media,
+            )
+        elif preview_url:
+            link_preview_options = types.LinkPreviewOptions(
+                is_disabled=True,
+                url=preview_url,
+                show_above_text=message.invert_media,
+            )
 
         reply_markup = message.reply_markup
 
@@ -1861,7 +1882,11 @@ class Message(Object, Update):
             else:
                 reply_markup = None
 
-        reactions = await types.MessageReactions._parse(client, message.reactions, users, chats)
+        reactions = (
+            await types.MessageReactions._parse(client, message.reactions, users, chats)
+            if message.reactions is not None
+            else None
+        )
 
         raw_sender_business_bot = users.get(getattr(message, "via_business_bot_id", None))
         raw_via_bot = users.get(message.via_bot_id)
@@ -1951,8 +1976,12 @@ class Message(Object, Update):
                 for reason in getattr(message, "restriction_reason", [])
             )
             or None,
-            fact_check=await types.FactCheck._parse(client, message.factcheck, users),
-            suggested_post_info=types.SuggestedPostInfo._parse(message.suggested_post),
+            fact_check=await types.FactCheck._parse(client, message.factcheck, users)
+            if message.factcheck is not None
+            else None,
+            suggested_post_info=types.SuggestedPostInfo._parse(message.suggested_post)
+            if message.suggested_post is not None
+            else None,
             channel_post=message.post,
             repeat_period=message.schedule_repeat_period,
             summary_language_code=message.summary_from_language,
@@ -1987,9 +2016,14 @@ class Message(Object, Update):
                 raw_reply_to_message=raw_reply_to_message,
             )
 
-        if topics:
+        raw_topic = topics.get(parsed_message.message_thread_id) if topics else None
+
+        if raw_topic is not None:
             parsed_message.topic = await types.ForumTopic._parse(
-                client, topics.get(parsed_message.message_thread_id), users=users, chats=chats
+                client,
+                raw_topic,
+                users=users,
+                chats=chats,
             )
 
             if parsed_message.topic:
@@ -2170,7 +2204,9 @@ class Message(Object, Update):
                 photo = types.Photo._parse(client, media.photo, media.ttl_seconds)
                 has_media_spoiler = media.spoiler
             elif isinstance(media, raw.types.MessageMediaGeo):
-                location = types.Location._parse(media.geo)
+                if isinstance(media.geo, raw.types.GeoPoint):
+                    location = types.Location._parse(media.geo)
+
                 media_type = enums.MessageMediaType.LOCATION
             elif isinstance(media, raw.types.MessageMediaGeoLive):
                 location = types.Location._parse(media)
@@ -2259,7 +2295,9 @@ class Message(Object, Update):
                         media_type = enums.MessageMediaType.DOCUMENT
             elif isinstance(media, raw.types.MessageMediaWebPage):
                 media_type = enums.MessageMediaType.WEB_PAGE
-                web_page = types.WebPage._parse(client, media)
+
+                if not isinstance(media.webpage, raw.types.WebPageNotModified):
+                    web_page = types.WebPage._parse(client, media)
             elif isinstance(media, raw.types.MessageMediaPoll):
                 poll = await types.Poll._parse(
                     client,
@@ -2287,10 +2325,20 @@ class Message(Object, Update):
                 media_type = enums.MessageMediaType.UNSUPPORTED
                 media = None
 
-        link_preview_options = types.LinkPreviewOptions._parse(
-            media,
-            getattr(getattr(media, "webpage", None), "url", utils.get_first_url(message.message)),
-        )
+        link_preview_options: types.LinkPreviewOptions | None = None
+        preview_web_page = getattr(media, "webpage", None)
+        preview_url = getattr(preview_web_page, "url", utils.get_first_url(message.message))
+
+        if isinstance(media, raw.types.MessageMediaWebPage) and not isinstance(
+            media.webpage,
+            raw.types.WebPageNotModified,
+        ):
+            link_preview_options = types.LinkPreviewOptions._parse(media)
+        elif preview_url:
+            link_preview_options = types.LinkPreviewOptions(
+                is_disabled=True,
+                url=preview_url,
+            )
 
         reply_markup = message.reply_markup
 

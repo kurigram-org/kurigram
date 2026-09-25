@@ -62,13 +62,10 @@ class MessageReactions(Object):
     @staticmethod
     async def _parse(
         client: pyrogram.Client,
-        message_reactions: raw.base.MessageReactions | None,
-        users: dict[int, types.User],
-        chats: dict[int, types.Chat],
-    ) -> MessageReactions | None:
-        if not message_reactions:
-            return None
-
+        message_reactions: raw.base.MessageReactions,
+        users: dict[int, raw.base.User],
+        chats: dict[int, raw.base.Chat],
+    ) -> MessageReactions:
         return MessageReactions(
             client=client,
             reactions=types.List(

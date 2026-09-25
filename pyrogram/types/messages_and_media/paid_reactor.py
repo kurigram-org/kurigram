@@ -66,13 +66,10 @@ class PaidReactor(Object):
     @staticmethod
     async def _parse(
         client: pyrogram.Client,
-        paid_reactor: raw.base.MessageReactor | None,
+        paid_reactor: raw.base.MessageReactor,
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
-    ) -> PaidReactor | None:
-        if not paid_reactor:
-            return None
-
+    ) -> PaidReactor:
         chat = chats.get(utils.get_raw_peer_id(paid_reactor.peer_id)) or users.get(
             utils.get_raw_peer_id(paid_reactor.peer_id)
         )

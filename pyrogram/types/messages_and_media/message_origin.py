@@ -53,10 +53,7 @@ class MessageOrigin(Object):
         fwd_from: raw.types.MessageFwdHeader,
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
-    ) -> MessageOrigin | None:
-        if not fwd_from:
-            return None
-
+    ) -> MessageOrigin:
         forward_date = utils.timestamp_to_datetime(fwd_from.date)
 
         if fwd_from.from_id:
@@ -94,11 +91,14 @@ class MessageOrigin(Object):
                         sender_chat=parsed_chat,
                         author_signature=fwd_from.post_author,
                     )
-        elif fwd_from.from_name:
+
+        if fwd_from.from_name:
             return types.MessageOriginHiddenUser(
                 date=forward_date, sender_user_name=fwd_from.from_name
             )
-        elif fwd_from.imported:
-            return types.MessageOriginImport(
-                date=forward_date, sender_user_name=fwd_from.post_author
-            )
+
+        # Callers pass only a header that names its origin, so what is left is an import.
+        return types.MessageOriginImport(
+            date=forward_date,
+            sender_user_name=fwd_from.post_author,
+        )

@@ -121,6 +121,6 @@ class Photo(Object):
                 file_size=main.size,
                 date=utils.timestamp_to_datetime(photo.date),
                 ttl_seconds=ttl_seconds,
-                thumbs=types.Thumbnail._parse(client, photo),
+                thumbs=types.Thumbnail._parse(client, photo) or None,
                 client=client,
             )

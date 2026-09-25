@@ -826,7 +826,8 @@ class User(Object, Update):
         parsed_user.bot_broadcast_admin_rights = types.ChatAdministratorRights._parse(
             user.bot_broadcast_admin_rights
         )
-        parsed_user.chat_background = types.ChatBackground._parse(client, user.wallpaper)
+        if user.wallpaper is not None:
+            parsed_user.chat_background = types.ChatBackground._parse(client, user.wallpaper)
 
         if user.stories:
             parsed_user.stories = (
@@ -842,13 +843,24 @@ class User(Object, Update):
         parsed_user.business_work_hours = types.BusinessWorkingHours._parse(
             user.business_work_hours
         )
-        parsed_user.business_location = types.Location._parse(user.business_location)
-        parsed_user.business_greeting_message = await types.BusinessMessage._parse(
-            client, user.business_greeting_message, users
-        )
-        parsed_user.business_away_message = await types.BusinessMessage._parse(
-            client, user.business_away_message, users
-        )
+
+        if user.business_location is not None:
+            parsed_user.business_location = types.Location._parse(user.business_location)
+
+        if user.business_greeting_message is not None:
+            parsed_user.business_greeting_message = await types.BusinessMessage._parse(
+                client,
+                user.business_greeting_message,
+                users,
+            )
+
+        if user.business_away_message is not None:
+            parsed_user.business_away_message = await types.BusinessMessage._parse(
+                client,
+                user.business_away_message,
+                users,
+            )
+
         parsed_user.business_intro = await types.BusinessIntro._parse(client, user.business_intro)
         parsed_user.birthday = types.Birthday._parse(user.birthday)
 

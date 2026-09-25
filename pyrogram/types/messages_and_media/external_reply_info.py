@@ -178,13 +178,7 @@ class ExternalReplyInfo(Object):
         reply: raw.types.MessageReplyHeader,
         users: dict[int, raw.types.User],
         chats: dict[int, raw.types.Chat],
-    ) -> ExternalReplyInfo | None:
-        if not isinstance(reply, raw.types.MessageReplyHeader):
-            return None
-
-        if not reply.reply_from:
-            return None
-
+    ) -> ExternalReplyInfo:
         animation = None
         audio = None
         document = None
@@ -216,7 +210,9 @@ class ExternalReplyInfo(Object):
                 media_type = enums.MessageMediaType.PHOTO
                 has_media_spoiler = media.spoiler
             elif isinstance(media, raw.types.MessageMediaGeo):
-                location = types.Location._parse(media.geo)
+                if isinstance(media.geo, raw.types.GeoPoint):
+                    location = types.Location._parse(media.geo)
+
                 media_type = enums.MessageMediaType.LOCATION
             elif isinstance(media, raw.types.MessageMediaContact):
                 contact = types.Contact._parse(client, media)
@@ -315,10 +311,18 @@ class ExternalReplyInfo(Object):
                 reply.reply_from,
                 users,
                 chats,
-            ),
+            )
+            if reply.reply_from is not None
+            and (
+                reply.reply_from.from_id or reply.reply_from.from_name or reply.reply_from.imported
+            )
+            else None,
             chat=await types.Chat._parse_chat(client, raw_chat) if raw_chat is not None else None,
             message_id=reply.reply_to_msg_id,
-            link_preview_options=types.LinkPreviewOptions._parse(reply.reply_media),
+            link_preview_options=types.LinkPreviewOptions._parse(reply.reply_media)
+            if isinstance(reply.reply_media, raw.types.MessageMediaWebPage)
+            and not isinstance(reply.reply_media.webpage, raw.types.WebPageNotModified)
+            else None,
             media=media_type,
             animation=animation,
             audio=audio,

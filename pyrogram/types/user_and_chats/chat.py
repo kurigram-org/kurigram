@@ -1175,7 +1175,8 @@ class Chat(Object):
         parsed_chat.channel_admin_rights = types.ChatAdministratorRights._parse(
             user.bot_broadcast_admin_rights
         )
-        parsed_chat.chat_background = types.ChatBackground._parse(client, user.wallpaper)
+        if user.wallpaper is not None:
+            parsed_chat.chat_background = types.ChatBackground._parse(client, user.wallpaper)
 
         if user.stories:
             parsed_chat.stories = (
@@ -1191,13 +1192,24 @@ class Chat(Object):
         parsed_chat.business_work_hours = types.BusinessWorkingHours._parse(
             user.business_work_hours
         )
-        parsed_chat.business_location = types.Location._parse(user.business_location)
-        parsed_chat.business_greeting_message = await types.BusinessMessage._parse(
-            client, user.business_greeting_message, users
-        )
-        parsed_chat.business_away_message = await types.BusinessMessage._parse(
-            client, user.business_away_message, users
-        )
+
+        if user.business_location is not None:
+            parsed_chat.business_location = types.Location._parse(user.business_location)
+
+        if user.business_greeting_message is not None:
+            parsed_chat.business_greeting_message = await types.BusinessMessage._parse(
+                client,
+                user.business_greeting_message,
+                users,
+            )
+
+        if user.business_away_message is not None:
+            parsed_chat.business_away_message = await types.BusinessMessage._parse(
+                client,
+                user.business_away_message,
+                users,
+            )
+
         parsed_chat.business_intro = await types.BusinessIntro._parse(client, user.business_intro)
         parsed_chat.birthday = types.Birthday._parse(user.birthday)
 
@@ -1409,7 +1421,9 @@ class Chat(Object):
                 or None
             )
 
-        parsed_chat.chat_background = types.ChatBackground._parse(client, channel.wallpaper)
+        if channel.wallpaper is not None:
+            parsed_chat.chat_background = types.ChatBackground._parse(client, channel.wallpaper)
+
         parsed_chat.boosts_applied = channel.boosts_applied
         parsed_chat.unrestrict_boost_count = channel.boosts_unrestrict
         parsed_chat.custom_emoji_sticker_set_name = getattr(channel.emojiset, "short_name", None)
