@@ -8227,11 +8227,7 @@ class Message(Object, Update):
 
     async def reply_chat_action(
         self,
-        action: enums.ChatAction,
-        *,
-        emoticon: str | None = None,
-        message_id: int | None = None,
-        interaction: str | None = None,
+        action: enums.ChatAction | types.ChatAction,
     ) -> bool:
         """Shortcut for method :obj:`~pyrogram.Client.send_chat_action` will automatically fill method attributes:
 
@@ -8239,37 +8235,22 @@ class Message(Object, Update):
         * business_connection_id
 
         Parameters:
-            action (:obj:`~pyrogram.enums.ChatAction`):
-                Type of action to broadcast.
-
-            emoticon (``str``, *optional*):
-                The animated emoji that was clicked.
-                Required by the two emoji-interaction actions, rejected by every other action.
-
-            message_id (``int``, *optional*):
-                Identifier of the message carrying the animated emoji that was clicked.
-                Required by :obj:`~pyrogram.enums.ChatAction.EMOJI_INTERACTION`, rejected by every other action.
-
-            interaction (``str``, *optional*):
-                JSON-serialized description of the taps, spelled out in
-                :obj:`~pyrogram.Client.send_chat_action`.
-                Required by :obj:`~pyrogram.enums.ChatAction.EMOJI_INTERACTION`, rejected by every other action.
+            action (:obj:`~pyrogram.enums.ChatAction` | :obj:`~pyrogram.types.ChatAction`):
+                Type of action to broadcast. An enum member broadcasts the action with its default
+                fields; a :obj:`~pyrogram.types.ChatAction` instance carries the fields the caller
+                chose, and is the only way to send the actions that require them, such as
+                :obj:`~pyrogram.types.ChatActionEmojiInteraction`.
 
         Returns:
             ``bool``: On success, True is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
-            ValueError: In case the action was given fields it does not take, or was not given
-                the fields it needs.
         """
         return await self._client.send_chat_action(
             chat_id=self.chat.id,
             action=action,
             business_connection_id=self.business_connection_id,
-            emoticon=emoticon,
-            message_id=message_id,
-            interaction=interaction,
         )
 
     async def reply_inline_bot_result(
