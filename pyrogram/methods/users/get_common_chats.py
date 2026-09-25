@@ -50,7 +50,8 @@ class GetCommonChats:
 
         peer = await self.resolve_peer(user_id)
 
-        if isinstance(peer, raw.types.InputPeerUser):
+        # `InputPeerUserFromMessage` accepted too: see `ban_chat_member.py`.
+        if isinstance(peer, (raw.types.InputPeerUser, raw.types.InputPeerUserFromMessage)):
             r = await self.invoke(
                 raw.functions.messages.GetCommonChats(
                     user_id=peer,

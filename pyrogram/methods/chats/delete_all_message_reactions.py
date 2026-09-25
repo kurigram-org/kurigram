@@ -56,7 +56,15 @@ class DeleteAllMessageReactions:
         if user_id is not None:
             peer = await self.resolve_peer(user_id)
 
-            if not isinstance(peer, (raw.types.InputPeerUser, raw.types.InputPeerSelf)):
+            # `InputPeerUserFromMessage` accepted too: see `ban_chat_member.py`.
+            if not isinstance(
+                peer,
+                (
+                    raw.types.InputPeerUser,
+                    raw.types.InputPeerSelf,
+                    raw.types.InputPeerUserFromMessage,
+                ),
+            ):
                 return False
         elif actor_chat_id is not None:
             peer = await self.resolve_peer(actor_chat_id)

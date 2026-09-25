@@ -78,7 +78,15 @@ class GetChat:
         if force_full:
             if isinstance(peer, raw.types.InputPeerChannel):
                 r = await self.invoke(raw.functions.channels.GetFullChannel(channel=peer))
-            elif isinstance(peer, (raw.types.InputPeerUser, raw.types.InputPeerSelf)):
+            # `InputPeerUserFromMessage` accepted too: see `ban_chat_member.py`.
+            elif isinstance(
+                peer,
+                (
+                    raw.types.InputPeerUser,
+                    raw.types.InputPeerSelf,
+                    raw.types.InputPeerUserFromMessage,
+                ),
+            ):
                 r = await self.invoke(raw.functions.users.GetFullUser(id=peer))
             else:
                 r = await self.invoke(raw.functions.messages.GetFullChat(chat_id=peer.chat_id))
@@ -87,7 +95,14 @@ class GetChat:
         else:
             if isinstance(peer, raw.types.InputPeerChannel):
                 r = await self.invoke(raw.functions.channels.GetChannels(id=[peer]))
-            elif isinstance(peer, (raw.types.InputPeerUser, raw.types.InputPeerSelf)):
+            elif isinstance(
+                peer,
+                (
+                    raw.types.InputPeerUser,
+                    raw.types.InputPeerSelf,
+                    raw.types.InputPeerUserFromMessage,
+                ),
+            ):
                 r = await self.invoke(raw.functions.users.GetUsers(id=[peer]))
             else:
                 r = await self.invoke(raw.functions.messages.GetChats(id=[peer.chat_id]))

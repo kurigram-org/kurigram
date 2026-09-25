@@ -250,7 +250,10 @@ class SendStory:
                 if allowed_users:
                     for user in allowed_users:
                         peer = await self.resolve_peer(user)
-                        if isinstance(peer, raw.types.InputPeerUser):
+                        # `InputPeerUserFromMessage` accepted too: see `ban_chat_member.py`.
+                        if isinstance(
+                            peer, (raw.types.InputPeerUser, raw.types.InputPeerUserFromMessage)
+                        ):
                             _allowed_users.append(peer)
                         elif isinstance(
                             peer, (raw.types.InputPeerChat, raw.types.InputPeerChannel)
