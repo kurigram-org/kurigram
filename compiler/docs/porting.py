@@ -69,6 +69,10 @@ _REMOVED: Final[Mapping[str, str]] = {
         "has not joined as well as one it has."
     ),
     "class:InviteLinkImporter": "Renamed to :class:`~pyrogram.types.ChatJoiner`.",
+    "Link.format": (
+        "Made private: it was the static helper that renders a mention into HTML or "
+        "Markdown, and the name now reaches the plain ``str.format``."
+    ),
 }
 
 # `read` and `write` are Pyrogram's own TL (de)serialization hooks on `Object` subclasses.
