@@ -1335,7 +1335,7 @@ class Message(Object, Update):
             action,
             (raw.types.MessageActionRequestedPeer, raw.types.MessageActionRequestedPeerSentMe),
         ):
-            if isinstance(action.peers[0], (raw.types.PeerUser, raw.types.RequestedPeerUser)):
+            if isinstance(action.peers[0], utils.PEERS_WITH_A_USER_ID):
                 service_type = enums.MessageServiceType.USERS_SHARED
                 users_shared = await types.UsersShared._parse(client, action, users)
             else:
