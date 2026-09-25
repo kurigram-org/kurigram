@@ -44,7 +44,7 @@ class InlineQueryResultLocation(InlineQueryResult):
             Unique identifier for this result, 1-64 bytes.
             Defaults to a randomly generated UUID4.
 
-        horizontal_accuracy (``float``, *optional*)
+        horizontal_accuracy (``float``, *optional*):
             The radius of uncertainty for the location, measured in meters; 0-1500.
 
         live_period (``int``, *optional*):

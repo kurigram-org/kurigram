@@ -43,10 +43,11 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
 # An entry reads `    reply_markup (``InlineKeyboardMarkup``, *optional*):`: the name, then
-#  the type and the markers in brackets. The stars belong to `*args` and `**kwargs` and are
-#  not part of the name. The closing colon is optional because a handful of entries are
-#  written without one, and an entry read as absent would be reported as undocumented.
-_ENTRY: Final[Pattern[str]] = re.compile(r"^(?P<indent> *)\*{0,2}(?P<name>\w+) \((?P<spec>.*)\):?$")
+#  the type and the markers in brackets, then the colon that makes Sphinx render the line as
+#  a definition term. The stars belong to `*args` and `**kwargs` and are not part of the
+#  name. An entry written without the colon is read as absent, so its parameter is reported
+#  as undocumented, which is what enforces the colon.
+_ENTRY: Final[Pattern[str]] = re.compile(r"^(?P<indent> *)\*{0,2}(?P<name>\w+) \((?P<spec>.*)\):$")
 
 _OPTIONAL_MARKER: Final[str] = "*optional*"
 
@@ -310,6 +311,9 @@ def test_the_sweep_reads_an_entry_and_skips_its_description() -> None:
         "",
         "            **kwargs (``any``, *optional*):",
         "                Anything else.",
+        "",
+        "            colon_less (``int``, *optional*)",
+        "                Written without the closing colon, so read as absent.",
         "",
         "        Returns:",
         "            not_a_parameter (``int``):",

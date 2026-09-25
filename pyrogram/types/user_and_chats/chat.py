@@ -548,10 +548,10 @@ class Chat(Object):
             The field is only available to chat administrators
             Returned only in :meth:`~pyrogram.Client.get_chat`.
 
-        community_id (``int``, *optional*)
+        community_id (``int``, *optional*):
             The identifier of the community to which the chat belongs.
 
-        community (:obj:`~pyrogram.types.Community`, *optional*)
+        community (:obj:`~pyrogram.types.Community`, *optional*):
             The :obj:`~pyrogram.types.Community` to which the chat belongs.
 
         raw (:obj:`~pyrogram.raw.types.UserFull` | :obj:`~pyrogram.raw.types.ChatFull` | :obj:`~pyrogram.raw.types.ChannelFull`, *optional*):
