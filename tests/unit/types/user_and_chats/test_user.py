@@ -24,7 +24,8 @@ from typing import Final, Protocol
 
 import pytest
 
-from pyrogram import enums
+from pyrogram import enums, raw, types
+from pyrogram.errors import EmptyObjectError
 from pyrogram.types.user_and_chats.user import Link
 
 _URL: Final[str] = "https://example.com"
@@ -74,3 +75,9 @@ def test_pickling_a_link_preserves_its_url_text_and_style(protocol: int) -> None
     round_tripped: Link = pickle.loads(pickle.dumps(_LINK, protocol))
 
     assert state(round_tripped) == state(_LINK)
+
+
+@pytest.mark.asyncio
+async def test_parse_raises_on_user_empty() -> None:
+    with pytest.raises(EmptyObjectError, match="UserEmpty"):
+        await types.User._parse(None, raw.types.UserEmpty(id=7))
