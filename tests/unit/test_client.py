@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-"""What `Client` does without a network: plugin loading and the download path.
+"""What `Client` does without a network: plugin loading, the download path and proxy assignment.
 
 `load_plugins()` reads a plugin package without tripping over what else lives in it.
 A plugin module is ordinary user code, so anything at all can sit beside the decorated
@@ -37,11 +37,14 @@ import pytest
 
 from pyrogram import Client, StopTransmission, filters, raw
 from pyrogram.client import _plugin_handlers
+from pyrogram.connection.proxy import HTTPProxy, SOCKS5Proxy
 from pyrogram.file_id import FileId, FileType
 from pyrogram.handlers import MessageHandler
 
 if TYPE_CHECKING:
     from concurrent.futures import Executor
+
+    from pyrogram.connection.proxy import Proxy, ProxyDict
 
 _PLUGIN_SOURCE: Final[str] = """
 from pyrogram import Client
@@ -169,6 +172,70 @@ def test_load_plugins_reports_the_pair_it_refuses(
 
     assert client.dispatcher.groups == {}
     assert "greet" in caplog.text
+
+
+def _proxy_client(*, proxy: str | ProxyDict | Proxy | None = None) -> Client:
+    return Client(
+        name="proxy_probe",
+        in_memory=True,
+        proxy=proxy,
+    )
+
+
+@pytest.mark.parametrize(
+    ("proxy", "expected"),
+    [
+        pytest.param(
+            "socks5://username:changeme@11.22.33.44:1234",
+            SOCKS5Proxy(
+                hostname="11.22.33.44",
+                port=1234,
+                username="username",
+                password="changeme",
+            ),
+            id="url",
+        ),
+        pytest.param(
+            {"scheme": "socks5", "hostname": "11.22.33.44", "port": 1234},
+            SOCKS5Proxy(
+                hostname="11.22.33.44",
+                port=1234,
+            ),
+            id="dict",
+        ),
+        pytest.param(
+            HTTPProxy(
+                hostname="11.22.33.44",
+                port=8080,
+            ),
+            HTTPProxy(
+                hostname="11.22.33.44",
+                port=8080,
+            ),
+            id="dataclass",
+        ),
+        pytest.param(None, None, id="none"),
+    ],
+)
+def test_a_proxy_assigned_after_construction_is_normalized_like_the_constructor_argument(
+    proxy: str | ProxyDict | Proxy | None,
+    *,
+    expected: Proxy | None,
+) -> None:
+    assigned = _proxy_client()
+    assigned.proxy = proxy
+
+    constructed = _proxy_client(proxy=proxy)
+
+    assert assigned.proxy == expected
+    assert constructed.proxy == expected
+
+
+def test_an_invalid_proxy_is_refused_at_the_assignment() -> None:
+    client = _proxy_client()
+
+    with pytest.raises(ValueError, match="unknown proxy scheme"):
+        client.proxy = {"scheme": "quic", "hostname": "11.22.33.44", "port": 443}
 
 
 _CHUNK_SIZE: Final[int] = 1024 * 1024

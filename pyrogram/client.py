@@ -150,6 +150,7 @@ class Client(Methods):
             never adds the TLS record layer. A secret longer than 16 bytes - dd-prefixed or
             ee-prefixed - asks for random padding, and the transport that sends it is picked
             from the secret, so *proxy* is the only argument either scheme needs.
+            Assigning ``client.proxy`` later accepts the same forms; the next connection uses it.
 
         test_mode (``bool``, *optional*):
             Enable or disable login to the test servers.
@@ -372,7 +373,7 @@ class Client(Methods):
         self.lang_code = lang_code.lower()
         self.system_lang_code = system_lang_code.lower()
         self.ipv6 = ipv6
-        self.proxy = normalize_proxy(proxy)
+        self.proxy = proxy
         self.test_mode = test_mode
         self.bot_token = bot_token
         self.session_string = session_string
@@ -1695,6 +1696,14 @@ class Client(Methods):
             log.info("Changed session DC%s address to %s:%s", dc_id, server_address, port)
         else:
             log.info("Session DC%s address is already %s:%s", dc_id, server_address, port)
+
+    @property
+    def proxy(self) -> Proxy | None:
+        return self._proxy
+
+    @proxy.setter
+    def proxy(self, proxy: str | ProxyDict | Proxy | None) -> None:
+        self._proxy = normalize_proxy(proxy)
 
     @property
     def server_time(self) -> float:
