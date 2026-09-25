@@ -80,7 +80,6 @@ _HELD_BY_A_PULL_REQUEST: Final[dict[str, str]] = {
     "pyrogram/types/messages_and_media/message.py": "2026-09-19: file uploads are rewritten onto `aiofiles` in review.",
     "pyrogram/types/messages_and_media/story.py": "2026-09-19: file uploads are rewritten onto `aiofiles` in review.",
     "pyrogram/types/user_and_chats/chat.py": "2026-09-19: file uploads are rewritten onto `aiofiles` in review.",
-    "pyrogram/methods/chats/update_chat_notifications.py": "2026-09-19: `mute_until` is renamed on the notification-settings branch.",
 }
 
 
