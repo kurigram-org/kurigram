@@ -20,6 +20,7 @@ from __future__ import annotations as _annotations
 
 from typing import TYPE_CHECKING
 
+import pyrogram
 from pyrogram import raw, types, utils
 
 from ..object import Object
@@ -148,10 +149,11 @@ class ChatSettings(Object):
         self.last_photo_change_date = last_photo_change_date
 
     @staticmethod
-    async def _parse(client, chat_settings: raw.types.PeerSettings, users) -> ChatSettings | None:
-        if not chat_settings:
-            return None
-
+    async def _parse(
+        client: pyrogram.Client,
+        chat_settings: raw.types.PeerSettings,
+        users: dict[int, raw.base.User],
+    ) -> ChatSettings:
         raw_business_bot = users.get(getattr(chat_settings, "business_bot_id", None))
 
         return ChatSettings(

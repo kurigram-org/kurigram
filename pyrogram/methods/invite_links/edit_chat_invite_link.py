@@ -94,4 +94,7 @@ class EditChatInviteLink:
 
         users = {i.id: i for i in r.users}
 
+        if not isinstance(r.invite, raw.types.ChatInviteExported):
+            return None
+
         return await types.ChatInviteLink._parse(self, r.invite, users)

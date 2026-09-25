@@ -72,10 +72,7 @@ class ShippingAddress(Object):
     @staticmethod
     def _parse(
         shipping_address: raw.types.PostAddress,
-    ) -> ShippingAddress | None:
-        if not shipping_address:
-            return None
-
+    ) -> ShippingAddress:
         return ShippingAddress(
             country_code=shipping_address.country_iso2,
             state=shipping_address.state,

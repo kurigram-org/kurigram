@@ -1334,14 +1334,12 @@ class Message(Object, Update):
             action,
             (raw.types.MessageActionRequestedPeer, raw.types.MessageActionRequestedPeerSentMe),
         ):
-            _requested_chat = await types.ChatShared._parse(client, action, chats)
-
-            if _requested_chat is None:
+            if isinstance(action.peers[0], (raw.types.PeerUser, raw.types.RequestedPeerUser)):
                 service_type = enums.MessageServiceType.USERS_SHARED
                 users_shared = await types.UsersShared._parse(client, action, users)
             else:
                 service_type = enums.MessageServiceType.CHAT_SHARED
-                chat_shared = _requested_chat
+                chat_shared = await types.ChatShared._parse(client, action, chats)
         elif isinstance(action, raw.types.MessageActionScreenshotTaken):
             service_type = enums.MessageServiceType.SCREENSHOT_TAKEN
             screenshot_taken = types.ScreenshotTaken()

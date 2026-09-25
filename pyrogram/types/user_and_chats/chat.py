@@ -935,7 +935,12 @@ class Chat(Object):
             )
             or None,
             dc_id=getattr(getattr(user, "photo", None), "dc_id", None),
-            emoji_status=types.EmojiStatus._parse(client, user.emoji_status),
+            emoji_status=types.EmojiStatus._parse(client, user.emoji_status)
+            if isinstance(
+                user.emoji_status,
+                (raw.types.EmojiStatus, raw.types.EmojiStatusCollectible),
+            )
+            else None,
             accent_color_id=accent_color_id,
             background_custom_emoji_id=background_custom_emoji_id,
             profile_accent_color_id=profile_accent_color_id,
@@ -981,7 +986,9 @@ class Chat(Object):
             is_call_not_empty=chat.call_not_empty,
             usernames=types.List([types.Username._parse(r) for r in usernames]) or None,
             photo=await types.ChatPhoto._parse(client, chat.photo, peer_id, 0),
-            permissions=types.ChatPermissions._parse(chat.default_banned_rights),
+            permissions=types.ChatPermissions._parse(chat.default_banned_rights)
+            if chat.default_banned_rights is not None
+            else None,
             members_count=chat.participants_count,
             dc_id=getattr(getattr(chat, "photo", None), "dc_id", None),
             has_protected_content=chat.noforwards,
@@ -1068,10 +1075,17 @@ class Chat(Object):
             sign_messages=channel.signatures,
             restrictions=types.List([types.Restriction._parse(r) for r in restriction_reason])
             or None,
-            permissions=types.ChatPermissions._parse(channel.default_banned_rights),
+            permissions=types.ChatPermissions._parse(channel.default_banned_rights)
+            if channel.default_banned_rights is not None
+            else None,
             members_count=channel.participants_count,
             dc_id=getattr(getattr(channel, "photo", None), "dc_id", None),
-            emoji_status=types.EmojiStatus._parse(client, channel.emoji_status),
+            emoji_status=types.EmojiStatus._parse(client, channel.emoji_status)
+            if isinstance(
+                channel.emoji_status,
+                (raw.types.EmojiStatus, raw.types.EmojiStatusCollectible),
+            )
+            else None,
             has_protected_content=channel.noforwards,
             level=channel.level,
             accent_color_id=accent_color_id,
@@ -1189,8 +1203,10 @@ class Chat(Object):
                 or None
             )
 
-        parsed_chat.business_work_hours = types.BusinessWorkingHours._parse(
-            user.business_work_hours
+        parsed_chat.business_work_hours = (
+            types.BusinessWorkingHours._parse(user.business_work_hours)
+            if user.business_work_hours is not None
+            else None
         )
 
         if user.business_location is not None:
@@ -1210,8 +1226,14 @@ class Chat(Object):
                 users,
             )
 
-        parsed_chat.business_intro = await types.BusinessIntro._parse(client, user.business_intro)
-        parsed_chat.birthday = types.Birthday._parse(user.birthday)
+        parsed_chat.business_intro = (
+            await types.BusinessIntro._parse(client, user.business_intro)
+            if user.business_intro is not None
+            else None
+        )
+        parsed_chat.birthday = (
+            types.Birthday._parse(user.birthday) if user.birthday is not None else None
+        )
 
         if user.personal_channel_id:
             parsed_chat.personal_channel = await Chat._parse_channel_chat(
@@ -1223,8 +1245,10 @@ class Chat(Object):
 
         parsed_chat.gift_count = user.stargifts_count
         # parsed_chat.starref_program
-        parsed_chat.bot_verification = await types.BotVerification._parse(
-            client, user.bot_verification, users
+        parsed_chat.bot_verification = (
+            await types.BotVerification._parse(client, user.bot_verification, users)
+            if user.bot_verification is not None
+            else None
         )
         parsed_chat.main_profile_tab = (
             enums.ProfileTab(type(user.main_tab)) if user.main_tab else None
@@ -1245,20 +1269,33 @@ class Chat(Object):
                     ),
                 )
 
-        parsed_chat.rating = types.UserRating._parse(user.stars_rating)
-        parsed_chat.pending_rating = types.UserRating._parse(user.stars_my_pending_rating)
+        parsed_chat.rating = (
+            types.UserRating._parse(user.stars_rating) if user.stars_rating is not None else None
+        )
+        parsed_chat.pending_rating = (
+            types.UserRating._parse(user.stars_my_pending_rating)
+            if user.stars_my_pending_rating is not None
+            else None
+        )
         parsed_chat.pending_rating_date = utils.timestamp_to_datetime(
             user.stars_my_pending_rating_date
         )
         parsed_chat.paid_message_star_count = user.send_paid_messages_stars
         parsed_chat.display_gifts_button = user.display_gifts_button
         parsed_chat.uses_unofficial_app = user.unofficial_security_risk
-        parsed_chat.accepted_gift_types = types.AcceptedGiftTypes._parse(user.disallowed_gifts)
+        parsed_chat.accepted_gift_types = (
+            types.AcceptedGiftTypes._parse(user.disallowed_gifts)
+            if user.disallowed_gifts is not None
+            else None
+        )
         parsed_chat.note = await types.FormattedText._parse(client, user.note)
 
         if parsed_chat.community_id:
-            parsed_chat.community = await types.Community._parse(
-                client, chats.get(utils.get_raw_peer_id(parsed_chat.community_id))
+            raw_community = chats.get(utils.get_raw_peer_id(parsed_chat.community_id))
+            parsed_chat.community = (
+                await types.Community._parse(client, raw_community)
+                if isinstance(raw_community, (raw.types.Community, raw.types.CommunityForbidden))
+                else None
             )
 
         return parsed_chat
@@ -1300,8 +1337,11 @@ class Chat(Object):
         parsed_chat.theme = chat.theme_emoticon
         parsed_chat.join_requests_count = chat.requests_pending
         # parsed_chat.recent_requesters
-        parsed_chat.available_reactions = types.ChatReactions._parse(
-            client, chat.available_reactions
+        parsed_chat.available_reactions = (
+            types.ChatReactions._parse(client, chat.available_reactions)
+            if chat.available_reactions is not None
+            and not isinstance(chat.available_reactions, raw.types.ChatReactionsNone)
+            else None
         )
         parsed_chat.reactions_limit = chat.reactions_limit
         parsed_chat.has_welcome_messages = chat.has_welcome_messages
@@ -1405,8 +1445,11 @@ class Chat(Object):
 
             parsed_chat.send_as_chat = await Chat._parse_chat(client, send_as_raw)
 
-        parsed_chat.available_reactions = types.ChatReactions._parse(
-            client, channel.available_reactions
+        parsed_chat.available_reactions = (
+            types.ChatReactions._parse(client, channel.available_reactions)
+            if channel.available_reactions is not None
+            and not isinstance(channel.available_reactions, raw.types.ChatReactionsNone)
+            else None
         )
         parsed_chat.reactions_limit = channel.reactions_limit
 
@@ -1427,8 +1470,10 @@ class Chat(Object):
         parsed_chat.boosts_applied = channel.boosts_applied
         parsed_chat.unrestrict_boost_count = channel.boosts_unrestrict
         parsed_chat.custom_emoji_sticker_set_name = getattr(channel.emojiset, "short_name", None)
-        parsed_chat.bot_verification = await types.BotVerification._parse(
-            client, channel.bot_verification, users
+        parsed_chat.bot_verification = (
+            await types.BotVerification._parse(client, channel.bot_verification, users)
+            if channel.bot_verification is not None
+            else None
         )
         parsed_chat.main_profile_tab = (
             enums.ProfileTab(type(channel.main_tab)) if channel.main_tab else None
@@ -1444,8 +1489,11 @@ class Chat(Object):
         parsed_chat.has_welcome_messages = channel.has_welcome_messages
 
         if parsed_chat.community_id:
-            parsed_chat.community = await types.Community._parse(
-                client, chats.get(utils.get_raw_peer_id(parsed_chat.community_id))
+            raw_community = chats.get(utils.get_raw_peer_id(parsed_chat.community_id))
+            parsed_chat.community = (
+                await types.Community._parse(client, raw_community)
+                if isinstance(raw_community, (raw.types.Community, raw.types.CommunityForbidden))
+                else None
             )
 
         return parsed_chat

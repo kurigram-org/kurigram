@@ -51,13 +51,10 @@ class ChatShared(Object):
         client: pyrogram.Client,
         action: raw.types.MessageActionRequestedPeer | raw.types.MessageActionRequestedPeerSentMe,
         chats: dict[int, raw.base.Chat] | None = None,
-    ) -> ChatShared | None:
+    ) -> ChatShared:
         chats = chats or {}
 
         peer = action.peers[0]
-
-        if isinstance(peer, (raw.types.PeerUser, raw.types.RequestedPeerUser)):
-            return None
 
         peer_id = utils.get_peer_id(peer)
         peer_type = utils.get_peer_type(peer_id)

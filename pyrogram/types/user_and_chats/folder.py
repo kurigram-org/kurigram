@@ -138,14 +138,11 @@ class Folder(Object):
 
     @staticmethod
     async def _parse(
-        client: pyrogram.Client, folder: raw.base.DialogFilter, users, chats
-    ) -> Folder | None:
-        if not folder:
-            return
-
-        if isinstance(folder, raw.types.DialogFilterDefault):
-            return
-
+        client: pyrogram.Client,
+        folder: raw.types.DialogFilter | raw.types.DialogFilterChatlist,
+        users,
+        chats,
+    ) -> Folder:
         pinned_chats = types.List()
         included_chats = types.List()
         excluded_chats = types.List()

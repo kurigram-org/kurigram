@@ -140,33 +140,32 @@ class ChatPermissions(Object):
         self.can_send_media_messages = can_send_media_messages
 
     @staticmethod
-    def _parse(denied_permissions: raw.base.ChatBannedRights) -> ChatPermissions | None:
-        if isinstance(denied_permissions, raw.types.ChatBannedRights):
-            return ChatPermissions(
-                can_send_messages=not denied_permissions.send_messages,
-                can_send_audios=not denied_permissions.send_audios,
-                can_send_documents=not denied_permissions.send_docs,
-                can_send_photos=not denied_permissions.send_photos,
-                can_send_videos=not denied_permissions.send_videos,
-                can_send_video_notes=not denied_permissions.send_roundvideos,
-                can_send_voice_notes=not denied_permissions.send_voices,
-                can_send_polls=not denied_permissions.send_polls,
-                can_send_other_messages=any(
-                    [
-                        not denied_permissions.send_stickers,
-                        not denied_permissions.send_gifs,
-                        not denied_permissions.send_games,
-                        not denied_permissions.send_inline,
-                    ]
-                ),
-                can_add_web_page_previews=not denied_permissions.embed_links,
-                can_react_to_messages=not denied_permissions.send_reactions,
-                can_edit_tag=not denied_permissions.edit_rank,
-                can_change_info=not denied_permissions.change_info,
-                can_invite_users=not denied_permissions.invite_users,
-                can_pin_messages=not denied_permissions.pin_messages,
-                can_manage_topics=not denied_permissions.manage_topics,
-            )
+    def _parse(denied_permissions: raw.types.ChatBannedRights) -> ChatPermissions:
+        return ChatPermissions(
+            can_send_messages=not denied_permissions.send_messages,
+            can_send_audios=not denied_permissions.send_audios,
+            can_send_documents=not denied_permissions.send_docs,
+            can_send_photos=not denied_permissions.send_photos,
+            can_send_videos=not denied_permissions.send_videos,
+            can_send_video_notes=not denied_permissions.send_roundvideos,
+            can_send_voice_notes=not denied_permissions.send_voices,
+            can_send_polls=not denied_permissions.send_polls,
+            can_send_other_messages=any(
+                [
+                    not denied_permissions.send_stickers,
+                    not denied_permissions.send_gifs,
+                    not denied_permissions.send_games,
+                    not denied_permissions.send_inline,
+                ]
+            ),
+            can_add_web_page_previews=not denied_permissions.embed_links,
+            can_react_to_messages=not denied_permissions.send_reactions,
+            can_edit_tag=not denied_permissions.edit_rank,
+            can_change_info=not denied_permissions.change_info,
+            can_invite_users=not denied_permissions.invite_users,
+            can_pin_messages=not denied_permissions.pin_messages,
+            can_manage_topics=not denied_permissions.manage_topics,
+        )
 
     def write(self, until_date: datetime | None = None) -> raw.types.ChatBannedRights:
         until_date = until_date or utils.zero_datetime()

@@ -90,7 +90,9 @@ class ChatJoinRequest(Object, Update):
             from_user=await types.User._parse(client, users[update.user_id]),
             date=utils.timestamp_to_datetime(update.date),
             bio=update.about,
-            invite_link=await types.ChatInviteLink._parse(client, update.invite, users),
+            invite_link=await types.ChatInviteLink._parse(client, update.invite, users)
+            if isinstance(update.invite, raw.types.ChatInviteExported)
+            else None,
             query_id=str(update.query_id) if update.query_id else None,
             client=client,
         )

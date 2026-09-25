@@ -57,11 +57,8 @@ class VerificationStatus(Object):
 
     @staticmethod
     def _parse(
-        chat: raw.base.User | raw.base.Chat | raw.base.ChatInvite,
-    ) -> VerificationStatus | None:
-        if not isinstance(chat, (raw.types.User, raw.types.Channel, raw.types.ChatInvite)):
-            return None
-
+        chat: raw.types.User | raw.types.Channel | raw.types.ChatInvite,
+    ) -> VerificationStatus:
         bot_verification_icon = None
 
         if isinstance(chat, raw.types.ChatInvite):

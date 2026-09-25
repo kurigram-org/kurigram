@@ -72,15 +72,10 @@ class BusinessConnection(Object, Update):
     @staticmethod
     async def _parse(
         client,
-        connection: raw.types.BotBusinessConnection
-        | raw.types.UpdateBotBusinessConnect
-        | None = None,
+        connection: raw.types.BotBusinessConnection | raw.types.UpdateBotBusinessConnect,
         users: dict[int, raw.base.User] | None = None,
-    ) -> BusinessConnection | None:
+    ) -> BusinessConnection:
         users = users or {}
-
-        if not connection:
-            return None
 
         if isinstance(connection, raw.types.UpdateBotBusinessConnect):
             connection = connection.connection

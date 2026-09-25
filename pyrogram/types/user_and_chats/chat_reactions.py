@@ -52,21 +52,21 @@ class ChatReactions(Object):
         self.reactions = reactions
 
     @staticmethod
-    def _parse(client, chat_reactions: raw.base.ChatReactions) -> ChatReactions | None:
+    def _parse(
+        client: pyrogram.Client,
+        chat_reactions: raw.types.ChatReactionsAll | raw.types.ChatReactionsSome,
+    ) -> ChatReactions:
         if isinstance(chat_reactions, raw.types.ChatReactionsAll):
             return ChatReactions(
                 client=client, all_are_enabled=True, allow_custom_emoji=chat_reactions.allow_custom
             )
 
-        if isinstance(chat_reactions, raw.types.ChatReactionsSome):
-            return ChatReactions(
-                client=client,
-                reactions=[
-                    types.Reaction._parse(client, reaction)
-                    if not isinstance(reaction, raw.types.ReactionEmpty)
-                    else None
-                    for reaction in chat_reactions.reactions
-                ],
-            )
-
-        return None
+        return ChatReactions(
+            client=client,
+            reactions=[
+                types.Reaction._parse(client, reaction)
+                if not isinstance(reaction, raw.types.ReactionEmpty)
+                else None
+                for reaction in chat_reactions.reactions
+            ],
+        )

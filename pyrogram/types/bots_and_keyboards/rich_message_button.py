@@ -164,7 +164,8 @@ class RichMessageButton(Object):
                 return RichMessageButton(
                     text=button_text,
                     switch_inline_query_chosen_chat=types.SwitchInlineQueryChosenChat._parse(
-                        button_type
+                        button_type.query,
+                        peer_types=button_type.peer_types,
                     ),
                     style=button_style,
                 )

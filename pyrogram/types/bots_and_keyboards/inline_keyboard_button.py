@@ -213,7 +213,8 @@ class InlineKeyboardButton(Object):
                 return InlineKeyboardButton(
                     text=button_text,
                     switch_inline_query_chosen_chat=types.SwitchInlineQueryChosenChat._parse(
-                        button_type
+                        button_type.query,
+                        peer_types=button_type.peer_types,
                     ),
                     style=button_style,
                     icon_custom_emoji_id=icon_custom_emoji_id,
