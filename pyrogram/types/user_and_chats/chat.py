@@ -28,7 +28,7 @@ from ..object import Object
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
     from pyrogram._typing import PathType
 
@@ -1688,7 +1688,7 @@ class Chat(Object):
     async def ban_member(
         self,
         user_id: int | str,
-        until_date: datetime | None = None,
+        until_date: datetime | timedelta | None = None,
         revoke_messages: bool | None = None,
     ) -> types.Message | bool:
         """Bound method *ban_member* of :obj:`~pyrogram.types.Chat`.
@@ -1712,10 +1712,11 @@ class Chat(Object):
                 Unique identifier (int) or username (str) of the target user.
                 For a contact that exists in your Telegram address book you can use his phone number (str).
 
-            until_date (:py:obj:`~datetime.datetime`, *optional*):
+            until_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the user will be unbanned.
                 If user is banned for more than 366 days or less than 30 seconds from the current time they are
                 considered to be banned forever. Defaults to epoch (ban forever).
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             revoke_messages (``bool``, *optional*):
                 Pass True to delete all messages in the chat for the user who is being removed.
@@ -1771,7 +1772,7 @@ class Chat(Object):
         self,
         user_id: int | str,
         permissions: types.ChatPermissions,
-        until_date: datetime | None = None,
+        until_date: datetime | timedelta | None = None,
     ) -> types.Chat:
         """Bound method *unban_member* of :obj:`~pyrogram.types.Chat`.
 
@@ -1798,10 +1799,11 @@ class Chat(Object):
             permissions (:obj:`~pyrogram.types.ChatPermissions`):
                 New user permissions.
 
-            until_date (:py:obj:`~datetime.datetime`, *optional*):
+            until_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the user will be unbanned.
                 If user is banned for more than 366 days or less than 30 seconds from the current time they are
                 considered to be banned forever. Defaults to epoch (ban forever).
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
         Returns:
             :obj:`~pyrogram.types.Chat`: On success, a chat object is returned.
@@ -2076,7 +2078,7 @@ class Chat(Object):
         """
         return await self._client.unpin_all_chat_messages(self.id)
 
-    async def mute(self, mute_until: datetime | None = None) -> bool:
+    async def mute(self, mute_until: datetime | timedelta | None = None) -> bool:
         """Bound method *mute* of :obj:`~pyrogram.types.Chat`.
 
         Use as a shortcut for:
@@ -2086,11 +2088,9 @@ class Chat(Object):
             client.update_chat_notifications(chat_id, mute=True, mute_until=mute_until)
 
         Parameters:
-            mute (``bool``, *optional*):
-                Pass True if you want to mute chat.
-
-            until_date (:py:obj:`~datetime.datetime`, *optional*):
-                Date when the user will be unmuted. Defaults to forever.
+            mute_until (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
+                Date when the chat will be unmuted. Defaults to forever.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
         Example:
             .. code-block:: python

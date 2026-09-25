@@ -44,10 +44,10 @@ class MarkChecklistTasksAsDone:
             message_id (``int``):
                 Identifier of the message containing the checklist.
 
-            marked_as_done_task_ids (List of ``int``):
+            marked_as_done_task_ids (List of ``int``, *optional*):
                 Identifiers of tasks that were marked as done.
 
-            marked_as_not_done_task_ids (List of ``int``):
+            marked_as_not_done_task_ids (List of ``int``, *optional*):
                 Identifiers of tasks that were marked as not done.
 
         Returns:

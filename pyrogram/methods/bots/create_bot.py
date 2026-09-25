@@ -46,7 +46,7 @@ class CreateBot:
                 The username must end with "bot".
                 Use :meth:`~pyrogram.Client.check_bot_username` to find whether the name is suitable.
 
-            via_link (``bool``):
+            via_link (``bool``, *optional*):
                 Pass True if the bot is created from link.
 
         Returns:

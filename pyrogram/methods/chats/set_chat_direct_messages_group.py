@@ -37,7 +37,7 @@ class SetChatDirectMessagesGroup:
             chat_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the target chat.
 
-            paid_message_star_count (``bool``):
+            paid_message_star_count (``int``, *optional*):
                 The new number of Telegram Stars that must be paid for each message that is sent to the direct messages chat unless the sender is an administrator of the channel chat, 0-10000.
 
             is_enabled (``bool``, *optional*):

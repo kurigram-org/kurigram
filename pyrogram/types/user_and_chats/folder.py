@@ -261,9 +261,6 @@ class Folder(Object):
                 The identifier of the chosen color for the chat folder icon.
                 Can't be changed if folder tags are disabled or the current user doesn't have Telegram Premium subscription.
 
-            is_shareable (``bool``, *optional*):
-                True, if at least one link has been created for the folder.
-
             pinned_chats (List of ``int`` | ``str``, *optional*):
                 The pinned chats in the folder.
                 There can be up to getOption("chat_folder_chosen_chat_count_max") pinned and always included non-secret chats and the same number of secret chats, but the limit can be increased with Telegram Premium.
@@ -478,7 +475,7 @@ class Folder(Object):
                await folder.update_color(enums.FolderColor.RED)
 
         Parameters:
-            color (:obj:`~pyrogram.enums.FolderColor`, *optional*):
+            color (:obj:`~pyrogram.enums.FolderColor`):
                 Color type.
                 Pass :obj:`~pyrogram.enums.FolderColor` to set folder color.
 

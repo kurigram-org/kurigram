@@ -34,7 +34,7 @@ class ToggleJoinToSend:
             chat_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the target chat.
 
-            enabled (``bool``):
+            enabled (``bool``, *optional*):
                 The new status. Pass True to enable guest users to send message.
 
         Returns:

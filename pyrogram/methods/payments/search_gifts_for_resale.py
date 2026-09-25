@@ -46,7 +46,7 @@ class SearchGiftsForResale:
             gift_id (``int``):
                 Identifier of the regular gift that was upgraded to a unique gift.
 
-            order (:obj:`~pyrogram.enums.GiftForResaleOrder`):
+            order (:obj:`~pyrogram.enums.GiftForResaleOrder`, *optional*):
                 Order in which the results will be sorted.
 
             for_crafting (``bool``, *optional*):

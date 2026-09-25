@@ -24,7 +24,7 @@ import pyrogram
 from pyrogram import raw, types, utils
 
 if TYPE_CHECKING:
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
 
 class ForwardStory:
@@ -35,7 +35,7 @@ class ForwardStory:
         story_id: int,
         disable_notification: bool | None = None,
         message_thread_id: int | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         paid_message_star_count: int | None = None,
         protect_content: bool | None = None,
@@ -76,8 +76,9 @@ class ForwardStory:
                 Unique identifier for the target message thread (topic) of the forum.
                 For supergroups only.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.

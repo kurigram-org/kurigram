@@ -50,7 +50,7 @@ class EditEphemeralMessageText:
             ephemeral_message_id (``int``):
                 Identifier of the ephemeral message to edit.
 
-            text (``str``):
+            text (``str``, *optional*):
                 New text of the message, 1-4096 characters after entity parsing, required if *rich_message* isn't specified.
 
             parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
