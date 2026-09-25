@@ -21,7 +21,7 @@ from .auto_name import AutoName
 
 
 class ChatAction(AutoName):
-    """Chat action enumeration used in :obj:`~pyrogram.types.ChatEvent`."""
+    """Chat action enumeration used in :meth:`~pyrogram.Client.send_chat_action`."""
 
     TYPING = raw.types.SendMessageTypingAction
     "Typing text message"
