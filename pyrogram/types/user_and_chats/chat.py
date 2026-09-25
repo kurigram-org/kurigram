@@ -1140,7 +1140,7 @@ class Chat(Object):
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
     ) -> Chat:
-        parsed_chat = utils.require_parsed(await Chat._parse_user_chat(client, users[user.id]))
+        parsed_chat = await Chat._parse_user_chat(client, users[user.id])
         parsed_chat.raw = user
 
         parsed_chat.settings = await types.ChatSettings._parse(client, user.settings, users)
@@ -1307,7 +1307,7 @@ class Chat(Object):
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
     ) -> Chat:
-        parsed_chat = utils.require_parsed(await Chat._parse_chat_chat(client, chats[chat.id]))
+        parsed_chat = await Chat._parse_chat_chat(client, chats[chat.id])
         parsed_chat.raw = chat
 
         parsed_chat.description = chat.about or None
@@ -1355,9 +1355,7 @@ class Chat(Object):
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
     ) -> Chat:
-        parsed_chat = utils.require_parsed(
-            await Chat._parse_channel_chat(client, chats[channel.id])
-        )
+        parsed_chat = await Chat._parse_channel_chat(client, chats[channel.id])
         parsed_chat.raw = channel
 
         parsed_chat.description = channel.about or None

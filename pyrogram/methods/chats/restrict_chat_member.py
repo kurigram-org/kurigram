@@ -87,4 +87,4 @@ class RestrictChatMember:
             )
         )
 
-        return utils.require_parsed(await types.Chat._parse_chat(self, r.chats[0]))
+        return await types.Chat._parse_chat(self, r.chats[0])

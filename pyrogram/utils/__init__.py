@@ -38,7 +38,6 @@ from .gifts import get_input_stargift
 from .inline import pack_inline_message_id, unpack_inline_message_id
 from .json_values import jsonvalue_to_obj, obj_to_jsonvalue
 from .messages import get_reply_to, parse_deleted_messages, parse_messages
-from .parsing import require_parsed
 from .peers import (
     MAX_CHANNEL_ID,
     MAX_CHAT_ID,
@@ -91,7 +90,6 @@ __all__ = [
     "parse_messages",
     "parse_text_entities",
     "parse_text_with_entities",
-    "require_parsed",
     "sha256",
     "split_text",
     "timestamp_to_datetime",

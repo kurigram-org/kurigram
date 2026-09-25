@@ -22,7 +22,7 @@ import logging
 import re
 
 import pyrogram
-from pyrogram import raw, types, utils
+from pyrogram import raw, types
 
 log = logging.getLogger(__name__)
 
@@ -56,4 +56,4 @@ class ChangePhoneNumber:
             )
         )
 
-        return utils.require_parsed(await types.User._parse(self, r))
+        return await types.User._parse(self, r)
