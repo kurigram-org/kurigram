@@ -33,20 +33,20 @@ MAX_CHAT_ID = 999999999999
 
 # The constructors of `Peer`/`InputPeer`/`RequestedPeer` that carry each id attribute;
 #  `isinstance` over them is what lets a type checker narrow the attribute type.
-_PEERS_WITH_A_USER_ID: Final = (
+PEERS_WITH_A_USER_ID: Final = (
     raw.types.PeerUser,
     raw.types.InputPeerUser,
     raw.types.InputPeerUserFromMessage,
     raw.types.RequestedPeerUser,
 )
 
-_PEERS_WITH_A_CHAT_ID: Final = (
+PEERS_WITH_A_CHAT_ID: Final = (
     raw.types.PeerChat,
     raw.types.InputPeerChat,
     raw.types.RequestedPeerChat,
 )
 
-_PEERS_WITH_A_CHANNEL_ID: Final = (
+PEERS_WITH_A_CHANNEL_ID: Final = (
     raw.types.PeerChannel,
     raw.types.InputPeerChannel,
     raw.types.InputPeerChannelFromMessage,
@@ -73,13 +73,13 @@ def get_raw_peer_id(
         elif 0 < peer <= MAX_USER_ID:
             return peer
     else:
-        if isinstance(peer, _PEERS_WITH_A_USER_ID):
+        if isinstance(peer, PEERS_WITH_A_USER_ID):
             return peer.user_id
 
-        if isinstance(peer, _PEERS_WITH_A_CHAT_ID):
+        if isinstance(peer, PEERS_WITH_A_CHAT_ID):
             return peer.chat_id
 
-        if isinstance(peer, _PEERS_WITH_A_CHANNEL_ID):
+        if isinstance(peer, PEERS_WITH_A_CHANNEL_ID):
             return peer.channel_id
 
     return None
@@ -87,13 +87,13 @@ def get_raw_peer_id(
 
 def get_peer_id(peer: raw.base.Peer | raw.base.InputPeer | raw.base.RequestedPeer) -> int:
     """Get the non-raw peer id from a Peer object"""
-    if isinstance(peer, _PEERS_WITH_A_USER_ID):
+    if isinstance(peer, PEERS_WITH_A_USER_ID):
         return peer.user_id
 
-    if isinstance(peer, _PEERS_WITH_A_CHAT_ID):
+    if isinstance(peer, PEERS_WITH_A_CHAT_ID):
         return -peer.chat_id
 
-    if isinstance(peer, _PEERS_WITH_A_CHANNEL_ID):
+    if isinstance(peer, PEERS_WITH_A_CHANNEL_ID):
         return ZERO_CHANNEL_ID - peer.channel_id
 
     raise ValueError(f"Peer type invalid: {peer}")

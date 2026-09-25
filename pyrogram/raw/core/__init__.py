@@ -29,7 +29,7 @@ from .primitives.double import Double
 from .primitives.int import Int, Int128, Int256, Long
 from .primitives.string import String
 from .primitives.vector import Vector
-from .tl_object import TLObject
+from .tl_object import ReturnType, TLObject
 
 __all__ = [
     "FutureSalt",
@@ -51,4 +51,5 @@ __all__ = [
     "Vector",
     "BaseTypeMeta",
     "TLObject",
+    "ReturnType",
 ]

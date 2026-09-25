@@ -27,7 +27,10 @@ from pyrogram.utils import compute_password_hash, compute_password_check, btoi, 
 
 class ChangeCloudPassword:
     async def change_cloud_password(
-        self: pyrogram.Client, current_password: str, new_password: str, new_hint: str = ""
+        self: pyrogram.Client,
+        current_password: str,
+        new_password: str,
+        new_hint: str | None = None,
     ) -> bool:
         """Change your Two-Step Verification password (Cloud Password) with a new one.
 
@@ -42,6 +45,8 @@ class ChangeCloudPassword:
 
             new_hint (``str``, *optional*):
                 A new password hint.
+                Pass ``None`` or omit it to keep the hint the account already has.
+                Pass an empty string to remove the hint.
 
         Returns:
             ``bool``: True on success.
@@ -52,11 +57,14 @@ class ChangeCloudPassword:
         Example:
             .. code-block:: python
 
-                # Change password only
+                # Change password only, keeping the current hint
                 await app.change_cloud_password("current_password", "new_password")
 
                 # Change password and hint
                 await app.change_cloud_password("current_password", "new_password", new_hint="hint")
+
+                # Change password and drop the hint
+                await app.change_cloud_password("current_password", "new_password", new_hint="")
         """
         r = await self.invoke(raw.functions.account.GetPassword())
 
@@ -67,11 +75,19 @@ class ChangeCloudPassword:
         new_hash = btoi(compute_password_hash(r.new_algo, new_password))
         new_hash = itob(pow(r.new_algo.g, new_hash, btoi(r.new_algo.p)))
 
+        # The hint shares flag bit 0 with `new_algo` and `new_password_hash`
+        #  (`compiler/api/source/main_api.tl:687`), which a password change always sends, so a
+        #  hint is on the wire either way and there is no way to say "leave it alone". Sending
+        #  the account's current one back is what leaves it unchanged.
+        hint = new_hint if new_hint is not None else (r.hint or "")
+
         await self.invoke(
             raw.functions.account.UpdatePasswordSettings(
                 password=compute_password_check(r, current_password),
                 new_settings=raw.types.account.PasswordInputSettings(
-                    new_algo=r.new_algo, new_password_hash=new_hash, hint=new_hint
+                    new_algo=r.new_algo,
+                    new_password_hash=new_hash,
+                    hint=hint,
                 ),
             )
         )

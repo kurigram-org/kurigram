@@ -26,7 +26,7 @@ from pyrogram import raw, types, utils
 from ..object import Object
 
 if TYPE_CHECKING:
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
 
 class RichText(Object):
@@ -395,8 +395,9 @@ class RichTextDateTime(RichText):
         text (:obj:`~pyrogram.types.RichText`):
             The text.
 
-        date (:py:obj:`datetime.datetime`):
+        date (:py:obj:`datetime.datetime` | :py:obj:`datetime.timedelta`):
             The date associated with the entity.
+            A :py:obj:`datetime.timedelta` is counted from now.
 
         date_time_format (``str``, *optional*):
             The string that defines the formatting of the date and time.
@@ -406,7 +407,7 @@ class RichTextDateTime(RichText):
     def __init__(
         self,
         text: types.RichText,
-        date: datetime,
+        date: datetime | timedelta,
         date_time_format: str | None = None,
     ):
         super().__init__()

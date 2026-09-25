@@ -24,7 +24,7 @@ import pyrogram
 from pyrogram import raw, types, utils
 
 if TYPE_CHECKING:
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
 
 class CreateChatInviteLink:
@@ -32,7 +32,7 @@ class CreateChatInviteLink:
         self: pyrogram.Client,
         chat_id: int | str,
         name: str | None = None,
-        expire_date: datetime | None = None,
+        expire_date: datetime | timedelta | None = None,
         member_limit: int | None = None,
         creates_join_request: bool | None = None,
     ) -> types.ChatInviteLink | None:
@@ -52,9 +52,10 @@ class CreateChatInviteLink:
             name (``str``, *optional*):
                 Invite link name.
 
-            expire_date (:py:obj:`~datetime.datetime`, *optional*):
+            expire_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Point in time when the link will expire.
                 Defaults to None (no expiration date).
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             member_limit (``int``, *optional*):
                 Maximum number of users that can be members of the chat simultaneously after joining the chat via

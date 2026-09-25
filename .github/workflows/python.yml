@@ -1,7 +1,10 @@
 name: Pyrogram
 
 on:
+  # Branches live in this repository and are tested through their pull request, so an
+  #  unfiltered `push` ran the whole workflow a second time for the same commit.
   push:
+    branches: [main]
   pull_request:
   # Every job above installs from `uv.lock`, so a dependency release published after the last
   #  `uv lock` is exercised by nothing until somebody happens to relock. `test-ceil` resolves

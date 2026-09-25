@@ -49,6 +49,11 @@ class SetProfilePhoto:
             is_public (``bool``, *optional*):
                 Pass True to set the public photo, which will be visible even if the main photo is hidden by privacy settings.
 
+            video (``str`` | ``BinaryIO``, *optional*):
+                Profile video to set.
+                This parameter is deprecated and should not be used.
+                Use `photo` instead.
+
         Returns:
             ``bool``: True on success.
 

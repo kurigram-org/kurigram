@@ -1,4 +1,5 @@
 id	message
+AICOMPOSE_TIMEOUT	A timeout occurred while composing the message.
 API_CALL_ERROR	API call error due to Telegram having internal problems. Please try again later.
 AUTH_KEY_UNSYNCHRONIZED	Internal error, please repeat the method call.
 AUTH_RESTART	User authorization has restarted.
@@ -32,6 +33,7 @@ MT_SEND_QUEUE_TOO_LONG	The MTProto send queue has grown too much due to Telegram
 NEED_CHAT_INVALID	The provided chat is invalid.
 NEED_MEMBER_INVALID	The provided member is invalid or does not exist.
 No workers running	The Telegram server is restarting its workers. Try again later.
+OAUTH_REQUEST_INVALID	The specified OAuth request is invalid.
 PARTICIPANT_CALL_FAILED	Failure while making call due to Telegram having internal problems. Please try again later.
 PERSISTENT_TIMESTAMP_OUTDATED	The persistent timestamp is outdated due to Telegram having internal problems. Please try again later (treat this like an RPC_CALL_FAIL).
 PHOTO_CREATE_FAILED	The creation of the photo failed due to Telegram having internal problems. Please try again later.
@@ -50,6 +52,7 @@ STORAGE_CHOOSE_VOLUME_FAILED	Storage choose volume failed due to Telegram having
 STORE_INVALID_SCALAR_TYPE	Telegram is having internal problems. Please try again later.
 TIMEOUT	A timeout occurred while fetching data from the worker.
 TRANSLATE_REQ_FAILED	Translation failed, please try again later.
+TRANSLATION_TIMEOUT	A timeout occurred while translating the specified text.
 UNKNOWN_METHOD	The method you tried to call cannot be called on non-CDN DCs.
 UPLOAD_NO_VOLUME	Telegram is having internal problems. Please try again later.
 VOLUME_LOC_NOT_FOUND	Telegram is having internal problems. Please try again later.

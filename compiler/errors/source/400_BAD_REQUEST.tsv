@@ -50,7 +50,7 @@ BOT_BUSINESS_MISSING	The specified bot is not a business bot (the [user](https:/
 BOT_CHANNELS_NA	Bots can't edit admin privileges.
 BOT_COMMAND_DESCRIPTION_INVALID	The specified command description was empty, too long or had invalid characters.
 BOT_COMMAND_INVALID	The specified command is invalid.
-BOT_CREATE_LIMIT_EXCEEDED	The current user already owns the maximum allowed number of owned bots, as specified by [`bots_create_limit_default` &raquo;](https://core.telegram.org/api/config#bots-create-limit-default) and [`bots_create_limit_premium` &raquo;](https://core.telegram.org/api/config#bots-create-limit-premium); if the current user doesn't have Telegram Premium, upgrading to Premium will allow them to create more bots.
+BOT_CREATE_LIMIT_EXCEEDED	The current user already owns the maximum allowed number of owned bots, as specified by [`bots_create_limit_default` »](https://core.telegram.org/api/config#bots-create-limit-default) and [`bots_create_limit_premium` »](https://core.telegram.org/api/config#bots-create-limit-premium); if the current user doesn't have Telegram Premium, upgrading to Premium will allow them to create more bots.
 BOT_DOMAIN_INVALID	The domain used for the auth button does not match the one configured in @BotFather.
 BOT_FALLBACK_UNSUPPORTED	The fallback flag can't be set for bots.
 BOT_GAMES_DISABLED	Bot games cannot be used in this type of chat.
@@ -200,7 +200,7 @@ ENTITIES_TOO_LONG	The entity provided contains data that is too long, or you pas
 ENTITY_BOUNDS_INVALID	A specified [entity offset or length](https://core.telegram.org/api/entities#entity-length) is invalid, see [here »](https://core.telegram.org/api/entities#entity-length) for info on how to properly compute the entity offset/length.
 ENTITY_DATE_FORMAT_INVALID	One of the passed messageEntityFormattedDate objects has an invalid format (i.e. an invalid combination of the format flags).
 ENTITY_DATE_INVALID	A specified date/time entity is invalid.
-ENTITY_DATE_TOO_LONG	The maximum text span that can be covered by a date entity is 31 UTF-16 code units if any of the date formatting flags is set, or 127 UTF-16 code units without.  .
+ENTITY_DATE_TOO_LONG	The maximum text span that can be covered by a date entity is 31 UTF-16 code units if any of the date formatting flags is set, or 127 UTF-16 code units without.
 ENTITY_MENTION_USER_INVALID	The mentioned entity is not an user.
 ERROR_TEXT_EMPTY	The provided error message is empty.
 EXPIRES_AT_INVALID	The specified `expires_at` timestamp is invalid.
@@ -221,7 +221,6 @@ FILE_EMTPY	An empty file was provided.
 FILE_ID_INVALID	The provided file id is invalid.
 FILE_MIGRATE_X	The file currently being accessed is stored in DC{dc_id}, please re-send the query to that DC.
 FILE_PARTS_INVALID	The number of file parts is invalid.
-FILE_PART_0_MISSING	File part 0 missing.
 FILE_PART_EMPTY	The provided file part is empty.
 FILE_PART_INVALID	The file part number is invalid.
 FILE_PART_LENGTH_INVALID	The length of a file part is invalid.
@@ -304,7 +303,7 @@ INPUT_METHOD_INVALID	The method invoked is invalid in the current schema.
 INPUT_PEERS_EMPTY	The specified peer array is empty.
 INPUT_PURPOSE_INVALID	The specified payment purpose is invalid.
 INPUT_REQUEST_TOO_LONG	The request payload is too long.
-INPUT_STARS_AMOUNT_INVALID	The specified offer amount in stars is invalid, see [here &raquo;](https://core.telegram.org/api/gifts#collectible-gift-purchase-offers) for the allowed range.
+INPUT_STARS_AMOUNT_INVALID	The specified offer amount in stars is invalid, see [here »](https://core.telegram.org/api/gifts#collectible-gift-purchase-offers) for the allowed range.
 INPUT_STARS_NANOS_INVALID	The specified stars nano amount is invalid.
 INPUT_TEXT_EMPTY	The specified text is empty.
 INPUT_TEXT_TOO_LONG	The specified text is too long.
@@ -592,7 +591,7 @@ START_PARAM_INVALID	The start parameter invalid.
 START_PARAM_TOO_LONG	The start parameter is too long.
 STICKERPACK_STICKERS_TOO_MUCH	There are too many stickers in this stickerpack, you can't add any more.
 STICKERSET_INVALID	The requested sticker set is invalid.
-STICKERSET_NOT_MODIFIED	TThe sticker set is not modified.
+STICKERSET_NOT_MODIFIED	The sticker set is not modified.
 STICKERS_EMPTY	No sticker provided.
 STICKERS_TOO_MUCH	There are too many stickers in this stickerpack, you can't add any more.
 STICKER_DOCUMENT_INVALID	The specified sticker document is invalid.
@@ -702,7 +701,7 @@ USER_BOT_INVALID	User accounts must provide the `bot` method parameter when call
 USER_BOT_REQUIRED	This method can only be called by a bot.
 USER_BOT_TO_BOT_DISABLED	Bot-to-bot messaging is disabled because one of the two bots hasn't enabled the Bot to Bot setting in @BotFather.
 USER_CHANNELS_TOO_MUCH	One of the users you tried to add is already in too many channels/supergroups.
-USER_CREATOR	The user id being used is invalid or not known yet. Make sure you meet the user before interacting with it.
+USER_CREATOR	You are not the owner of the channel, so you cannot edit the owner's admin rights; or you are its creator, so you cannot leave it.
 USER_GIFT_UNAVAILABLE	Gifts are not available in the current region ([stars_gifts_enabled](https://core.telegram.org/api/config#stars-gifts-enabled) is equal to false).
 USER_HANDLE_MISMATCH	The user handle mismatch.
 USER_ID_INVALID	The provided user id is invalid.
@@ -724,7 +723,7 @@ VIDEO_STOP_FORBIDDEN	You cannot stop the video stream.
 VIDEO_TITLE_EMPTY	The specified video title is empty.
 VOICE_MESSAGES_FORBIDDEN	This user's privacy settings forbid you from sending voice messages.
 VOLUME_LOC_NOT_FOUND	The volume location can't be found.
-WALLPAPER_FILE_INVALID	TThe provided file cannot be used as a wallpaper.
+WALLPAPER_FILE_INVALID	The provided file cannot be used as a wallpaper.
 WALLPAPER_INVALID	The specified wallpaper is invalid.
 WALLPAPER_MIME_INVALID	The specified wallpaper MIME type is invalid.
 WALLPAPER_NOT_FOUND	The specified wallpaper could not be found.

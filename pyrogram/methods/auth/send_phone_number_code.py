@@ -63,6 +63,50 @@ class SendPhoneNumberCode:
             recaptcha_token (``str``, *optional*):
                 Recaptcha token.
 
+            current_number (``bool``, *optional*):
+                Pass True if the authenticated phone number is used on the current device.
+                This parameter is deprecated and should not be used.
+                Use `settings` instead.
+
+            allow_flashcall (``bool``, *optional*):
+                Pass True if the authentication code may be sent via a flash call to the specified phone number.
+                This parameter is deprecated and should not be used.
+                Use `settings` instead.
+
+            allow_app_hash (``bool``, *optional*):
+                For official applications only.
+                Pass True if the application can use the Android SMS Retriever API to receive the authentication code.
+                This parameter is deprecated and should not be used.
+                Use `settings` instead.
+
+            allow_missed_call (``bool``, *optional*):
+                Pass True if the authentication code may be sent via a missed call to the specified phone number.
+                This parameter is deprecated and should not be used.
+                Use `settings` instead.
+
+            allow_firebase (``bool``, *optional*):
+                For official Android applications only.
+                Pass True to authenticate through Firebase.
+                This parameter is deprecated and should not be used.
+                Use `settings` instead.
+
+            logout_tokens (List of ``bytes``, *optional*):
+                List of up to 20 authentication tokens, recently received in previously logged out sessions.
+                This parameter is deprecated and should not be used.
+                Use `settings` instead.
+
+            token (``str``, *optional*):
+                For official iOS applications only.
+                Device token for Firebase Authentication.
+                This parameter is deprecated and should not be used.
+                Use `settings` instead.
+
+            app_sandbox (``bool``, *optional*):
+                For official iOS applications only.
+                Pass True if the device token belongs to the Apple Push Notification sandbox.
+                This parameter is deprecated and should not be used.
+                Use `settings` instead.
+
         Returns:
             :obj:`~pyrogram.types.SentCode`: On success, returns information about the sent code.
 

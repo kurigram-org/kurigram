@@ -21,7 +21,7 @@ PAYMENT_UNSUPPORTED	A detailed description of the error will be received separat
 PEER_ID_INVALID	The provided peer id is invalid.
 PHONE_NUMBER_INVALID	The phone number is invalid.
 PHONE_PASSWORD_FLOOD	You have tried to log-in too many times.
-POLL_COUNTRY_RESTRICTED	Users from the current user's country cannot vote in this [country-restricted poll &raquo;](https://core.telegram.org/api/poll#country-restricted-polls).
+POLL_COUNTRY_RESTRICTED	Users from the current user's country cannot vote in this [country-restricted poll »](https://core.telegram.org/api/poll#country-restricted-polls).
 POLL_MEMBER_RESTRICTED	Only channel subscribers can vote in this poll.
 PRECHECKOUT_FAILED	Precheckout is failed.
 PREMIUM_CURRENTLY_UNAVAILABLE	You cannot currently purchase a Premium subscription.

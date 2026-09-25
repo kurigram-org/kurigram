@@ -6,7 +6,7 @@ from io import BytesIO
 from typing import TYPE_CHECKING, Any
 
 from pyrogram.raw.core.primitives import Int, Long, Int128, Int256, Bool, Bytes, String, Double, Vector
-from pyrogram.raw.core import TLObject
+from pyrogram.raw.core import TLObject{return_type_import}
 
 if TYPE_CHECKING:
     from pyrogram import raw

@@ -37,12 +37,12 @@ class ToggleForumTopics:
             chat_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the target chat.
 
-            is_forum (``bool``):
+            is_forum (``bool``, *optional*):
                 The new status.
                 Pass True to enable forum topics.
                 Defaults to False.
 
-            has_forum_tabs (``bool``):
+            has_forum_tabs (``bool``, *optional*):
                 Whether to enable or disable tabs in the forum.
                 Defaults to False.
 

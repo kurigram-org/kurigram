@@ -22,13 +22,20 @@ import asyncio
 import hashlib
 import hmac
 import time
-from typing import Final, NamedTuple
+from typing import Final, NamedTuple, NoReturn
 
 import pytest
 
-from python_socks import ProxyType
+from python_socks import ProxyError, ProxyType
 
-from pyrogram.connection.proxy import HTTPProxy, MTProxy, Proxy, SOCKS5Proxy, WebProxy
+from pyrogram.connection.proxy import (
+    HTTPProxy,
+    MTProxy,
+    Proxy,
+    SOCKS4Proxy,
+    SOCKS5Proxy,
+    WebProxy,
+)
 from pyrogram.connection.transport.tcp import TCPAbridged, TCPIntermediatePadded
 from pyrogram.connection.transport.tcp.faketls_records import (
     APPLICATION_DATA_PREFIX,
@@ -596,6 +603,122 @@ async def test_build_proxy_rejects_a_scheme_it_cannot_dial() -> None:
 
     with pytest.raises(ValueError, match="WebProxy"):
         await transport._build_proxy()
+
+
+# The DC2 address `ipv6=True` selects. `_UNREACHABLE_DC_ADDRESS` above is the
+#  IPv4 case these tests contrast it with.
+_IPV6_DC_ADDRESS: Final[tuple[str, int]] = ("2001:67c:4e8:f002::a", 443)
+
+_SOCKS5_PROXY: Final[SOCKS5Proxy] = SOCKS5Proxy(
+    hostname="1.2.3.4",
+    port=1080,
+)
+_SOCKS4_PROXY: Final[SOCKS4Proxy] = SOCKS4Proxy(
+    hostname="1.2.3.4",
+    port=1080,
+)
+
+
+class _RefusingProxy:
+    """Stands in for `python_socks`' `Proxy`: every dial fails the same way."""
+
+    def __init__(self, error: Exception) -> None:
+        self.error = error
+
+    # `dest_host` and `dest_port` are `python_socks`' own keyword names, which
+    #  `_connect_via_proxy` calls by; a stub that renames them is never reached.
+    #  https://github.com/romis2012/python-socks/blob/bc543bb8449bb9b3db372bd28116548d40d73915/python_socks/async_/asyncio/_proxy.py#L57-L61
+    async def connect(self, *, dest_host: str, dest_port: int, timeout: float) -> NoReturn:
+        raise self.error
+
+
+def _transport_dialing_into(proxy: Proxy, *, error: Exception) -> TCPAbridged:
+    """A transport that reaches `_connect_via_proxy` without opening a socket."""
+    transport = TCPAbridged(
+        proxy=proxy,
+        dc_id=_DC_ID,
+    )
+    refusing = _RefusingProxy(error)
+
+    async def refusing_proxy() -> _RefusingProxy:
+        return refusing
+
+    transport._build_proxy = refusing_proxy
+
+    return transport
+
+
+@pytest.mark.parametrize(
+    ("reply_code", "reply_message"),
+    [
+        pytest.param(0x03, "Network unreachable", id="network-unreachable"),
+        pytest.param(0x04, "Host unreachable", id="host-unreachable"),
+        pytest.param(0x08, "Address type not supported", id="address-type-not-supported"),
+    ],
+)
+async def test_connect_via_proxy_names_the_missing_ipv6_route(
+    reply_code: int,
+    *,
+    reply_message: str,
+) -> None:
+    refused = ProxyError(reply_message, error_code=reply_code)
+    transport = _transport_dialing_into(_SOCKS5_PROXY, error=refused)
+
+    with pytest.raises(ProxyError) as raised:
+        await transport._connect_via_proxy(_IPV6_DC_ADDRESS)
+
+    assert str(raised.value) == (
+        f"the proxy at 1.2.3.4:1080 has no IPv6 route to the DC at "
+        f"[2001:67c:4e8:f002::a]:443 and answered {reply_message}; build the Client with "
+        f"ipv6=False to reach it over IPv4"
+    )
+    assert raised.value.__cause__ is refused
+    assert raised.value.error_code == reply_code
+
+
+async def test_connect_via_proxy_leaves_the_same_reply_alone_on_an_ipv4_dial() -> None:
+    # The proxy is equally unable to reach an IPv4 DC, and `ipv6=False` is then
+    #  no answer at all.
+    refused = ProxyError("Network unreachable", error_code=0x03)
+    transport = _transport_dialing_into(_SOCKS5_PROXY, error=refused)
+
+    with pytest.raises(ProxyError) as raised:
+        await transport._connect_via_proxy(_UNREACHABLE_DC_ADDRESS)
+
+    assert raised.value is refused
+
+
+async def test_connect_via_proxy_leaves_a_reply_that_is_not_about_routing_alone() -> None:
+    # X'02' is the proxy refusing by its own rules, which says nothing about IPv6.
+    refused = ProxyError("Connection not allowed by ruleset", error_code=0x02)
+    transport = _transport_dialing_into(_SOCKS5_PROXY, error=refused)
+
+    with pytest.raises(ProxyError) as raised:
+        await transport._connect_via_proxy(_IPV6_DC_ADDRESS)
+
+    assert raised.value is refused
+
+
+async def test_connect_via_proxy_refuses_an_ipv6_dial_through_socks4() -> None:
+    # No stub: the guard fires before anything is dialed, which is the point -
+    #  SOCKS4 cannot carry the address at all.
+    transport = TCPAbridged(
+        proxy=_SOCKS4_PROXY,
+        dc_id=_DC_ID,
+    )
+
+    with pytest.raises(ValueError, match="SOCKS4 has no IPv6 address type"):
+        await transport._connect_via_proxy(_IPV6_DC_ADDRESS)
+
+
+async def test_connect_via_proxy_still_dials_ipv4_through_socks4() -> None:
+    refused = ProxyError("Request rejected or failed", error_code=91)
+    transport = _transport_dialing_into(_SOCKS4_PROXY, error=refused)
+
+    with pytest.raises(ProxyError) as raised:
+        await transport._connect_via_proxy(_UNREACHABLE_DC_ADDRESS)
+
+    assert raised.value is refused
 
 
 # The same seven values TDLib refuses, as the little-endian ints it compares.

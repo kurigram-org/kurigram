@@ -20,6 +20,7 @@ from __future__ import annotations as _annotations
 
 import asyncio
 import hashlib
+import ipaddress
 import logging
 import os
 import socket
@@ -27,7 +28,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import ClassVar, Final, NamedTuple
 
-from python_socks import ProxyType
+from python_socks import ProxyError, ProxyType
 from python_socks.async_.asyncio import Proxy as SocksProxy
 
 from pyrogram.connection.proxy import (
@@ -89,6 +90,20 @@ _PYTHON_SOCKS_TYPES: Final[dict[ProxyScheme, ProxyType]] = {
     ProxyScheme.SOCKS5: ProxyType.SOCKS5,
     ProxyScheme.HTTP: ProxyType.HTTP,
 }
+
+# SOCKS5 replies that mean the proxy itself could not get to the destination:
+#  X'03' network unreachable, X'04' host unreachable, X'08' address type not
+#  supported. `python_socks` hands the code through on `ProxyError.error_code`.
+#  https://datatracker.ietf.org/doc/html/rfc1928#section-6
+_SOCKS5_NO_ROUTE_REPLIES: Final[frozenset[int]] = frozenset({0x03, 0x04, 0x08})
+
+
+def _is_ipv6_literal(host: str) -> bool:
+    try:
+        return isinstance(ipaddress.ip_address(host), ipaddress.IPv6Address)
+
+    except ValueError:
+        return False
 
 
 def generate_obfuscated2_nonce(
@@ -308,8 +323,53 @@ class TCP:
         except Exception as e:
             log.debug("Could not configure TCP Keep-Alive: %s %s", type(e).__name__, e)
 
+    def _missing_ipv6_route_error(
+        self,
+        error: Exception,
+        *,
+        destination_host: str,
+        destination_port: int,
+    ) -> ProxyError | None:
+        """The same failure spelled out, or None when it was not about IPv6.
+
+        `ipv6=True` makes every DC address an IPv6 literal, and through a proxy the
+        dial is the proxy's rather than ours: one without an IPv6 route answers a
+        `_SOCKS5_NO_ROUTE_REPLIES` code, which reaches the caller as a bare
+        `ProxyError: Network unreachable` naming neither IPv6 nor the flag that asked
+        for it.
+        """
+        proxy = self.proxy
+
+        if not isinstance(proxy, SOCKS5Proxy) or not _is_ipv6_literal(destination_host):
+            return None
+
+        if not isinstance(error, ProxyError) or error.error_code not in _SOCKS5_NO_ROUTE_REPLIES:
+            return None
+
+        msg = (
+            f"the proxy at {proxy.hostname}:{proxy.port} has no IPv6 route to the DC at "
+            f"[{destination_host}]:{destination_port} and answered {error}; build the Client "
+            f"with ipv6=False to reach it over IPv4"
+        )
+
+        return ProxyError(msg, error_code=error.error_code)
+
     async def _connect_via_proxy(self, destination: tuple[str, int]) -> None:
         dest_host, dest_port = destination
+
+        # SOCKS4 carries a 4-byte DSTIP and has no IPv6 address type at all
+        #  (https://www.openssh.org/txt/socks4.protocol), so `python_socks` falls
+        #  through to the SOCKS4a hostname field and sends the literal as a DNS name,
+        #  which can only come back as reply 91, "request rejected or failed".
+        #  https://github.com/romis2012/python-socks/blob/bc543bb8449bb9b3db372bd28116548d40d73915/python_socks/_protocols/socks4.py#L45-L62
+        if isinstance(self.proxy, SOCKS4Proxy) and _is_ipv6_literal(dest_host):
+            msg = (
+                f"SOCKS4 has no IPv6 address type, so {self.proxy.hostname}:{self.proxy.port} "
+                f"cannot dial the DC at [{dest_host}]:{dest_port}; build the Client with "
+                f"ipv6=False, or use a SOCKS5 proxy"
+            )
+            raise ValueError(msg)
+
         proxy = await self._build_proxy()
 
         log.info(
@@ -327,7 +387,17 @@ class TCP:
             )
         except Exception as e:
             log.error("Proxy connection failed: %s %s", type(e).__name__, e)
-            raise
+
+            ipv6_route_error = self._missing_ipv6_route_error(
+                e,
+                destination_host=dest_host,
+                destination_port=dest_port,
+            )
+
+            if ipv6_route_error is None:
+                raise
+
+            raise ipv6_route_error from e
 
         self._enable_keepalive(sock)
 
