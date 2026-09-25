@@ -999,6 +999,25 @@ def pyrogram_api():
             UpgradedGiftAttributeRarityEpic
             UpgradedGiftAttributeRarityLegendary
             UpgradedGiftOriginalDetails
+            ChatAction
+            ChatActionCancel
+            ChatActionChooseContact
+            ChatActionChooseSticker
+            ChatActionEmojiInteraction
+            ChatActionEmojiInteractionSeen
+            ChatActionFindLocation
+            ChatActionImportHistory
+            ChatActionPlaying
+            ChatActionRecordAudio
+            ChatActionRecordVideo
+            ChatActionRecordVideoNote
+            ChatActionSpeaking
+            ChatActionTyping
+            ChatActionUploadAudio
+            ChatActionUploadDocument
+            ChatActionUploadPhoto
+            ChatActionUploadVideo
+            ChatActionUploadVideoNote
             InputChatPhoto
             InputChatPhotoPrevious
             InputChatPhotoStatic
