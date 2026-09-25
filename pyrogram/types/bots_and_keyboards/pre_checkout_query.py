@@ -99,7 +99,9 @@ class PreCheckoutQuery(Object, Update):
                 email=pre_checkout_query.info.email,
                 shipping_address=types.ShippingAddress._parse(
                     pre_checkout_query.info.shipping_address
-                ),
+                )
+                if pre_checkout_query.info.shipping_address is not None
+                else None,
             )
             if pre_checkout_query.info
             else None,

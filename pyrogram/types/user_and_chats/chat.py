@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING, BinaryIO
 
 import pyrogram
 from pyrogram import enums, raw, types, utils
+from pyrogram.errors import EmptyObjectError
 
 from ..object import Object
 
@@ -887,10 +888,10 @@ class Chat(Object):
     @staticmethod
     async def _parse_user_chat(
         client,
-        user: raw.types.User,
-    ) -> Chat | None:
-        if user is None or isinstance(user, raw.types.UserEmpty):
-            return None
+        user: raw.base.User,
+    ) -> Chat:
+        if isinstance(user, raw.types.UserEmpty):
+            raise EmptyObjectError(user)
 
         peer_id = user.id
 
@@ -934,7 +935,12 @@ class Chat(Object):
             )
             or None,
             dc_id=getattr(getattr(user, "photo", None), "dc_id", None),
-            emoji_status=types.EmojiStatus._parse(client, user.emoji_status),
+            emoji_status=types.EmojiStatus._parse(client, user.emoji_status)
+            if isinstance(
+                user.emoji_status,
+                (raw.types.EmojiStatus, raw.types.EmojiStatusCollectible),
+            )
+            else None,
             accent_color_id=accent_color_id,
             background_custom_emoji_id=background_custom_emoji_id,
             profile_accent_color_id=profile_accent_color_id,
@@ -949,9 +955,12 @@ class Chat(Object):
         )
 
     @staticmethod
-    async def _parse_chat_chat(client, chat: raw.types.Chat) -> Chat | None:
-        if chat is None or isinstance(chat, raw.types.ChatEmpty):
-            return None
+    async def _parse_chat_chat(
+        client: pyrogram.Client,
+        chat: raw.types.Chat | raw.types.ChatForbidden | raw.types.ChatEmpty,
+    ) -> Chat:
+        if isinstance(chat, raw.types.ChatEmpty):
+            raise EmptyObjectError(chat)
 
         peer_id = -chat.id
         usernames = getattr(chat, "usernames", [])
@@ -977,7 +986,9 @@ class Chat(Object):
             is_call_not_empty=chat.call_not_empty,
             usernames=types.List([types.Username._parse(r) for r in usernames]) or None,
             photo=await types.ChatPhoto._parse(client, chat.photo, peer_id, 0),
-            permissions=types.ChatPermissions._parse(chat.default_banned_rights),
+            permissions=types.ChatPermissions._parse(chat.default_banned_rights)
+            if chat.default_banned_rights is not None
+            else None,
             members_count=chat.participants_count,
             dc_id=getattr(getattr(chat, "photo", None), "dc_id", None),
             has_protected_content=chat.noforwards,
@@ -988,11 +999,8 @@ class Chat(Object):
     @staticmethod
     async def _parse_channel_chat(
         client,
-        channel: raw.types.Channel,
-    ) -> Chat | None:
-        if channel is None:
-            return None
-
+        channel: raw.types.Channel | raw.types.ChannelForbidden,
+    ) -> Chat:
         peer_id = utils.get_channel_id(channel.id)
         restriction_reason = getattr(channel, "restriction_reason", [])
         usernames = getattr(channel, "usernames", [])
@@ -1067,10 +1075,17 @@ class Chat(Object):
             sign_messages=channel.signatures,
             restrictions=types.List([types.Restriction._parse(r) for r in restriction_reason])
             or None,
-            permissions=types.ChatPermissions._parse(channel.default_banned_rights),
+            permissions=types.ChatPermissions._parse(channel.default_banned_rights)
+            if channel.default_banned_rights is not None
+            else None,
             members_count=channel.participants_count,
             dc_id=getattr(getattr(channel, "photo", None), "dc_id", None),
-            emoji_status=types.EmojiStatus._parse(client, channel.emoji_status),
+            emoji_status=types.EmojiStatus._parse(client, channel.emoji_status)
+            if isinstance(
+                channel.emoji_status,
+                (raw.types.EmojiStatus, raw.types.EmojiStatusCollectible),
+            )
+            else None,
             has_protected_content=channel.noforwards,
             level=channel.level,
             accent_color_id=accent_color_id,
@@ -1090,37 +1105,33 @@ class Chat(Object):
         )
 
     @staticmethod
-    async def _parse(
-        client,
-        message: raw.types.Message | raw.types.MessageService,
+    def _find_message_chat(
+        message: raw.types.Message | raw.types.MessageService | raw.types.EphemeralMessage,
+        *,
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
         is_chat: bool,
-    ) -> Chat | None:
+    ) -> raw.base.User | raw.base.Chat | None:
         from_id = utils.get_raw_peer_id(message.from_id)
         peer_id = utils.get_raw_peer_id(message.peer_id)
         chat_id = (peer_id or from_id) if is_chat else (from_id or peer_id)
 
         if isinstance(message.peer_id, raw.types.PeerUser):
-            return await Chat._parse_user_chat(client, users.get(chat_id))
-        elif isinstance(message.peer_id, raw.types.PeerChat):
-            return await Chat._parse_chat_chat(client, chats.get(chat_id))
-        else:
-            return await Chat._parse_channel_chat(client, chats.get(chat_id))
+            return users.get(chat_id)
+
+        return chats.get(chat_id)
 
     @staticmethod
-    async def _parse_dialog(
-        client,
-        peer: raw.base.Peer,
+    def _find_peer_chat(
+        peer: raw.base.Peer | raw.base.InputPeer,
+        *,
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
-    ):
+    ) -> raw.base.User | raw.base.Chat | None:
         if isinstance(peer, utils.PEERS_WITH_A_USER_ID):
-            return await Chat._parse_user_chat(client, users.get(peer.user_id))
-        elif isinstance(peer, utils.PEERS_WITH_A_CHAT_ID):
-            return await Chat._parse_chat_chat(client, chats.get(peer.chat_id))
-        else:
-            return await Chat._parse_channel_chat(client, chats.get(peer.channel_id))
+            return users.get(peer.user_id)
+
+        return chats.get(utils.get_raw_peer_id(peer))
 
     @staticmethod
     async def _parse_full_user(
@@ -1129,7 +1140,7 @@ class Chat(Object):
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
     ) -> Chat:
-        parsed_chat = utils.require_parsed(await Chat._parse_user_chat(client, users[user.id]))
+        parsed_chat = await Chat._parse_user_chat(client, users[user.id])
         parsed_chat.raw = user
 
         parsed_chat.settings = await types.ChatSettings._parse(client, user.settings, users)
@@ -1178,7 +1189,8 @@ class Chat(Object):
         parsed_chat.channel_admin_rights = types.ChatAdministratorRights._parse(
             user.bot_broadcast_admin_rights
         )
-        parsed_chat.chat_background = types.ChatBackground._parse(client, user.wallpaper)
+        if user.wallpaper is not None:
+            parsed_chat.chat_background = types.ChatBackground._parse(client, user.wallpaper)
 
         if user.stories:
             parsed_chat.stories = (
@@ -1191,18 +1203,37 @@ class Chat(Object):
                 or None
             )
 
-        parsed_chat.business_work_hours = types.BusinessWorkingHours._parse(
-            user.business_work_hours
+        parsed_chat.business_work_hours = (
+            types.BusinessWorkingHours._parse(user.business_work_hours)
+            if user.business_work_hours is not None
+            else None
         )
-        parsed_chat.business_location = types.Location._parse(user.business_location)
-        parsed_chat.business_greeting_message = await types.BusinessMessage._parse(
-            client, user.business_greeting_message, users
+
+        if user.business_location is not None:
+            parsed_chat.business_location = types.Location._parse(user.business_location)
+
+        if user.business_greeting_message is not None:
+            parsed_chat.business_greeting_message = await types.BusinessMessage._parse(
+                client,
+                user.business_greeting_message,
+                users,
+            )
+
+        if user.business_away_message is not None:
+            parsed_chat.business_away_message = await types.BusinessMessage._parse(
+                client,
+                user.business_away_message,
+                users,
+            )
+
+        parsed_chat.business_intro = (
+            await types.BusinessIntro._parse(client, user.business_intro)
+            if user.business_intro is not None
+            else None
         )
-        parsed_chat.business_away_message = await types.BusinessMessage._parse(
-            client, user.business_away_message, users
+        parsed_chat.birthday = (
+            types.Birthday._parse(user.birthday) if user.birthday is not None else None
         )
-        parsed_chat.business_intro = await types.BusinessIntro._parse(client, user.business_intro)
-        parsed_chat.birthday = types.Birthday._parse(user.birthday)
 
         if user.personal_channel_id:
             parsed_chat.personal_channel = await Chat._parse_channel_chat(
@@ -1214,8 +1245,10 @@ class Chat(Object):
 
         parsed_chat.gift_count = user.stargifts_count
         # parsed_chat.starref_program
-        parsed_chat.bot_verification = await types.BotVerification._parse(
-            client, user.bot_verification, users
+        parsed_chat.bot_verification = (
+            await types.BotVerification._parse(client, user.bot_verification, users)
+            if user.bot_verification is not None
+            else None
         )
         parsed_chat.main_profile_tab = (
             enums.ProfileTab(type(user.main_tab)) if user.main_tab else None
@@ -1236,20 +1269,33 @@ class Chat(Object):
                     ),
                 )
 
-        parsed_chat.rating = types.UserRating._parse(user.stars_rating)
-        parsed_chat.pending_rating = types.UserRating._parse(user.stars_my_pending_rating)
+        parsed_chat.rating = (
+            types.UserRating._parse(user.stars_rating) if user.stars_rating is not None else None
+        )
+        parsed_chat.pending_rating = (
+            types.UserRating._parse(user.stars_my_pending_rating)
+            if user.stars_my_pending_rating is not None
+            else None
+        )
         parsed_chat.pending_rating_date = utils.timestamp_to_datetime(
             user.stars_my_pending_rating_date
         )
         parsed_chat.paid_message_star_count = user.send_paid_messages_stars
         parsed_chat.display_gifts_button = user.display_gifts_button
         parsed_chat.uses_unofficial_app = user.unofficial_security_risk
-        parsed_chat.accepted_gift_types = types.AcceptedGiftTypes._parse(user.disallowed_gifts)
+        parsed_chat.accepted_gift_types = (
+            types.AcceptedGiftTypes._parse(user.disallowed_gifts)
+            if user.disallowed_gifts is not None
+            else None
+        )
         parsed_chat.note = await types.FormattedText._parse(client, user.note)
 
         if parsed_chat.community_id:
-            parsed_chat.community = await types.Community._parse(
-                client, chats.get(utils.get_raw_peer_id(parsed_chat.community_id))
+            raw_community = chats.get(utils.get_raw_peer_id(parsed_chat.community_id))
+            parsed_chat.community = (
+                await types.Community._parse(client, raw_community)
+                if isinstance(raw_community, (raw.types.Community, raw.types.CommunityForbidden))
+                else None
             )
 
         return parsed_chat
@@ -1261,7 +1307,7 @@ class Chat(Object):
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
     ) -> Chat:
-        parsed_chat = utils.require_parsed(await Chat._parse_chat_chat(client, chats[chat.id]))
+        parsed_chat = await Chat._parse_chat_chat(client, chats[chat.id])
         parsed_chat.raw = chat
 
         parsed_chat.description = chat.about or None
@@ -1291,8 +1337,11 @@ class Chat(Object):
         parsed_chat.theme = chat.theme_emoticon
         parsed_chat.join_requests_count = chat.requests_pending
         # parsed_chat.recent_requesters
-        parsed_chat.available_reactions = types.ChatReactions._parse(
-            client, chat.available_reactions
+        parsed_chat.available_reactions = (
+            types.ChatReactions._parse(client, chat.available_reactions)
+            if chat.available_reactions is not None
+            and not isinstance(chat.available_reactions, raw.types.ChatReactionsNone)
+            else None
         )
         parsed_chat.reactions_limit = chat.reactions_limit
         parsed_chat.has_welcome_messages = chat.has_welcome_messages
@@ -1306,9 +1355,7 @@ class Chat(Object):
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
     ) -> Chat:
-        parsed_chat = utils.require_parsed(
-            await Chat._parse_channel_chat(client, chats[channel.id])
-        )
+        parsed_chat = await Chat._parse_channel_chat(client, chats[channel.id])
         parsed_chat.raw = channel
 
         parsed_chat.description = channel.about or None
@@ -1396,8 +1443,11 @@ class Chat(Object):
 
             parsed_chat.send_as_chat = await Chat._parse_chat(client, send_as_raw)
 
-        parsed_chat.available_reactions = types.ChatReactions._parse(
-            client, channel.available_reactions
+        parsed_chat.available_reactions = (
+            types.ChatReactions._parse(client, channel.available_reactions)
+            if channel.available_reactions is not None
+            and not isinstance(channel.available_reactions, raw.types.ChatReactionsNone)
+            else None
         )
         parsed_chat.reactions_limit = channel.reactions_limit
 
@@ -1412,12 +1462,16 @@ class Chat(Object):
                 or None
             )
 
-        parsed_chat.chat_background = types.ChatBackground._parse(client, channel.wallpaper)
+        if channel.wallpaper is not None:
+            parsed_chat.chat_background = types.ChatBackground._parse(client, channel.wallpaper)
+
         parsed_chat.boosts_applied = channel.boosts_applied
         parsed_chat.unrestrict_boost_count = channel.boosts_unrestrict
         parsed_chat.custom_emoji_sticker_set_name = getattr(channel.emojiset, "short_name", None)
-        parsed_chat.bot_verification = await types.BotVerification._parse(
-            client, channel.bot_verification, users
+        parsed_chat.bot_verification = (
+            await types.BotVerification._parse(client, channel.bot_verification, users)
+            if channel.bot_verification is not None
+            else None
         )
         parsed_chat.main_profile_tab = (
             enums.ProfileTab(type(channel.main_tab)) if channel.main_tab else None
@@ -1425,12 +1479,19 @@ class Chat(Object):
         parsed_chat.gift_count = channel.stargifts_count
         parsed_chat.sticker_set_name = getattr(channel.stickerset, "short_name", None)
         parsed_chat.is_paid_messages_available = channel.paid_messages_available
-        parsed_chat.guard_bot = await types.User._parse(client, users.get(channel.guard_bot_id))
+
+        raw_guard_bot = users.get(channel.guard_bot_id)
+        if raw_guard_bot is not None:
+            parsed_chat.guard_bot = await types.User._parse(client, raw_guard_bot)
+
         parsed_chat.has_welcome_messages = channel.has_welcome_messages
 
         if parsed_chat.community_id:
-            parsed_chat.community = await types.Community._parse(
-                client, chats.get(utils.get_raw_peer_id(parsed_chat.community_id))
+            raw_community = chats.get(utils.get_raw_peer_id(parsed_chat.community_id))
+            parsed_chat.community = (
+                await types.Community._parse(client, raw_community)
+                if isinstance(raw_community, (raw.types.Community, raw.types.CommunityForbidden))
+                else None
             )
 
         return parsed_chat
@@ -1438,26 +1499,24 @@ class Chat(Object):
     @staticmethod
     async def _parse_full(
         client: pyrogram.Client,
-        chat_full: raw.types.UserFull | raw.types.ChatFull | raw.types.ChannelFull,
-    ) -> Chat | None:
+        chat_full: raw.types.users.UserFull | raw.types.messages.ChatFull,
+    ) -> Chat:
         users = {u.id: u for u in chat_full.users}
         chats = {c.id: c for c in chat_full.chats}
 
         if isinstance(chat_full, raw.types.users.UserFull):
             return await Chat._parse_full_user(client, chat_full.full_user, users, chats)
-        elif isinstance(chat_full, raw.types.messages.ChatFull) and isinstance(
-            chat_full.full_chat, raw.types.ChatFull
-        ):
+
+        if isinstance(chat_full.full_chat, raw.types.ChatFull):
             return await Chat._parse_full_chat(client, chat_full.full_chat, users, chats)
-        elif isinstance(chat_full, raw.types.messages.ChatFull) and isinstance(
-            chat_full.full_chat, raw.types.ChannelFull
-        ):
-            return await Chat._parse_full_channel(client, chat_full.full_chat, users, chats)
+
+        return await Chat._parse_full_channel(client, chat_full.full_chat, users, chats)
 
     @staticmethod
-    async def _parse_chat(
-        client, chat: raw.types.Chat | raw.types.User | raw.types.Channel
-    ) -> Chat | None:
+    async def _parse_chat(client: pyrogram.Client, chat: raw.base.User | raw.base.Chat) -> Chat:
+        if isinstance(chat, (raw.types.UserEmpty, raw.types.ChatEmpty)):
+            raise EmptyObjectError(chat)
+
         if isinstance(chat, (raw.types.Chat, raw.types.ChatForbidden)):
             return await Chat._parse_chat_chat(client, chat)
         elif isinstance(chat, raw.types.User):

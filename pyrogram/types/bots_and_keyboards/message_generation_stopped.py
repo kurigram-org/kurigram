@@ -54,13 +54,12 @@ class MessageGenerationStopped(Object, Update):
         chats: list[raw.base.Chat],
     ) -> MessageGenerationStopped:
         action: raw.types.SendMessageStopDraftAction = update.action
+        raw_chat: raw.base.User | raw.base.Chat | None = users.get(
+            getattr(update, "user_id", None)
+        ) or chats.get(getattr(update, "channel_id", None))
 
         return MessageGenerationStopped(
-            chat=await types.Chat._parse_chat(
-                client=client,
-                chat=users.get(getattr(update, "user_id", None))
-                or chats.get(getattr(update, "channel_id", None)),
-            ),
+            chat=await types.Chat._parse_chat(client, raw_chat) if raw_chat is not None else None,
             message_thread_id=update.top_msg_id,
             draft_id=action.random_id,
         )

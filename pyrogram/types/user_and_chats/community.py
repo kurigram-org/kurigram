@@ -87,7 +87,7 @@ class Community(Object):
     @staticmethod
     async def _parse(
         client: pyrogram.Client, community: raw.types.Community | raw.types.CommunityForbidden
-    ) -> Community | None:
+    ) -> Community:
         if isinstance(community, raw.types.CommunityForbidden):
             return Community(
                 id=utils.get_channel_id(community.id),
@@ -97,20 +97,19 @@ class Community(Object):
                 client=client,
             )
 
-        if isinstance(community, raw.types.Community):
-            return Community(
-                id=utils.get_channel_id(community.id),
-                have_access=bool(community.access_hash),
-                name=community.title,
-                photo=await types.ChatPhoto._parse(
-                    client,
-                    community.photo,
-                    utils.get_channel_id(community.id),
-                    community.access_hash or 0,
-                ),
-                date=utils.timestamp_to_datetime(community.date),
-                status=types.CommunityMemberStatus._parse(community),
-                permissions=types.CommunityPermissions._parse(community.default_banned_rights),
-                raw=community,
-                client=client,
-            )
+        return Community(
+            id=utils.get_channel_id(community.id),
+            have_access=bool(community.access_hash),
+            name=community.title,
+            photo=await types.ChatPhoto._parse(
+                client,
+                community.photo,
+                utils.get_channel_id(community.id),
+                community.access_hash or 0,
+            ),
+            date=utils.timestamp_to_datetime(community.date),
+            status=types.CommunityMemberStatus._parse(community),
+            permissions=types.CommunityPermissions._parse(community.default_banned_rights),
+            raw=community,
+            client=client,
+        )

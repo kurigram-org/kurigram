@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING
 
 import pyrogram
 from pyrogram import enums, raw, types, utils
+from pyrogram.errors import EmptyObjectError
 
 from ..object import Object
 from ..update import Update
@@ -687,9 +688,9 @@ class User(Object, Update):
     # endregion
 
     @staticmethod
-    async def _parse(client, user: raw.base.User) -> User | None:
-        if not isinstance(user, raw.types.User):
-            return None
+    async def _parse(client: pyrogram.Client, user: raw.base.User) -> User:
+        if isinstance(user, raw.types.UserEmpty):
+            raise EmptyObjectError(user)
 
         accent_color_id = None
         background_custom_emoji_id = None
@@ -734,7 +735,12 @@ class User(Object, Update):
             username=user.username or (user.usernames[0].username if user.usernames else None),
             usernames=types.List([types.Username._parse(r) for r in user.usernames or []]) or None,
             language_code=user.lang_code,
-            emoji_status=types.EmojiStatus._parse(client, user.emoji_status),
+            emoji_status=types.EmojiStatus._parse(client, user.emoji_status)
+            if isinstance(
+                user.emoji_status,
+                (raw.types.EmojiStatus, raw.types.EmojiStatusCollectible),
+            )
+            else None,
             dc_id=getattr(user.photo, "dc_id", None),
             phone_number=user.phone,
             photo=await types.ChatPhoto._parse(client, user.photo, user.id, user.access_hash),
@@ -773,7 +779,7 @@ class User(Object, Update):
         user: raw.types.UserFull,
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
-    ) -> User | None:
+    ) -> User:
         parsed_user = await User._parse(client, users[user.id])
         parsed_user.raw = user
 
@@ -825,7 +831,8 @@ class User(Object, Update):
         parsed_user.bot_broadcast_admin_rights = types.ChatAdministratorRights._parse(
             user.bot_broadcast_admin_rights
         )
-        parsed_user.chat_background = types.ChatBackground._parse(client, user.wallpaper)
+        if user.wallpaper is not None:
+            parsed_user.chat_background = types.ChatBackground._parse(client, user.wallpaper)
 
         if user.stories:
             parsed_user.stories = (
@@ -838,18 +845,37 @@ class User(Object, Update):
                 or None
             )
 
-        parsed_user.business_work_hours = types.BusinessWorkingHours._parse(
-            user.business_work_hours
+        parsed_user.business_work_hours = (
+            types.BusinessWorkingHours._parse(user.business_work_hours)
+            if user.business_work_hours is not None
+            else None
         )
-        parsed_user.business_location = types.Location._parse(user.business_location)
-        parsed_user.business_greeting_message = await types.BusinessMessage._parse(
-            client, user.business_greeting_message, users
+
+        if user.business_location is not None:
+            parsed_user.business_location = types.Location._parse(user.business_location)
+
+        if user.business_greeting_message is not None:
+            parsed_user.business_greeting_message = await types.BusinessMessage._parse(
+                client,
+                user.business_greeting_message,
+                users,
+            )
+
+        if user.business_away_message is not None:
+            parsed_user.business_away_message = await types.BusinessMessage._parse(
+                client,
+                user.business_away_message,
+                users,
+            )
+
+        parsed_user.business_intro = (
+            await types.BusinessIntro._parse(client, user.business_intro)
+            if user.business_intro is not None
+            else None
         )
-        parsed_user.business_away_message = await types.BusinessMessage._parse(
-            client, user.business_away_message, users
+        parsed_user.birthday = (
+            types.Birthday._parse(user.birthday) if user.birthday is not None else None
         )
-        parsed_user.business_intro = await types.BusinessIntro._parse(client, user.business_intro)
-        parsed_user.birthday = types.Birthday._parse(user.birthday)
 
         if user.personal_channel_id:
             parsed_user.personal_channel = await types.Chat._parse_channel_chat(
@@ -861,8 +887,10 @@ class User(Object, Update):
 
         parsed_user.gift_count = user.stargifts_count
         # parsed_user.starref_program = user.starref_program
-        parsed_user.bot_verification = await types.BotVerification._parse(
-            client, user.bot_verification, users
+        parsed_user.bot_verification = (
+            await types.BotVerification._parse(client, user.bot_verification, users)
+            if user.bot_verification is not None
+            else None
         )
         parsed_user.main_profile_tab = (
             enums.ProfileTab(type(user.main_tab)) if user.main_tab else None
@@ -883,17 +911,30 @@ class User(Object, Update):
                     ),
                 )
 
-        parsed_user.rating = types.UserRating._parse(user.stars_rating)
-        parsed_user.pending_rating = types.UserRating._parse(user.stars_my_pending_rating)
+        parsed_user.rating = (
+            types.UserRating._parse(user.stars_rating) if user.stars_rating is not None else None
+        )
+        parsed_user.pending_rating = (
+            types.UserRating._parse(user.stars_my_pending_rating)
+            if user.stars_my_pending_rating is not None
+            else None
+        )
         parsed_user.pending_rating_date = utils.timestamp_to_datetime(
             user.stars_my_pending_rating_date
         )
-        parsed_user.accepted_gift_types = types.AcceptedGiftTypes._parse(user.disallowed_gifts)
+        parsed_user.accepted_gift_types = (
+            types.AcceptedGiftTypes._parse(user.disallowed_gifts)
+            if user.disallowed_gifts is not None
+            else None
+        )
         parsed_user.note = await types.FormattedText._parse(client, user.note)
 
         if parsed_user.community_id:
-            parsed_user.community = await types.Community._parse(
-                client, chats.get(utils.get_raw_peer_id(parsed_user.community_id))
+            raw_community = chats.get(utils.get_raw_peer_id(parsed_user.community_id))
+            parsed_user.community = (
+                await types.Community._parse(client, raw_community)
+                if isinstance(raw_community, (raw.types.Community, raw.types.CommunityForbidden))
+                else None
             )
 
         return parsed_user

@@ -188,6 +188,9 @@ class Poll(Object, Update):
                 if result.correct:
                     correct_option_ids.append(i)
 
+            raw_added_by_user = users.get(utils.get_raw_peer_id(answer.added_by))
+            raw_added_by_chat = chats.get(utils.get_raw_peer_id(answer.added_by))
+
             options.append(
                 types.PollOption(
                     persistent_id=answer.option.decode(),
@@ -201,24 +204,26 @@ class Poll(Object, Update):
                     vote_percentage=vote_percentages[i],
                     recent_voters=types.List(
                         [
-                            await types.Chat._parse_chat(
-                                client,
+                            await types.Chat._parse_chat(client, raw_voter)
+                            if raw_voter is not None
+                            else None
+                            for raw_voter in (
                                 users.get(
                                     utils.get_raw_peer_id(voter_peer)
                                     or chats.get(utils.get_raw_peer_id(voter_peer))
-                                ),
+                                )
+                                for voter_peer in result.recent_voters
                             )
-                            for voter_peer in result.recent_voters
                         ]
                     )
                     if result and result.recent_voters
                     else None,
-                    added_by_user=await types.User._parse(
-                        client, users.get(utils.get_raw_peer_id(answer.added_by))
-                    ),
-                    added_by_chat=await types.Chat._parse_chat(
-                        client, chats.get(utils.get_raw_peer_id(answer.added_by))
-                    ),
+                    added_by_user=await types.User._parse(client, raw_added_by_user)
+                    if raw_added_by_user is not None
+                    else None,
+                    added_by_chat=await types.Chat._parse_chat(client, raw_added_by_chat)
+                    if raw_added_by_chat is not None
+                    else None,
                     addition_date=utils.datetime_to_timestamp(getattr(answer, "date", None)),
                     client=client,
                 )

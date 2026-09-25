@@ -84,5 +84,7 @@ class SuggestedPostApprovalFailed(Object):
         return SuggestedPostApprovalFailed(
             suggested_post_message_id=suggested_post_message_id,
             suggested_post_message=suggested_post_message,
-            price=types.SuggestedPostPrice._parse(action.price),
+            price=types.SuggestedPostPrice._parse(action.price)
+            if action.price is not None
+            else None,
         )

@@ -74,6 +74,8 @@ class StoryView(Object):
             date=utils.timestamp_to_datetime(view.date),
             is_blocked=getattr(view, "blocked", None),
             is_blocked_my_stories_from=getattr(view, "blocked_my_stories_from", None),
-            reaction=types.Reaction._parse(client, getattr(view, "reaction", None)),
+            reaction=types.Reaction._parse(client, view.reaction)
+            if view.reaction is not None and not isinstance(view.reaction, raw.types.ReactionEmpty)
+            else None,
             client=client,
         )

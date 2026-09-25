@@ -60,11 +60,8 @@ class FactCheck(Object):
     async def _parse(
         client: pyrogram.Client,
         fact_check: raw.types.FactCheck,
-        users: dict[int, list[raw.base.User]],
-    ) -> FactCheck | None:
-        if not fact_check:
-            return None
-
+        users: dict[int, raw.base.User],
+    ) -> FactCheck:
         message, entities = (
             await utils.parse_text_with_entities(client, getattr(fact_check, "text", None), users)
         ).values()

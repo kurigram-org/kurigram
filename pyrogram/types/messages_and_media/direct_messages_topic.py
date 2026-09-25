@@ -88,17 +88,16 @@ class DirectMessagesTopic(Object):
         messages: dict | None = None,
         users: dict[int, raw.base.User] | None = None,
         chats: dict[int, raw.base.Chat] | None = None,
-    ) -> DirectMessagesTopic | None:
+    ) -> DirectMessagesTopic:
         messages = messages or {}
         users = users or {}
         chats = chats or {}
 
-        if not topic:
-            return None
+        raw_user = users.get(topic.peer.user_id)
 
         return DirectMessagesTopic(
             id=topic.peer.user_id,
-            user=await types.User._parse(client, users.get(topic.peer.user_id)),
+            user=await types.User._parse(client, raw_user) if raw_user is not None else None,
             can_send_unpaid_messages=topic.nopaid_messages_exception,
             is_marked_as_unread=topic.unread_mark,
             unread_count=topic.unread_count,

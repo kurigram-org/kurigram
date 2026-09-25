@@ -40,17 +40,29 @@ class UpgradedGiftAttributeRarity(Object):
     @staticmethod
     def _parse(
         rarity: raw.base.StarGiftAttributeRarity,
-    ) -> UpgradedGiftAttributeRarity | None:
+    ) -> (
+        UpgradedGiftAttributeRarityPerMille
+        | UpgradedGiftAttributeRarityUncommon
+        | UpgradedGiftAttributeRarityRare
+        | UpgradedGiftAttributeRarityEpic
+        | UpgradedGiftAttributeRarityLegendary
+    ):
         if isinstance(rarity, raw.types.StarGiftAttributeRarity):
             return UpgradedGiftAttributeRarityPerMille(per_mille=rarity.permille)
-        elif isinstance(rarity, raw.types.StarGiftAttributeRarityUncommon):
+
+        if isinstance(rarity, raw.types.StarGiftAttributeRarityUncommon):
             return UpgradedGiftAttributeRarityUncommon()
-        elif isinstance(rarity, raw.types.StarGiftAttributeRarityRare):
+
+        if isinstance(rarity, raw.types.StarGiftAttributeRarityRare):
             return UpgradedGiftAttributeRarityRare()
-        elif isinstance(rarity, raw.types.StarGiftAttributeRarityEpic):
+
+        if isinstance(rarity, raw.types.StarGiftAttributeRarityEpic):
             return UpgradedGiftAttributeRarityEpic()
-        elif isinstance(rarity, raw.types.StarGiftAttributeRarityLegendary):
+
+        if isinstance(rarity, raw.types.StarGiftAttributeRarityLegendary):
             return UpgradedGiftAttributeRarityLegendary()
+
+        raise TypeError(f"Unexpected {type(rarity).__name__}")
 
 
 class UpgradedGiftAttributeRarityPerMille(UpgradedGiftAttributeRarity):
@@ -67,26 +79,12 @@ class UpgradedGiftAttributeRarityPerMille(UpgradedGiftAttributeRarity):
 
         self.per_mille = per_mille
 
-    @staticmethod
-    def _parse(
-        rarity: raw.base.StarGiftAttributeRarity,
-    ) -> UpgradedGiftAttributeRarityPerMille | None:
-        if isinstance(rarity, raw.types.StarGiftAttributeRarity):
-            return UpgradedGiftAttributeRarityPerMille(per_mille=rarity.permille)
-
 
 class UpgradedGiftAttributeRarityUncommon(UpgradedGiftAttributeRarity):
     """The attribute is uncommon."""
 
     def __init__(self):
         super().__init__()
-
-    @staticmethod
-    def _parse(
-        rarity: raw.base.StarGiftAttributeRarity,
-    ) -> UpgradedGiftAttributeRarityUncommon | None:
-        if isinstance(rarity, raw.types.StarGiftAttributeRarityUncommon):
-            return UpgradedGiftAttributeRarityUncommon()
 
 
 class UpgradedGiftAttributeRarityRare(UpgradedGiftAttributeRarity):
@@ -95,13 +93,6 @@ class UpgradedGiftAttributeRarityRare(UpgradedGiftAttributeRarity):
     def __init__(self):
         super().__init__()
 
-    @staticmethod
-    def _parse(
-        rarity: raw.base.StarGiftAttributeRarity,
-    ) -> UpgradedGiftAttributeRarityRare | None:
-        if isinstance(rarity, raw.types.StarGiftAttributeRarityRare):
-            return UpgradedGiftAttributeRarityRare()
-
 
 class UpgradedGiftAttributeRarityEpic(UpgradedGiftAttributeRarity):
     """The attribute is epic."""
@@ -109,23 +100,9 @@ class UpgradedGiftAttributeRarityEpic(UpgradedGiftAttributeRarity):
     def __init__(self):
         super().__init__()
 
-    @staticmethod
-    def _parse(
-        rarity: raw.base.StarGiftAttributeRarity,
-    ) -> UpgradedGiftAttributeRarityEpic | None:
-        if isinstance(rarity, raw.types.StarGiftAttributeRarityEpic):
-            return UpgradedGiftAttributeRarityEpic()
-
 
 class UpgradedGiftAttributeRarityLegendary(UpgradedGiftAttributeRarity):
     """The attribute is legendary."""
 
     def __init__(self):
         super().__init__()
-
-    @staticmethod
-    def _parse(
-        rarity: raw.base.StarGiftAttributeRarity,
-    ) -> UpgradedGiftAttributeRarityLegendary | None:
-        if isinstance(rarity, raw.types.StarGiftAttributeRarityLegendary):
-            return UpgradedGiftAttributeRarityLegendary()

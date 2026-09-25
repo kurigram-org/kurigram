@@ -18,6 +18,7 @@
 
 from __future__ import annotations as _annotations
 
+import pyrogram
 from pyrogram import raw, types
 
 from ..object import Object
@@ -52,10 +53,10 @@ class BusinessIntro(Object):
         self.sticker = sticker
 
     @staticmethod
-    async def _parse(client, business_intro: raw.types.BusinessIntro) -> BusinessIntro | None:
-        if not business_intro:
-            return None
-
+    async def _parse(
+        client: pyrogram.Client,
+        business_intro: raw.types.BusinessIntro,
+    ) -> BusinessIntro:
         doc = getattr(business_intro, "sticker", None)
         sticker = None
 

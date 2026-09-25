@@ -106,12 +106,9 @@ class ChatInviteLink(Object):
     @staticmethod
     async def _parse(
         client: pyrogram.Client,
-        invite: raw.base.ExportedChatInvite,
+        invite: raw.types.ChatInviteExported,
         users: dict[int, raw.types.User] | None = None,
-    ) -> ChatInviteLink | None:
-        if not isinstance(invite, raw.types.ChatInviteExported):
-            return None
-
+    ) -> ChatInviteLink:
         creator = (
             await types.User._parse(client, users[invite.admin_id]) if users is not None else None
         )

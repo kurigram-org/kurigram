@@ -106,11 +106,11 @@ class ChatMemberUpdated(Object, Update):
                 client, update.new_participant, users, chats
             )
 
-        if update.invite:
+        if isinstance(update.invite, raw.types.ChatInviteExported):
             invite_link = await types.ChatInviteLink._parse(client, update.invite, users)
 
-            if isinstance(update.invite, raw.types.ChatInvitePublicJoinRequests):
-                via_join_request = True
+        if isinstance(update.invite, raw.types.ChatInvitePublicJoinRequests):
+            via_join_request = True
 
         return ChatMemberUpdated(
             chat=await types.Chat._parse_chat(client, chats[chat_id]),

@@ -18,6 +18,7 @@
 
 from __future__ import annotations as _annotations
 
+import pyrogram
 from pyrogram import raw, types
 
 from ..object import Object
@@ -44,13 +45,14 @@ class BotVerification(Object):
 
     @staticmethod
     async def _parse(
-        client, verification: raw.types.BotVerification, users
-    ) -> BotVerification | None:
-        if not verification:
-            return None
+        client: pyrogram.Client,
+        verification: raw.types.BotVerification,
+        users: dict[int, raw.base.User],
+    ) -> BotVerification:
+        raw_bot = users.get(verification.bot_id)
 
         return BotVerification(
-            bot=await types.User._parse(client, users.get(verification.bot_id)),
+            bot=await types.User._parse(client, raw_bot) if raw_bot is not None else None,
             custom_emoji_id=str(verification.icon),
             description=verification.description,
         )

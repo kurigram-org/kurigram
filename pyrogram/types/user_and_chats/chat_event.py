@@ -436,16 +436,32 @@ class ChatEvent(Object):
                 action = enums.ChatEventAction.MESSAGE_PIN_CHANGED
 
         elif isinstance(action, raw.types.ChannelAdminLogEventActionExportedInviteEdit):
-            old_invite_link = await types.ChatInviteLink._parse(client, action.prev_invite, users)
-            new_invite_link = await types.ChatInviteLink._parse(client, action.new_invite, users)
+            old_invite_link = (
+                await types.ChatInviteLink._parse(client, action.prev_invite, users)
+                if isinstance(action.prev_invite, raw.types.ChatInviteExported)
+                else None
+            )
+            new_invite_link = (
+                await types.ChatInviteLink._parse(client, action.new_invite, users)
+                if isinstance(action.new_invite, raw.types.ChatInviteExported)
+                else None
+            )
             action = enums.ChatEventAction.INVITE_LINK_EDITED
 
         elif isinstance(action, raw.types.ChannelAdminLogEventActionExportedInviteRevoke):
-            revoked_invite_link = await types.ChatInviteLink._parse(client, action.invite, users)
+            revoked_invite_link = (
+                await types.ChatInviteLink._parse(client, action.invite, users)
+                if isinstance(action.invite, raw.types.ChatInviteExported)
+                else None
+            )
             action = enums.ChatEventAction.INVITE_LINK_REVOKED
 
         elif isinstance(action, raw.types.ChannelAdminLogEventActionExportedInviteDelete):
-            deleted_invite_link = await types.ChatInviteLink._parse(client, action.invite, users)
+            deleted_invite_link = (
+                await types.ChatInviteLink._parse(client, action.invite, users)
+                if isinstance(action.invite, raw.types.ChatInviteExported)
+                else None
+            )
             action = enums.ChatEventAction.INVITE_LINK_DELETED
 
         elif isinstance(action, raw.types.ChannelAdminLogEventActionCreateTopic):

@@ -51,6 +51,8 @@ class ManagedBotCreated(Object):
         if not isinstance(managed_bot_created, raw.types.MessageActionManagedBotCreated):
             return
 
+        raw_bot = users.get(managed_bot_created.bot_id)
+
         return ManagedBotCreated(
-            bot=await types.User._parse(client, users.get(managed_bot_created.bot_id))
+            bot=await types.User._parse(client, raw_bot) if raw_bot is not None else None
         )

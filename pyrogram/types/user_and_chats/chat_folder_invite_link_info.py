@@ -81,15 +81,23 @@ class ChatFolderInviteLinkInfo(Object):
                 ),
                 missing_chats=types.List(
                     [
-                        await types.Chat._parse_chat(client, chats.get(utils.get_raw_peer_id(i)))
-                        for i in invite.missing_peers
+                        await types.Chat._parse_chat(client, raw_chat)
+                        if raw_chat is not None
+                        else None
+                        for raw_chat in (
+                            chats.get(utils.get_raw_peer_id(peer)) for peer in invite.missing_peers
+                        )
                     ]
                 )
                 or None,
                 added_chats=types.List(
                     [
-                        await types.Chat._parse_chat(client, chats.get(utils.get_raw_peer_id(i)))
-                        for i in invite.already_peers
+                        await types.Chat._parse_chat(client, raw_chat)
+                        if raw_chat is not None
+                        else None
+                        for raw_chat in (
+                            chats.get(utils.get_raw_peer_id(peer)) for peer in invite.already_peers
+                        )
                     ]
                 )
                 or None,

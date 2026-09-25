@@ -43,10 +43,7 @@ class Birthday(Object):
         self.year = year
 
     @staticmethod
-    def _parse(birthday: raw.types.Birthday | None = None) -> Birthday | None:
-        if not birthday:
-            return
-
+    def _parse(birthday: raw.types.Birthday) -> Birthday:
         return Birthday(
             day=birthday.day, month=birthday.month, year=getattr(birthday, "year", None)
         )

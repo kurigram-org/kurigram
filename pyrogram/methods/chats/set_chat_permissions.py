@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types, utils
+from pyrogram import raw, types
 
 
 class SetChatPermissions:
@@ -69,4 +69,4 @@ class SetChatPermissions:
             )
         )
 
-        return utils.require_parsed(await types.Chat._parse_chat(self, r.chats[0]))
+        return await types.Chat._parse_chat(self, r.chats[0])

@@ -84,12 +84,13 @@ class CheckedGiftCode(Object):
         from_chat = None
         winner = None
 
-        if getattr(checked_gift_code, "from_id", None):
-            from_chat = await types.Chat._parse_chat(
-                client, chats.get(utils.get_raw_peer_id(checked_gift_code.from_id))
-            )
-        if getattr(checked_gift_code, "to_id", None):
-            winner = await types.User._parse(client, users.get(checked_gift_code.to_id))
+        raw_from_chat = chats.get(utils.get_raw_peer_id(checked_gift_code.from_id))
+        if raw_from_chat is not None:
+            from_chat = await types.Chat._parse_chat(client, raw_from_chat)
+
+        raw_winner = users.get(checked_gift_code.to_id)
+        if raw_winner is not None:
+            winner = await types.User._parse(client, raw_winner)
 
         return CheckedGiftCode(
             date=utils.timestamp_to_datetime(checked_gift_code.date),

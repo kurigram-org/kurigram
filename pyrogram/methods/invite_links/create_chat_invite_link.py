@@ -90,4 +90,7 @@ class CreateChatInviteLink:
             )
         )
 
+        if not isinstance(r, raw.types.ChatInviteExported):
+            return None
+
         return await types.ChatInviteLink._parse(self, r)

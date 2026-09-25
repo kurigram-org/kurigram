@@ -116,9 +116,15 @@ class MessageReactionUpdated(Object, Update):
             actor_chat=actor_chat,
             date=utils.timestamp_to_datetime(update.date),
             old_reaction=[
-                types.Reaction._parse(client, reaction) for reaction in update.old_reactions
+                types.Reaction._parse(client, reaction)
+                if not isinstance(reaction, raw.types.ReactionEmpty)
+                else None
+                for reaction in update.old_reactions
             ],
             new_reaction=[
-                types.Reaction._parse(client, reaction) for reaction in update.new_reactions
+                types.Reaction._parse(client, reaction)
+                if not isinstance(reaction, raw.types.ReactionEmpty)
+                else None
+                for reaction in update.new_reactions
             ],
         )

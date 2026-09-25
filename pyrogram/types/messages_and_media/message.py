@@ -1064,13 +1064,30 @@ class Message(Object, Update):
                 else:
                     users.update({i.id: i for i in r})
 
-        from_user = await types.User._parse(client, users.get(from_id or peer_id))
+        raw_from_user = users.get(from_id or peer_id)
+        from_user = (
+            await types.User._parse(client, raw_from_user) if raw_from_user is not None else None
+        )
+
+        raw_sender_chat = types.Chat._find_message_chat(
+            message,
+            users=users,
+            chats=chats,
+            is_chat=False,
+        )
         sender_chat = (
-            await types.Chat._parse(client, message, users, chats, is_chat=False)
-            if not from_user
+            await types.Chat._parse_chat(client, raw_sender_chat)
+            if from_user is None and raw_sender_chat is not None
             else None
         )
-        chat = await types.Chat._parse(client, message, users, chats, is_chat=True)
+
+        raw_chat = types.Chat._find_message_chat(
+            message,
+            users=users,
+            chats=chats,
+            is_chat=True,
+        )
+        chat = await types.Chat._parse_chat(client, raw_chat) if raw_chat is not None else None
 
         action = message.action
 
@@ -1254,7 +1271,7 @@ class Message(Object, Update):
             giveaway_completed = await types.GiveawayCompleted._parse(
                 client,
                 action,
-                await types.Chat._parse(client, message, users, chats, is_chat=True),
+                chat,
                 getattr(getattr(message, "reply_to", None), "reply_to_msg_id", None),
             )
         elif isinstance(action, raw.types.MessageActionManagedBotCreated):
@@ -1318,14 +1335,12 @@ class Message(Object, Update):
             action,
             (raw.types.MessageActionRequestedPeer, raw.types.MessageActionRequestedPeerSentMe),
         ):
-            _requested_chat = await types.ChatShared._parse(client, action, chats)
-
-            if _requested_chat is None:
+            if isinstance(action.peers[0], utils.PEERS_WITH_A_USER_ID):
                 service_type = enums.MessageServiceType.USERS_SHARED
                 users_shared = await types.UsersShared._parse(client, action, users)
             else:
                 service_type = enums.MessageServiceType.CHAT_SHARED
-                chat_shared = _requested_chat
+                chat_shared = await types.ChatShared._parse(client, action, chats)
         elif isinstance(action, raw.types.MessageActionScreenshotTaken):
             service_type = enums.MessageServiceType.SCREENSHOT_TAKEN
             screenshot_taken = types.ScreenshotTaken()
@@ -1513,7 +1528,9 @@ class Message(Object, Update):
             community_chat_added=community_chat_added,
             community_chat_removed=community_chat_removed,
             community_chat_joined=community_chat_joined,
-            reactions=await types.MessageReactions._parse(client, message.reactions, users, chats),
+            reactions=await types.MessageReactions._parse(client, message.reactions, users, chats)
+            if message.reactions is not None
+            else None,
             business_connection_id=business_connection_id,
             raw=message,
             client=client,
@@ -1614,13 +1631,30 @@ class Message(Object, Update):
                 else:
                     users.update({i.id: i for i in r})
 
-        from_user = await types.User._parse(client, users.get(from_id or peer_id))
+        raw_from_user = users.get(from_id or peer_id)
+        from_user = (
+            await types.User._parse(client, raw_from_user) if raw_from_user is not None else None
+        )
+
+        raw_sender_chat = types.Chat._find_message_chat(
+            message,
+            users=users,
+            chats=chats,
+            is_chat=False,
+        )
         sender_chat = (
-            await types.Chat._parse(client, message, users, chats, is_chat=False)
-            if not from_user
+            await types.Chat._parse_chat(client, raw_sender_chat)
+            if from_user is None and raw_sender_chat is not None
             else None
         )
-        chat = await types.Chat._parse(client, message, users, chats, is_chat=True)
+
+        raw_chat = types.Chat._find_message_chat(
+            message,
+            users=users,
+            chats=chats,
+            is_chat=True,
+        )
+        chat = await types.Chat._parse_chat(client, raw_chat) if raw_chat is not None else None
 
         entities = types.List(
             filter(
@@ -1635,7 +1669,9 @@ class Message(Object, Update):
         forward_header = message.fwd_from
         forward_origin = None
 
-        if forward_header:
+        if forward_header is not None and (
+            forward_header.from_id or forward_header.from_name or forward_header.imported
+        ):
             forward_origin = await types.MessageOrigin._parse(
                 client,
                 forward_header,
@@ -1691,7 +1727,9 @@ class Message(Object, Update):
                 photo = types.Photo._parse(client, media.photo, media.ttl_seconds)
                 has_media_spoiler = media.spoiler
             elif isinstance(media, raw.types.MessageMediaGeo):
-                location = types.Location._parse(media.geo)
+                if isinstance(media.geo, raw.types.GeoPoint):
+                    location = types.Location._parse(media.geo)
+
                 media_type = enums.MessageMediaType.LOCATION
             elif isinstance(media, raw.types.MessageMediaGeoLive):
                 location = types.Location._parse(media)
@@ -1780,7 +1818,9 @@ class Message(Object, Update):
                         media_type = enums.MessageMediaType.DOCUMENT
             elif isinstance(media, raw.types.MessageMediaWebPage):
                 media_type = enums.MessageMediaType.WEB_PAGE
-                web_page = types.WebPage._parse(client, media)
+
+                if not isinstance(media.webpage, raw.types.WebPageNotModified):
+                    web_page = types.WebPage._parse(client, media)
             elif isinstance(media, raw.types.MessageMediaPoll):
                 poll = await types.Poll._parse(
                     client,
@@ -1808,11 +1848,24 @@ class Message(Object, Update):
                 media_type = enums.MessageMediaType.UNSUPPORTED
                 media = None
 
-        link_preview_options = types.LinkPreviewOptions._parse(
-            media,
-            getattr(getattr(media, "webpage", None), "url", utils.get_first_url(message.message)),
-            message.invert_media,
-        )
+        link_preview_options: types.LinkPreviewOptions | None = None
+        preview_web_page = getattr(media, "webpage", None)
+        preview_url = getattr(preview_web_page, "url", utils.get_first_url(message.message))
+
+        if isinstance(media, raw.types.MessageMediaWebPage) and not isinstance(
+            media.webpage,
+            raw.types.WebPageNotModified,
+        ):
+            link_preview_options = types.LinkPreviewOptions._parse(
+                media,
+                invert_media=message.invert_media,
+            )
+        elif preview_url:
+            link_preview_options = types.LinkPreviewOptions(
+                is_disabled=True,
+                url=preview_url,
+                show_above_text=message.invert_media,
+            )
 
         reply_markup = message.reply_markup
 
@@ -1828,7 +1881,17 @@ class Message(Object, Update):
             else:
                 reply_markup = None
 
-        reactions = await types.MessageReactions._parse(client, message.reactions, users, chats)
+        reactions = (
+            await types.MessageReactions._parse(client, message.reactions, users, chats)
+            if message.reactions is not None
+            else None
+        )
+
+        raw_sender_business_bot = users.get(getattr(message, "via_business_bot_id", None))
+        raw_via_bot = users.get(message.via_bot_id)
+        guest_bot_caller_id = utils.get_raw_peer_id(message.guestchat_via_from)
+        raw_guest_bot_caller_user = users.get(guest_bot_caller_id)
+        raw_guest_bot_caller_chat = chats.get(guest_bot_caller_id)
 
         parsed_message = Message(
             id=message.id,
@@ -1839,9 +1902,9 @@ class Message(Object, Update):
             chat=chat,
             from_user=from_user,
             sender_chat=sender_chat,
-            sender_business_bot=await types.User._parse(
-                client, users.get(getattr(message, "via_business_bot_id", None))
-            ),
+            sender_business_bot=await types.User._parse(client, raw_sender_business_bot)
+            if raw_sender_business_bot is not None
+            else None,
             sender_tag=message.from_rank,
             text=(
                 Str(message.message).init(entities) or None
@@ -1895,7 +1958,9 @@ class Message(Object, Update):
             views=message.views,
             forwards=message.forwards,
             sender_boost_count=message.from_boosts_applied,
-            via_bot=await types.User._parse(client, users.get(message.via_bot_id)),
+            via_bot=await types.User._parse(client, raw_via_bot)
+            if raw_via_bot is not None
+            else None,
             outgoing=message.out,
             business_connection_id=business_connection_id,
             reply_markup=reply_markup,
@@ -1910,17 +1975,21 @@ class Message(Object, Update):
                 for reason in getattr(message, "restriction_reason", [])
             )
             or None,
-            fact_check=await types.FactCheck._parse(client, message.factcheck, users),
-            suggested_post_info=types.SuggestedPostInfo._parse(message.suggested_post),
+            fact_check=await types.FactCheck._parse(client, message.factcheck, users)
+            if message.factcheck is not None
+            else None,
+            suggested_post_info=types.SuggestedPostInfo._parse(message.suggested_post)
+            if message.suggested_post is not None
+            else None,
             channel_post=message.post,
             repeat_period=message.schedule_repeat_period,
             summary_language_code=message.summary_from_language,
-            guest_bot_caller_user=await types.User._parse(
-                client, users.get(utils.get_raw_peer_id(message.guestchat_via_from))
-            ),
-            guest_bot_caller_chat=await types.Chat._parse_chat(
-                client, chats.get(utils.get_raw_peer_id(message.guestchat_via_from))
-            ),
+            guest_bot_caller_user=await types.User._parse(client, raw_guest_bot_caller_user)
+            if raw_guest_bot_caller_user is not None
+            else None,
+            guest_bot_caller_chat=await types.Chat._parse_chat(client, raw_guest_bot_caller_chat)
+            if raw_guest_bot_caller_chat is not None
+            else None,
             raw=message,
             client=client,
         )
@@ -1946,9 +2015,14 @@ class Message(Object, Update):
                 raw_reply_to_message=raw_reply_to_message,
             )
 
-        if topics:
+        raw_topic = topics.get(parsed_message.message_thread_id) if topics else None
+
+        if raw_topic is not None:
             parsed_message.topic = await types.ForumTopic._parse(
-                client, topics.get(parsed_message.message_thread_id), users=users, chats=chats
+                client,
+                raw_topic,
+                users=users,
+                chats=chats,
             )
 
             if parsed_message.topic:
@@ -2046,13 +2120,30 @@ class Message(Object, Update):
                 else:
                     users.update({i.id: i for i in r})
 
-        from_user = await types.User._parse(client, users.get(from_id or peer_id))
+        raw_from_user = users.get(from_id or peer_id)
+        from_user = (
+            await types.User._parse(client, raw_from_user) if raw_from_user is not None else None
+        )
+
+        raw_sender_chat = types.Chat._find_message_chat(
+            message,
+            users=users,
+            chats=chats,
+            is_chat=False,
+        )
         sender_chat = (
-            await types.Chat._parse(client, message, users, chats, is_chat=False)
-            if not from_user
+            await types.Chat._parse_chat(client, raw_sender_chat)
+            if from_user is None and raw_sender_chat is not None
             else None
         )
-        chat = await types.Chat._parse(client, message, users, chats, is_chat=True)
+
+        raw_chat = types.Chat._find_message_chat(
+            message,
+            users=users,
+            chats=chats,
+            is_chat=True,
+        )
+        chat = await types.Chat._parse_chat(client, raw_chat) if raw_chat is not None else None
 
         entities = types.List(
             filter(
@@ -2112,7 +2203,9 @@ class Message(Object, Update):
                 photo = types.Photo._parse(client, media.photo, media.ttl_seconds)
                 has_media_spoiler = media.spoiler
             elif isinstance(media, raw.types.MessageMediaGeo):
-                location = types.Location._parse(media.geo)
+                if isinstance(media.geo, raw.types.GeoPoint):
+                    location = types.Location._parse(media.geo)
+
                 media_type = enums.MessageMediaType.LOCATION
             elif isinstance(media, raw.types.MessageMediaGeoLive):
                 location = types.Location._parse(media)
@@ -2201,7 +2294,9 @@ class Message(Object, Update):
                         media_type = enums.MessageMediaType.DOCUMENT
             elif isinstance(media, raw.types.MessageMediaWebPage):
                 media_type = enums.MessageMediaType.WEB_PAGE
-                web_page = types.WebPage._parse(client, media)
+
+                if not isinstance(media.webpage, raw.types.WebPageNotModified):
+                    web_page = types.WebPage._parse(client, media)
             elif isinstance(media, raw.types.MessageMediaPoll):
                 poll = await types.Poll._parse(
                     client,
@@ -2229,10 +2324,20 @@ class Message(Object, Update):
                 media_type = enums.MessageMediaType.UNSUPPORTED
                 media = None
 
-        link_preview_options = types.LinkPreviewOptions._parse(
-            media,
-            getattr(getattr(media, "webpage", None), "url", utils.get_first_url(message.message)),
-        )
+        link_preview_options: types.LinkPreviewOptions | None = None
+        preview_web_page = getattr(media, "webpage", None)
+        preview_url = getattr(preview_web_page, "url", utils.get_first_url(message.message))
+
+        if isinstance(media, raw.types.MessageMediaWebPage) and not isinstance(
+            media.webpage,
+            raw.types.WebPageNotModified,
+        ):
+            link_preview_options = types.LinkPreviewOptions._parse(media)
+        elif preview_url:
+            link_preview_options = types.LinkPreviewOptions(
+                is_disabled=True,
+                url=preview_url,
+            )
 
         reply_markup = message.reply_markup
 
@@ -2248,6 +2353,8 @@ class Message(Object, Update):
             else:
                 reply_markup = None
 
+        raw_receiver_user = users.get(message.receiver_id)
+
         parsed_message = Message(
             id=0,
             ephemeral_message_id=message.id,
@@ -2255,7 +2362,9 @@ class Message(Object, Update):
             chat=chat,
             from_user=from_user,
             sender_chat=sender_chat,
-            receiver_user=await types.User._parse(client, users.get(message.receiver_id)),
+            receiver_user=await types.User._parse(client, raw_receiver_user)
+            if raw_receiver_user is not None
+            else None,
             text=(
                 Str(message.message).init(entities) or None
                 if media is None or web_page is not None
