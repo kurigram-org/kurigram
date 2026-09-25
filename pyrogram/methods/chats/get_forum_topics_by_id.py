@@ -52,7 +52,7 @@ class GetForumTopicsByID:
             chat_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the target chat.
 
-            topic_ids (``int`` | Iterable of ``int``, *optional*):
+            topic_ids (``int`` | Iterable of ``int``):
                 Pass a single topic identifier or an iterable of topic ids (as integers) to get the information of the
                 topic themselves.
 

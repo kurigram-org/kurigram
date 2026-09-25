@@ -26,7 +26,7 @@ from pyrogram import raw, types, utils
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
 log = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ async def get_chunk(
     limit: int = 0,
     offset: int = 0,
     offset_id: int = 0,
-    from_date: datetime | None = None,
+    from_date: datetime | timedelta | None = None,
     min_id: int = 0,  # Inclusive
     max_id: int = 0,  # Inclusive
     reverse: bool = False,
@@ -84,7 +84,7 @@ class GetChatHistory:
         limit: int = 0,
         offset: int = 0,
         offset_id: int | None = None,
-        offset_date: datetime | None = None,
+        offset_date: datetime | timedelta | None = None,
         min_id: int = 0,
         max_id: int = 0,
         reverse: bool = False,
@@ -114,8 +114,9 @@ class GetChatHistory:
                 This parameter is deprecated and should not be used.
                 Use `min_id` / `max_id` instead for proper filtering.
 
-            offset_date (:py:obj:`~datetime.datetime`, *optional*):
+            offset_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Pass a date as offset to retrieve only older messages starting from that date.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             min_id (``int``, *optional*):
                 If a positive value was provided, the method will return only messages

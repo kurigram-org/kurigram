@@ -36,20 +36,20 @@ class InlineQueryResultAnimation(InlineQueryResult):
             A valid URL for the animated GIF file.
             File size must not exceed 1 MB.
 
-        animation_width (``int``, *optional*)
+        animation_width (``int``, *optional*):
             Width of the animation.
 
-        animation_height (``int``, *optional*)
+        animation_height (``int``, *optional*):
             Height of the animation.
 
-        animation_duration (``int``, *optional*)
+        animation_duration (``int``, *optional*):
             Duration of the animation in seconds.
 
         thumb_url (``str``, *optional*):
             URL of the static thumbnail for the result (jpeg or gif)
             Defaults to the value passed in *animation_url*.
 
-        thumb_mime_type (``str``, *optional*)
+        thumb_mime_type (``str``, *optional*):
             MIME type of the thumbnail, must be one of "image/jpeg", "image/gif", or "video/mp4".
             Defaults to "image/jpeg".
 

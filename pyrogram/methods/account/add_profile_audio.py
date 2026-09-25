@@ -56,6 +56,35 @@ class AddProfileAudio:
                 pass a file path as string to upload a new audio file that exists on your local machine, or
                 pass a binary file-like object with its attribute ".name" set for in-memory uploads.
 
+            duration (``int``, *optional*):
+                Duration of the audio in seconds.
+
+            performer (``str``, *optional*):
+                Performer.
+
+            title (``str``, *optional*):
+                Track name.
+
+            thumb (``str`` | ``os.PathLike`` | ``BinaryIO``, *optional*):
+                Thumbnail of the music file album cover.
+                The thumbnail should be in JPEG format and less than 200 KB in size.
+                A thumbnail's width and height should not exceed 320 pixels.
+                Thumbnails can't be reused and can be only uploaded as a new file.
+
+            file_name (``str``, *optional*):
+                File name of the audio sent.
+                Defaults to file's path basename.
+
+            progress (``Callable``, *optional*):
+                Pass a callback function to view the file transmission progress.
+                The function must take *(current, total)* as positional arguments and will be called back each
+                time a new file chunk has been successfully transmitted.
+
+            progress_args (``tuple``, *optional*):
+                Extra custom arguments for the progress callback function.
+                You can pass anything you need to be available in the progress callback scope; for example, a Message
+                object or a Client instance in order to edit the message with the updated progress status.
+
         Returns:
             ``bool`` | ``None``: On success, True is returned, otherwise, in
             case the upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`, None is returned.

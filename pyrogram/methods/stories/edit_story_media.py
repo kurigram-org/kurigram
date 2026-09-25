@@ -84,6 +84,14 @@ class EditStoryMedia:
                 A thumbnail's width and height should not exceed 320 pixels.
                 Thumbnails can't be reused and can be only uploaded as a new file.
 
+            supports_streaming (``bool``, *optional*):
+                Pass True, if the uploaded video is suitable for streaming.
+                Defaults to True.
+
+            file_name (``str``, *optional*):
+                File name of the audio sent.
+                Defaults to file's path basename.
+
             progress (``Callable``, *optional*):
                 Pass a callback function to view the file transmission progress.
                 The function must take *(current, total)* as positional arguments (look at Other Parameters below for a

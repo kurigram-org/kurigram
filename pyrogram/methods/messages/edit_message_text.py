@@ -25,7 +25,7 @@ import pyrogram
 from pyrogram import enums, raw, types, utils
 
 if TYPE_CHECKING:
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
 log = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class EditMessageText:
         parse_mode: enums.ParseMode | None = None,
         entities: list[types.MessageEntity] | None = None,
         link_preview_options: types.LinkPreviewOptions | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         business_connection_id: str | None = None,
         rich_message: types.InputRichMessage | None = None,
         reply_markup: types.InlineKeyboardMarkup | None = None,
@@ -73,8 +73,9 @@ class EditMessageText:
             link_preview_options (:obj:`~pyrogram.types.LinkPreviewOptions`, *optional*):
                 Options used for link preview generation for the message.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             business_connection_id (``str``, *optional*):
                 Unique identifier of the business connection on behalf of which the message will be sent.
@@ -85,6 +86,16 @@ class EditMessageText:
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
                 An InlineKeyboardMarkup object.
+
+            show_caption_above_media (``bool``, *optional*):
+                Pass True, if the caption must be shown above the message media.
+                This parameter is deprecated and should not be used.
+                Use `link_preview_options` instead.
+
+            disable_web_page_preview (``bool``, *optional*):
+                Disables link previews for links in this message.
+                This parameter is deprecated and should not be used.
+                Use `link_preview_options` instead.
 
         Returns:
             :obj:`~pyrogram.types.Message`: On success, the edited message is returned.
