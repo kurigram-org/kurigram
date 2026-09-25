@@ -41,7 +41,7 @@ from ..update import Update
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from datetime import datetime
+    from datetime import datetime, timedelta
     from io import BytesIO
     from re import Match
 
@@ -2571,7 +2571,7 @@ class Message(Object, Update):
         file_name: str | None = None,
         disable_notification: bool | None = None,
         effect_id: int | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         protect_content: bool | None = None,
         allow_paid_broadcast: bool | None = None,
@@ -2650,8 +2650,9 @@ class Message(Object, Update):
                 Unique identifier of the message effect.
                 For private chats only.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -2762,7 +2763,7 @@ class Message(Object, Update):
         disable_notification: bool | None = None,
         effect_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         protect_content: bool | None = None,
         allow_paid_broadcast: bool | None = None,
@@ -2843,8 +2844,9 @@ class Message(Object, Update):
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -2946,7 +2948,7 @@ class Message(Object, Update):
         file_name: str | None = None,
         disable_notification: bool | None = None,
         effect_id: int | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         protect_content: bool | None = None,
         allow_paid_broadcast: bool | None = None,
@@ -3015,8 +3017,9 @@ class Message(Object, Update):
                 Unique identifier of the message effect.
                 For private chats only.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -3121,7 +3124,7 @@ class Message(Object, Update):
         disable_notification: bool | None = None,
         effect_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         protect_content: bool | None = None,
         allow_paid_broadcast: bool | None = None,
@@ -3192,8 +3195,9 @@ class Message(Object, Update):
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -3287,7 +3291,7 @@ class Message(Object, Update):
         vcard: str | None = None,
         disable_notification: bool | None = None,
         effect_id: int | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         protect_content: bool | None = None,
         allow_paid_broadcast: bool | None = None,
         paid_message_star_count: int | None = None,
@@ -3330,8 +3334,9 @@ class Message(Object, Update):
                 Unique identifier of the message effect.
                 For private chats only.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
@@ -3398,7 +3403,7 @@ class Message(Object, Update):
         disable_notification: bool | None = None,
         effect_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         protect_content: bool | None = None,
         allow_paid_broadcast: bool | None = None,
         paid_message_star_count: int | None = None,
@@ -3443,8 +3448,9 @@ class Message(Object, Update):
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
@@ -3508,7 +3514,7 @@ class Message(Object, Update):
         force_document: bool | None = None,
         disable_notification: bool | None = None,
         effect_id: int | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         protect_content: bool | None = None,
         allow_paid_broadcast: bool | None = None,
@@ -3573,8 +3579,9 @@ class Message(Object, Update):
                 Unique identifier of the message effect.
                 For private chats only.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -3675,7 +3682,7 @@ class Message(Object, Update):
         disable_notification: bool | None = None,
         effect_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         protect_content: bool | None = None,
         allow_paid_broadcast: bool | None = None,
@@ -3742,8 +3749,9 @@ class Message(Object, Update):
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -4367,7 +4375,7 @@ class Message(Object, Update):
         proximity_alert_radius: int | None = None,
         disable_notification: bool | None = None,
         effect_id: int | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         protect_content: bool | None = None,
         allow_paid_broadcast: bool | None = None,
         paid_message_star_count: int | None = None,
@@ -4420,8 +4428,9 @@ class Message(Object, Update):
                 Unique identifier of the message effect.
                 For private chats only.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
@@ -4492,7 +4501,7 @@ class Message(Object, Update):
         disable_notification: bool | None = None,
         effect_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         protect_content: bool | None = None,
         allow_paid_broadcast: bool | None = None,
         paid_message_star_count: int | None = None,
@@ -4547,8 +4556,9 @@ class Message(Object, Update):
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
@@ -4608,7 +4618,7 @@ class Message(Object, Update):
         media: list[types.InputMediaPhoto | types.InputMediaVideo],
         disable_notification: bool | None = None,
         effect_id: int | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         protect_content: bool | None = None,
         show_caption_above_media: bool | None = None,
         allow_paid_broadcast: bool | None = None,
@@ -4636,8 +4646,9 @@ class Message(Object, Update):
                 Unique identifier of the message effect.
                 For private chats only.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
@@ -4682,7 +4693,7 @@ class Message(Object, Update):
         disable_notification: bool | None = None,
         effect_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         protect_content: bool | None = None,
         show_caption_above_media: bool | None = None,
         allow_paid_broadcast: bool | None = None,
@@ -4712,8 +4723,9 @@ class Message(Object, Update):
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
@@ -4760,7 +4772,7 @@ class Message(Object, Update):
         link_preview_options: types.LinkPreviewOptions | None = None,
         disable_notification: bool | None = None,
         effect_id: int | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         protect_content: bool | None = None,
         allow_paid_broadcast: bool | None = None,
@@ -4805,8 +4817,9 @@ class Message(Object, Update):
                 Unique identifier of the message effect.
                 For private chats only.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -4879,7 +4892,7 @@ class Message(Object, Update):
         disable_notification: bool | None = None,
         effect_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         protect_content: bool | None = None,
         allow_paid_broadcast: bool | None = None,
@@ -4926,8 +4939,9 @@ class Message(Object, Update):
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -4995,7 +5009,7 @@ class Message(Object, Update):
         ttl_seconds: int | None = None,
         disable_notification: bool | None = None,
         effect_id: int | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         view_once: bool | None = None,
         protect_content: bool | None = None,
@@ -5057,8 +5071,9 @@ class Message(Object, Update):
                 Unique identifier of the message effect.
                 For private chats only.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -5164,7 +5179,7 @@ class Message(Object, Update):
         disable_notification: bool | None = None,
         effect_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         view_once: bool | None = None,
         protect_content: bool | None = None,
@@ -5228,8 +5243,9 @@ class Message(Object, Update):
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -5331,7 +5347,7 @@ class Message(Object, Update):
         disable_notification: bool | None = None,
         effect_id: int | None = None,
         show_caption_above_media: bool | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         protect_content: bool | None = None,
         allow_paid_broadcast: bool | None = None,
@@ -5403,8 +5419,9 @@ class Message(Object, Update):
             show_caption_above_media (``bool``, *optional*):
                 Pass True, if the caption must be shown above the message media.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -5509,7 +5526,7 @@ class Message(Object, Update):
         effect_id: int | None = None,
         show_caption_above_media: bool | None = None,
         reply_parameters: types.ReplyParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         protect_content: bool | None = None,
         allow_paid_broadcast: bool | None = None,
@@ -5583,8 +5600,9 @@ class Message(Object, Update):
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -5689,13 +5707,13 @@ class Message(Object, Update):
         explanation: types.FormattedText | None = None,
         explanation_media: types.InputPollMedia | None = None,
         open_period: int | None = None,
-        close_date: datetime | None = None,
+        close_date: datetime | timedelta | None = None,
         is_closed: bool | None = None,
         disable_notification: bool | None = None,
         protect_content: bool | None = None,
         allow_paid_broadcast: bool | None = None,
         effect_id: int | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         paid_message_star_count: int | None = None,
         reply_markup: (
@@ -5779,10 +5797,11 @@ class Message(Object, Update):
                 Amount of time in seconds the poll will be active after creation, 5-2628000.
                 Can't be used together with *close_date*.
 
-            close_date (:py:obj:`~datetime.datetime`, *optional*):
+            close_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Point in time when the poll will be automatically closed.
                 Must be at least 5 and no more than 2628000 seconds in the future.
                 Can't be used together with *open_period*.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             is_closed (``bool``, *optional*):
                 Pass True, if the poll needs to be immediately closed.
@@ -5806,8 +5825,9 @@ class Message(Object, Update):
                 Unique identifier of the message effect.
                 For private chats only.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -5879,14 +5899,14 @@ class Message(Object, Update):
         explanation: types.FormattedText | None = None,
         explanation_media: types.InputPollMedia | None = None,
         open_period: int | None = None,
-        close_date: datetime | None = None,
+        close_date: datetime | timedelta | None = None,
         is_closed: bool | None = None,
         disable_notification: bool | None = None,
         protect_content: bool | None = None,
         allow_paid_broadcast: bool | None = None,
         effect_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         paid_message_star_count: int | None = None,
         reply_markup: (
@@ -5969,10 +5989,11 @@ class Message(Object, Update):
                 Amount of time in seconds the poll will be active after creation, 5-2628000.
                 Can't be used together with *close_date*.
 
-            close_date (:py:obj:`~datetime.datetime`, *optional*):
+            close_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Point in time when the poll will be automatically closed.
                 Must be at least 5 and no more than 2628000 seconds in the future.
                 Can't be used together with *open_period*.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             is_closed (``bool``, *optional*):
                 Pass True, if the poll needs to be immediately closed.
@@ -5999,8 +6020,9 @@ class Message(Object, Update):
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -6059,7 +6081,7 @@ class Message(Object, Update):
         disable_notification: bool | None = None,
         effect_id: int | None = None,
         suggested_post_parameters: types.SuggestedPostParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         protect_content: bool | None = None,
         allow_paid_broadcast: bool | None = None,
         paid_message_star_count: int | None = None,
@@ -6098,8 +6120,9 @@ class Message(Object, Update):
             suggested_post_parameters (:obj:`~pyrogram.types.SuggestedPostParameters`, *optional*):
                 Information about the suggested post.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
@@ -6145,7 +6168,7 @@ class Message(Object, Update):
         effect_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
         suggested_post_parameters: types.SuggestedPostParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         protect_content: bool | None = None,
         allow_paid_broadcast: bool | None = None,
         paid_message_star_count: int | None = None,
@@ -6186,8 +6209,9 @@ class Message(Object, Update):
             suggested_post_parameters (:obj:`~pyrogram.types.SuggestedPostParameters`, *optional*):
                 Information about the suggested post.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
@@ -6235,7 +6259,7 @@ class Message(Object, Update):
         caption_entities: list[types.MessageEntity] | None = None,
         disable_notification: bool | None = None,
         effect_id: int | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         protect_content: bool | None = None,
         allow_paid_broadcast: bool | None = None,
@@ -6288,8 +6312,9 @@ class Message(Object, Update):
                 Unique identifier of the message effect.
                 For private chats only.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -6386,7 +6411,7 @@ class Message(Object, Update):
         disable_notification: bool | None = None,
         effect_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         protect_content: bool | None = None,
         allow_paid_broadcast: bool | None = None,
@@ -6441,8 +6466,9 @@ class Message(Object, Update):
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -6534,7 +6560,7 @@ class Message(Object, Update):
         foursquare_type: str = "",
         disable_notification: bool | None = None,
         effect_id: int | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         protect_content: bool | None = None,
         allow_paid_broadcast: bool | None = None,
         paid_message_star_count: int | None = None,
@@ -6584,8 +6610,9 @@ class Message(Object, Update):
                 Unique identifier of the message effect.
                 For private chats only.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
@@ -6656,7 +6683,7 @@ class Message(Object, Update):
         disable_notification: bool | None = None,
         effect_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         protect_content: bool | None = None,
         allow_paid_broadcast: bool | None = None,
         paid_message_star_count: int | None = None,
@@ -6708,8 +6735,9 @@ class Message(Object, Update):
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
@@ -6784,7 +6812,7 @@ class Message(Object, Update):
         supports_streaming: bool = True,
         disable_notification: bool | None = None,
         effect_id: int | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         protect_content: bool | None = None,
         no_sound: bool | None = None,
@@ -6882,8 +6910,9 @@ class Message(Object, Update):
                 Unique identifier of the message effect.
                 For private chats only.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -7007,7 +7036,7 @@ class Message(Object, Update):
         disable_notification: bool | None = None,
         effect_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         protect_content: bool | None = None,
         no_sound: bool | None = None,
@@ -7107,8 +7136,9 @@ class Message(Object, Update):
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -7214,7 +7244,7 @@ class Message(Object, Update):
         thumb: PathType | BinaryIO | None = None,
         disable_notification: bool | None = None,
         effect_id: int | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         protect_content: bool | None = None,
         view_once: bool | None = None,
@@ -7267,8 +7297,9 @@ class Message(Object, Update):
                 Unique identifier of the message effect.
                 For private chats only.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -7368,7 +7399,7 @@ class Message(Object, Update):
         disable_notification: bool | None = None,
         effect_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         protect_content: bool | None = None,
         view_once: bool | None = None,
@@ -7423,8 +7454,9 @@ class Message(Object, Update):
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -7520,7 +7552,7 @@ class Message(Object, Update):
         waveform: bytes | None = None,
         disable_notification: bool | None = None,
         effect_id: int | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         protect_content: bool | None = None,
         view_once: bool | None = None,
@@ -7578,8 +7610,9 @@ class Message(Object, Update):
                 Unique identifier of the message effect.
                 For private chats only.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -7683,7 +7716,7 @@ class Message(Object, Update):
         disable_notification: bool | None = None,
         effect_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         protect_content: bool | None = None,
         view_once: bool | None = None,
@@ -7743,8 +7776,9 @@ class Message(Object, Update):
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -7842,7 +7876,7 @@ class Message(Object, Update):
         caption_entities: list[types.MessageEntity] | None = None,
         disable_notification: bool | None = None,
         suggested_post_parameters: types.SuggestedPostParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         protect_content: bool | None = None,
         show_caption_above_media: bool | None = None,
     ) -> list[types.Message]:
@@ -7877,8 +7911,9 @@ class Message(Object, Update):
             suggested_post_parameters (:obj:`~pyrogram.types.SuggestedPostParameters`, *optional*):
                 Information about the suggested post.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
@@ -7918,7 +7953,7 @@ class Message(Object, Update):
         disable_notification: bool | None = None,
         reply_parameters: types.ReplyParameters | None = None,
         suggested_post_parameters: types.SuggestedPostParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         protect_content: bool | None = None,
         show_caption_above_media: bool | None = None,
     ) -> list[types.Message]:
@@ -7956,8 +7991,9 @@ class Message(Object, Update):
             suggested_post_parameters (:obj:`~pyrogram.types.SuggestedPostParameters`, *optional*):
                 Information about the suggested post.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
@@ -7993,7 +8029,7 @@ class Message(Object, Update):
         parse_mode: enums.ParseMode | None = None,
         caption_entities: list[types.MessageEntity] | None = None,
         disable_notification: bool | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         protect_content: bool | None = None,
         has_spoiler: bool | None = None,
         effect_id: int | None = None,
@@ -8036,8 +8072,9 @@ class Message(Object, Update):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
@@ -8105,7 +8142,7 @@ class Message(Object, Update):
         caption_entities: list[types.MessageEntity] | None = None,
         disable_notification: bool | None = None,
         reply_parameters: types.ReplyParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         protect_content: bool | None = None,
         has_spoiler: bool | None = None,
         effect_id: int | None = None,
@@ -8150,8 +8187,9 @@ class Message(Object, Update):
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
@@ -8252,7 +8290,7 @@ class Message(Object, Update):
         result_id: str,
         disable_notification: bool | None = None,
         paid_message_star_count: int | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
     ) -> Message | None:
         """Shortcut for method :obj:`~pyrogram.Client.send_inline_bot_result` will automatically fill method attributes:
 
@@ -8275,8 +8313,9 @@ class Message(Object, Update):
             paid_message_star_count (``int``, *optional*):
                 The number of Telegram Stars the user agreed to pay to send the messages.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
         Returns:
             :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the
@@ -8304,7 +8343,7 @@ class Message(Object, Update):
         disable_notification: bool | None = None,
         reply_parameters: types.ReplyParameters | None = None,
         paid_message_star_count: int | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
     ) -> Message | None:
         """Shortcut for method :obj:`~pyrogram.Client.send_inline_bot_result` will automatically fill method attributes:
 
@@ -8329,8 +8368,9 @@ class Message(Object, Update):
             paid_message_star_count (``int``, *optional*):
                 The number of Telegram Stars the user agreed to pay to send the messages.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
         Returns:
             :obj:`~pyrogram.types.Message` | ``None``: On success, the sent message is returned, otherwise, in case the
@@ -8357,7 +8397,7 @@ class Message(Object, Update):
         disable_notification: bool | None = None,
         protect_content: bool | None = None,
         effect_id: int | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         paid_message_star_count: int | None = None,
         reply_markup: (
@@ -8398,8 +8438,9 @@ class Message(Object, Update):
                 Unique identifier of the message effect.
                 For private chats only.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -8440,7 +8481,7 @@ class Message(Object, Update):
         protect_content: bool | None = None,
         effect_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         paid_message_star_count: int | None = None,
         reply_markup: (
@@ -8487,8 +8528,9 @@ class Message(Object, Update):
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -8975,7 +9017,7 @@ class Message(Object, Update):
         disable_notification: bool | None = None,
         hide_sender_name: bool | None = None,
         hide_captions: bool | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         allow_paid_broadcast: bool | None = None,
         video_start_timestamp: int | None = None,
@@ -9000,8 +9042,9 @@ class Message(Object, Update):
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
@@ -9060,7 +9103,7 @@ class Message(Object, Update):
         disable_notification: bool | None = None,
         message_thread_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         protect_content: bool | None = None,
         has_spoiler: bool | None = None,
         show_caption_above_media: bool | None = None,
@@ -9117,8 +9160,9 @@ class Message(Object, Update):
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
@@ -9329,7 +9373,7 @@ class Message(Object, Update):
         disable_notification: bool | None = None,
         message_thread_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         show_caption_above_media: bool | None = None,
         allow_paid_broadcast: bool | None = None,
         paid_message_star_count: int | None = None,
@@ -9365,8 +9409,9 @@ class Message(Object, Update):
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             show_caption_above_media (``bool``, *optional*):
                 Pass True, if the caption must be shown above the message media.

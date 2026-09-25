@@ -19,14 +19,14 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw
 
 
 class CheckBotUsername:
     async def check_bot_username(
         self: pyrogram.Client,
         username: str,
-    ) -> types.User:
+    ) -> bool:
         """Checks whether a username can be set for a new bot.
 
         .. include:: /_includes/usable-by/users.rst

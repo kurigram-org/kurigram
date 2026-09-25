@@ -25,7 +25,7 @@ import pyrogram
 from pyrogram import enums, raw, types, utils
 
 if TYPE_CHECKING:
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
 log = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ class SendInlineBotResult:
         direct_messages_topic_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
         paid_message_star_count: int | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         reply_to_message_id: int | None = None,
         reply_to_chat_id: int | str | None = None,
         reply_to_story_id: int | None = None,
@@ -82,8 +82,9 @@ class SendInlineBotResult:
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             paid_message_star_count (``int``, *optional*):
                 The number of Telegram Stars the user agreed to pay to send the messages.

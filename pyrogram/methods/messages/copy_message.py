@@ -22,7 +22,7 @@ import logging
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
     import pyrogram
     from pyrogram import enums, types
@@ -42,7 +42,7 @@ class CopyMessage:
         disable_notification: bool | None = None,
         message_thread_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         protect_content: bool | None = None,
         has_spoiler: bool | None = None,
         show_caption_above_media: bool | None = None,
@@ -109,8 +109,9 @@ class CopyMessage:
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
