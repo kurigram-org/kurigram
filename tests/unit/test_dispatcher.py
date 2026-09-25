@@ -44,6 +44,14 @@ if TYPE_CHECKING:
 
 _REGISTERING_THREADS: Final[int] = 2
 _HANDLERS_PER_THREAD: Final[int] = 500
+_UPDATES_SENT: Final[int] = 3
+
+# `UpdateShort` reaches the queue without touching storage, and no parser claims the
+#  inner update, so a worker hands it to a raw handler untouched.
+_UNPARSED_UPDATE: Final[raw.types.UpdateShort] = raw.types.UpdateShort(
+    update=raw.types.UpdateDcOptions(dc_options=[]),
+    date=0,
+)
 
 
 # The dispatcher calls a handler callback positionally.
@@ -163,6 +171,37 @@ async def test_start_rebuilds_the_queue_for_the_loop_about_to_read_it(
     await dispatcher.start()
 
     assert dispatcher.updates_queue is not built_by_the_constructor
+
+
+async def test_an_update_is_dropped_while_no_worker_runs(client: Client) -> None:
+    """A client that only called `connect()`: nothing drains the queue, so nothing enters it."""
+    for _ in range(_UPDATES_SENT):
+        await client.handle_updates(_UNPARSED_UPDATE)
+
+    assert client.dispatcher.updates_queue.qsize() == 0
+
+
+async def test_a_started_dispatcher_delivers_every_update(client: Client) -> None:
+    fired: list[int] = []
+    client.add_handler(_recording_handler(0, fired=fired))
+
+    await client.dispatcher.start()
+
+    for _ in range(_UPDATES_SENT):
+        await client.handle_updates(_UNPARSED_UPDATE)
+
+    await client.dispatcher.stop()
+
+    assert fired == [0] * _UPDATES_SENT
+
+
+async def test_an_update_after_stop_is_dropped(client: Client) -> None:
+    await client.dispatcher.start()
+    await client.dispatcher.stop(clear_handlers=False)
+
+    await client.handle_updates(_UNPARSED_UPDATE)
+
+    assert client.dispatcher.updates_queue.qsize() == 0
 
 
 @pytest.fixture
