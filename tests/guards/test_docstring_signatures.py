@@ -61,26 +61,7 @@ _RECEIVERS: Final[frozenset[str]] = frozenset({"self", "cls"})
 #  work already in review, so their drift is left for that branch to carry. Drop an entry once
 #  its branch lands; `test_every_exemption_still_names_a_module_that_drifts` fails on one that
 #  has nothing left to exempt.
-_HELD_BY_A_PULL_REQUEST: Final[dict[str, str]] = {
-    "pyrogram/methods/account/add_profile_audio.py": "2026-09-19: file uploads are rewritten onto `aiofiles` in review.",
-    "pyrogram/methods/messages/send_animation.py": "2026-09-19: file uploads are rewritten onto `aiofiles` in review.",
-    "pyrogram/methods/messages/send_audio.py": "2026-09-19: file uploads are rewritten onto `aiofiles` in review.",
-    "pyrogram/methods/messages/send_document.py": "2026-09-19: file uploads are rewritten onto `aiofiles` in review.",
-    "pyrogram/methods/messages/send_live_photo.py": "2026-09-19: file uploads are rewritten onto `aiofiles` in review.",
-    "pyrogram/methods/messages/send_media_group.py": "2026-09-19: file uploads are rewritten onto `aiofiles` in review.",
-    "pyrogram/methods/messages/send_paid_media.py": "2026-09-19: file uploads are rewritten onto `aiofiles` in review.",
-    "pyrogram/methods/messages/send_photo.py": "2026-09-19: file uploads are rewritten onto `aiofiles` in review.",
-    "pyrogram/methods/messages/send_sticker.py": "2026-09-19: file uploads are rewritten onto `aiofiles` in review.",
-    "pyrogram/methods/messages/send_video.py": "2026-09-19: file uploads are rewritten onto `aiofiles` in review.",
-    "pyrogram/methods/messages/send_video_note.py": "2026-09-19: file uploads are rewritten onto `aiofiles` in review.",
-    "pyrogram/methods/messages/send_voice.py": "2026-09-19: file uploads are rewritten onto `aiofiles` in review.",
-    "pyrogram/methods/stories/edit_story_media.py": "2026-09-19: file uploads are rewritten onto `aiofiles` in review.",
-    "pyrogram/methods/stories/send_story.py": "2026-09-19: file uploads are rewritten onto `aiofiles` in review.",
-    "pyrogram/methods/users/set_profile_photo.py": "2026-09-19: file uploads are rewritten onto `aiofiles` in review.",
-    "pyrogram/types/messages_and_media/message.py": "2026-09-19: file uploads are rewritten onto `aiofiles` in review.",
-    "pyrogram/types/messages_and_media/story.py": "2026-09-19: file uploads are rewritten onto `aiofiles` in review.",
-    "pyrogram/types/user_and_chats/chat.py": "2026-09-19: file uploads are rewritten onto `aiofiles` in review.",
-}
+_HELD_BY_A_PULL_REQUEST: Final[dict[str, str]] = {}
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
