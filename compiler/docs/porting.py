@@ -134,20 +134,18 @@ def _parameters(function: ast.FunctionDef | ast.AsyncFunctionDef) -> tuple[Param
 
     for argument, default in zip(positional, positional_defaults, strict=True):
         if argument.arg != "self":
-            collected.append(
-                Parameter(
-                    name=argument.arg,
-                    default=_unparse(default),
-                ),
-            )
-
-    for argument, default in zip(arguments.kwonlyargs, arguments.kw_defaults, strict=True):
-        collected.append(
-            Parameter(
+            parameter = Parameter(
                 name=argument.arg,
                 default=_unparse(default),
-            ),
+            )
+            collected.append(parameter)
+
+    for argument, default in zip(arguments.kwonlyargs, arguments.kw_defaults, strict=True):
+        parameter = Parameter(
+            name=argument.arg,
+            default=_unparse(default),
         )
+        collected.append(parameter)
 
     return tuple(collected)
 
@@ -408,12 +406,11 @@ def _render_aliases(*, reference: Surface, here: Surface) -> str:
         target = here.aliases.get(name)
 
         if target is not None:
-            rows.append(
-                (
-                    f"``{name.removeprefix('class:')}``",
-                    f"``{target.removeprefix('class:')}``",
-                )
+            row = (
+                f"``{name.removeprefix('class:')}``",
+                f"``{target.removeprefix('class:')}``",
             )
+            rows.append(row)
 
     return _table(
         headers=("Pyrogram name", "What it is an alias of"),
@@ -445,15 +442,14 @@ def _render_positional(*, reference: Surface, here: Surface) -> str:
         if safe >= shared_length:
             continue
 
-        rows.append(
+        row = (
+            f"``{name}``",
             (
-                f"``{name}``",
-                (
-                    f"the first {safe} still bind the same way; argument {safe + 1} was "
-                    f"``{before[safe]}`` and is now ``{after[safe]}``"
-                ),
-            )
+                f"the first {safe} still bind the same way; argument {safe + 1} was "
+                f"``{before[safe]}`` and is now ``{after[safe]}``"
+            ),
         )
+        rows.append(row)
 
     return _table(
         headers=("Method", "How far a positional call is still safe"),
@@ -505,12 +501,11 @@ def _render_enum_members(*, reference: Surface, here: Surface) -> str:
         ]
 
         if dropped:
-            rows.append(
-                (
-                    f"``{name.removeprefix('class:')}``",
-                    ", ".join(f"``{member}``" for member in dropped),
-                )
+            row = (
+                f"``{name.removeprefix('class:')}``",
+                ", ".join(f"``{member}``" for member in dropped),
             )
+            rows.append(row)
 
     return _table(
         headers=("Enumeration", "Members it no longer has"),
