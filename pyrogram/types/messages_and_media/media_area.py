@@ -166,7 +166,10 @@ class MediaArea(Object):
         gift = None
 
         if isinstance(area, raw.types.MediaAreaChannelPost):
-            sender_chat = await types.Chat._parse_channel_chat(client, chats.get(area.channel_id))
+            raw_sender_chat = chats.get(area.channel_id)
+            if raw_sender_chat is not None:
+                sender_chat = await types.Chat._parse_channel_chat(client, raw_sender_chat)
+
             message_id = area.msg_id
 
             try:

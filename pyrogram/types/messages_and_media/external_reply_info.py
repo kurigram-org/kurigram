@@ -307,6 +307,8 @@ class ExternalReplyInfo(Object):
             else:
                 media = None
 
+        raw_chat = chats.get(utils.get_raw_peer_id(reply.reply_to_peer_id))
+
         return ExternalReplyInfo(
             origin=await types.MessageOrigin._parse(
                 client,
@@ -314,10 +316,7 @@ class ExternalReplyInfo(Object):
                 users,
                 chats,
             ),
-            chat=await types.Chat._parse_chat(
-                client,
-                chats.get(utils.get_raw_peer_id(reply.reply_to_peer_id)),
-            ),
+            chat=await types.Chat._parse_chat(client, raw_chat) if raw_chat is not None else None,
             message_id=reply.reply_to_msg_id,
             link_preview_options=types.LinkPreviewOptions._parse(reply.reply_media),
             media=media_type,

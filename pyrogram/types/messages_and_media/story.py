@@ -271,14 +271,15 @@ class Story(Object, Update):
         else:
             raise ValueError(f"Invalid peer type: {type(peer)}")
 
-        from_user = await types.User._parse(client, users.get(peer_id, None))
+        raw_user = users.get(peer_id)
+        from_user = await types.User._parse(client, raw_user) if raw_user is not None else None
         sender_chat = (
-            await types.Chat._parse_channel_chat(client, chats[peer_id]) if not from_user else None
+            await types.Chat._parse_channel_chat(client, chats[peer_id])
+            if raw_user is None
+            else None
         )
         chat = (
-            sender_chat
-            if not from_user
-            else await types.Chat._parse_user_chat(client, users.get(peer_id, None))
+            sender_chat if raw_user is None else await types.Chat._parse_user_chat(client, raw_user)
         )
 
         if isinstance(story, raw.types.StoryItemDeleted):
@@ -444,29 +445,33 @@ class Story(Object, Update):
             if isinstance(priv, raw.types.PrivacyValueAllowUsers):
                 allowed_users = types.List(
                     [
-                        await types.User._parse(client, users.get(user_id, None))
-                        for user_id in priv.users
+                        await types.User._parse(client, raw_user) if raw_user is not None else None
+                        for raw_user in map(users.get, priv.users)
                     ]
                 )
             elif isinstance(priv, raw.types.PrivacyValueAllowChatParticipants):
                 allowed_users = types.List(
                     [
-                        await types.Chat._parse_chat_chat(client, chats.get(chat_id, None))
-                        for chat_id in priv.chats
+                        await types.Chat._parse_chat_chat(client, raw_chat)
+                        if raw_chat is not None
+                        else None
+                        for raw_chat in map(chats.get, priv.chats)
                     ]
                 )
             elif isinstance(priv, raw.types.PrivacyValueDisallowUsers):
                 disallowed_users = types.List(
                     [
-                        await types.User._parse(client, users.get(user_id, None))
-                        for user_id in priv.users
+                        await types.User._parse(client, raw_user) if raw_user is not None else None
+                        for raw_user in map(users.get, priv.users)
                     ]
                 )
             elif isinstance(priv, raw.types.PrivacyValueDisallowChatParticipants):
                 disallowed_users = types.List(
                     [
-                        await types.Chat._parse_chat_chat(client, chats.get(chat_id, None))
-                        for chat_id in priv.chats
+                        await types.Chat._parse_chat_chat(client, raw_chat)
+                        if raw_chat is not None
+                        else None
+                        for raw_chat in map(chats.get, priv.chats)
                     ]
                 )
 

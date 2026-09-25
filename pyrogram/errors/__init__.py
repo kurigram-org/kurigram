@@ -76,4 +76,6 @@ class EmptyObjectError(ValueError):
     """Telegram answered with an empty constructor where a full object was required."""
 
     def __init__(self, empty: TLObject) -> None:
-        super().__init__(f"Telegram returned {type(empty).__name__} where a full object was required")
+        super().__init__(
+            f"Telegram returned {type(empty).__name__} where a full object was required"
+        )

@@ -85,9 +85,11 @@ class BusinessConnection(Object, Update):
         if isinstance(connection, raw.types.UpdateBotBusinessConnect):
             connection = connection.connection
 
+        raw_user = users.get(connection.user_id)
+
         return BusinessConnection(
             id=connection.connection_id,
-            user=await types.User._parse(client, users.get(connection.user_id)),
+            user=await types.User._parse(client, raw_user) if raw_user is not None else None,
             dc_id=connection.dc_id,
             date=utils.timestamp_to_datetime(connection.date),
             is_enabled=not connection.disabled,

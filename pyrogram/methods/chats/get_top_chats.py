@@ -92,13 +92,12 @@ class GetTopChats:
             for cat in r.categories:
                 for top_peer in cat.peers:
                     peer_id = utils.get_raw_peer_id(top_peer.peer)
+                    raw_chat: raw.base.User | raw.base.Chat | None = users.get(
+                        peer_id
+                    ) or chats.get(peer_id)
 
-                    chat = await types.Chat._parse_chat(
-                        self, users.get(peer_id) or chats.get(peer_id)
-                    )
-
-                    if chat is not None:
-                        result_chats.append(chat)
+                    if raw_chat is not None:
+                        result_chats.append(await types.Chat._parse_chat(self, raw_chat))
 
             if not result_chats:
                 return

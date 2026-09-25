@@ -98,12 +98,14 @@ class GiveawayPrizeStars(Object):
         except (MessageIdsEmpty, ChannelPrivate):
             pass
 
+        raw_boosted_chat = chats.get(utils.get_raw_peer_id(action.boost_peer))
+
         return GiveawayPrizeStars(
             star_count=action.stars,
             transaction_id=action.transaction_id,
-            boosted_chat=await types.Chat._parse_chat(
-                client, chats.get(utils.get_raw_peer_id(action.boost_peer))
-            ),
+            boosted_chat=await types.Chat._parse_chat(client, raw_boosted_chat)
+            if raw_boosted_chat is not None
+            else None,
             giveaway_message_id=action.giveaway_msg_id,
             giveaway_message=parsed_message,
             sticker=random.choice(

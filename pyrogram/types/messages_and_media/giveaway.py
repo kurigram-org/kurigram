@@ -95,8 +95,10 @@ class Giveaway(Object):
         return Giveaway(
             chats=types.List(
                 [
-                    await types.Chat._parse_channel_chat(client, chats.get(i))
-                    for i in giveaway.channels
+                    await types.Chat._parse_channel_chat(client, raw_chat)
+                    if raw_chat is not None
+                    else None
+                    for raw_chat in map(chats.get, giveaway.channels)
                 ]
             ),
             quantity=giveaway.quantity,

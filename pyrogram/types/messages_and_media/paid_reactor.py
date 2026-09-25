@@ -78,7 +78,7 @@ class PaidReactor(Object):
         )
 
         return PaidReactor(
-            sender=await types.Chat._parse_chat(client, chat),
+            sender=await types.Chat._parse_chat(client, chat) if chat is not None else None,
             star_count=paid_reactor.count,
             is_top=paid_reactor.top,
             is_me=paid_reactor.my,

@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING, BinaryIO
 
 import pyrogram
 from pyrogram import enums, raw, types, utils
+from pyrogram.errors import EmptyObjectError
 
 from ..object import Object
 
@@ -887,10 +888,10 @@ class Chat(Object):
     @staticmethod
     async def _parse_user_chat(
         client,
-        user: raw.types.User,
-    ) -> Chat | None:
-        if user is None or isinstance(user, raw.types.UserEmpty):
-            return None
+        user: raw.base.User,
+    ) -> Chat:
+        if isinstance(user, raw.types.UserEmpty):
+            raise EmptyObjectError(user)
 
         peer_id = user.id
 
@@ -949,9 +950,12 @@ class Chat(Object):
         )
 
     @staticmethod
-    async def _parse_chat_chat(client, chat: raw.types.Chat) -> Chat | None:
-        if chat is None or isinstance(chat, raw.types.ChatEmpty):
-            return None
+    async def _parse_chat_chat(
+        client: pyrogram.Client,
+        chat: raw.types.Chat | raw.types.ChatForbidden | raw.types.ChatEmpty,
+    ) -> Chat:
+        if isinstance(chat, raw.types.ChatEmpty):
+            raise EmptyObjectError(chat)
 
         peer_id = -chat.id
         usernames = getattr(chat, "usernames", [])
@@ -988,11 +992,8 @@ class Chat(Object):
     @staticmethod
     async def _parse_channel_chat(
         client,
-        channel: raw.types.Channel,
-    ) -> Chat | None:
-        if channel is None:
-            return None
-
+        channel: raw.types.Channel | raw.types.ChannelForbidden,
+    ) -> Chat:
         peer_id = utils.get_channel_id(channel.id)
         restriction_reason = getattr(channel, "restriction_reason", [])
         usernames = getattr(channel, "usernames", [])
@@ -1090,37 +1091,33 @@ class Chat(Object):
         )
 
     @staticmethod
-    async def _parse(
-        client,
-        message: raw.types.Message | raw.types.MessageService,
+    def _find_message_chat(
+        message: raw.types.Message | raw.types.MessageService | raw.types.EphemeralMessage,
+        *,
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
         is_chat: bool,
-    ) -> Chat | None:
+    ) -> raw.base.User | raw.base.Chat | None:
         from_id = utils.get_raw_peer_id(message.from_id)
         peer_id = utils.get_raw_peer_id(message.peer_id)
         chat_id = (peer_id or from_id) if is_chat else (from_id or peer_id)
 
         if isinstance(message.peer_id, raw.types.PeerUser):
-            return await Chat._parse_user_chat(client, users.get(chat_id))
-        elif isinstance(message.peer_id, raw.types.PeerChat):
-            return await Chat._parse_chat_chat(client, chats.get(chat_id))
-        else:
-            return await Chat._parse_channel_chat(client, chats.get(chat_id))
+            return users.get(chat_id)
+
+        return chats.get(chat_id)
 
     @staticmethod
-    async def _parse_dialog(
-        client,
-        peer: raw.base.Peer,
+    def _find_peer_chat(
+        peer: raw.base.Peer | raw.base.InputPeer,
+        *,
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
-    ):
+    ) -> raw.base.User | raw.base.Chat | None:
         if isinstance(peer, (raw.types.PeerUser, raw.types.InputPeerUser)):
-            return await Chat._parse_user_chat(client, users.get(peer.user_id))
-        elif isinstance(peer, (raw.types.PeerChat, raw.types.InputPeerChat)):
-            return await Chat._parse_chat_chat(client, chats.get(peer.chat_id))
-        else:
-            return await Chat._parse_channel_chat(client, chats.get(peer.channel_id))
+            return users.get(peer.user_id)
+
+        return chats.get(utils.get_raw_peer_id(peer))
 
     @staticmethod
     async def _parse_full_user(
@@ -1425,7 +1422,11 @@ class Chat(Object):
         parsed_chat.gift_count = channel.stargifts_count
         parsed_chat.sticker_set_name = getattr(channel.stickerset, "short_name", None)
         parsed_chat.is_paid_messages_available = channel.paid_messages_available
-        parsed_chat.guard_bot = await types.User._parse(client, users.get(channel.guard_bot_id))
+
+        raw_guard_bot = users.get(channel.guard_bot_id)
+        if raw_guard_bot is not None:
+            parsed_chat.guard_bot = await types.User._parse(client, raw_guard_bot)
+
         parsed_chat.has_welcome_messages = channel.has_welcome_messages
 
         if parsed_chat.community_id:
@@ -1438,26 +1439,24 @@ class Chat(Object):
     @staticmethod
     async def _parse_full(
         client: pyrogram.Client,
-        chat_full: raw.types.UserFull | raw.types.ChatFull | raw.types.ChannelFull,
-    ) -> Chat | None:
+        chat_full: raw.types.users.UserFull | raw.types.messages.ChatFull,
+    ) -> Chat:
         users = {u.id: u for u in chat_full.users}
         chats = {c.id: c for c in chat_full.chats}
 
         if isinstance(chat_full, raw.types.users.UserFull):
             return await Chat._parse_full_user(client, chat_full.full_user, users, chats)
-        elif isinstance(chat_full, raw.types.messages.ChatFull) and isinstance(
-            chat_full.full_chat, raw.types.ChatFull
-        ):
+
+        if isinstance(chat_full.full_chat, raw.types.ChatFull):
             return await Chat._parse_full_chat(client, chat_full.full_chat, users, chats)
-        elif isinstance(chat_full, raw.types.messages.ChatFull) and isinstance(
-            chat_full.full_chat, raw.types.ChannelFull
-        ):
-            return await Chat._parse_full_channel(client, chat_full.full_chat, users, chats)
+
+        return await Chat._parse_full_channel(client, chat_full.full_chat, users, chats)
 
     @staticmethod
-    async def _parse_chat(
-        client, chat: raw.types.Chat | raw.types.User | raw.types.Channel
-    ) -> Chat | None:
+    async def _parse_chat(client: pyrogram.Client, chat: raw.base.User | raw.base.Chat) -> Chat:
+        if isinstance(chat, (raw.types.UserEmpty, raw.types.ChatEmpty)):
+            raise EmptyObjectError(chat)
+
         if isinstance(chat, (raw.types.Chat, raw.types.ChatForbidden)):
             return await Chat._parse_chat_chat(client, chat)
         elif isinstance(chat, raw.types.User):

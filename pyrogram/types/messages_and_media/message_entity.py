@@ -130,12 +130,14 @@ class MessageEntity(Object):
 
         custom_emoji_id = getattr(entity, "document_id", None)
 
+        raw_user = users.get(user_id)
+
         return MessageEntity(
             type=entity_type,
             offset=entity.offset,
             length=entity.length,
             url=getattr(entity, "url", None),
-            user=await types.User._parse(client, users.get(user_id, None)),
+            user=await types.User._parse(client, raw_user) if raw_user is not None else None,
             language=getattr(entity, "language", None),
             custom_emoji_id=str(custom_emoji_id) if custom_emoji_id else None,
             expandable=getattr(entity, "collapsed", None),

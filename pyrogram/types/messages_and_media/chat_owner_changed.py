@@ -41,9 +41,13 @@ class ChatOwnerChanged(Object):
     async def _parse(
         client: pyrogram.Client,
         action: raw.types.MessageActionChangeCreator,
-        users: dict[int, types.User],
+        users: dict[int, raw.base.User],
     ) -> ChatOwnerChanged:
         if isinstance(action, raw.types.MessageActionChangeCreator):
+            raw_new_owner = users.get(action.new_creator_id)
+
             return ChatOwnerChanged(
-                new_owner=await types.User._parse(client, users.get(action.new_creator_id))
+                new_owner=await types.User._parse(client, raw_new_owner)
+                if raw_new_owner is not None
+                else None
             )

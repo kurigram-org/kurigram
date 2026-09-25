@@ -155,8 +155,16 @@ class GiftAttribute(Object):
             sender_id = utils.get_raw_peer_id(attr.sender_id)
             recipient_id = utils.get_raw_peer_id(attr.recipient_id)
 
-            from_user = await types.User._parse(client, users.get(sender_id))
-            to_user = await types.User._parse(client, users.get(recipient_id))
+            raw_from_user = users.get(sender_id)
+            raw_to_user = users.get(recipient_id)
+            from_user = (
+                await types.User._parse(client, raw_from_user)
+                if raw_from_user is not None
+                else None
+            )
+            to_user = (
+                await types.User._parse(client, raw_to_user) if raw_to_user is not None else None
+            )
 
         return GiftAttribute(
             name=getattr(attr, "name", None),

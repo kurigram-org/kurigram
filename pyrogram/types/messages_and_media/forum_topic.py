@@ -147,6 +147,7 @@ class ForumTopic(Object):
         chats = chats or {}
 
         peer_id = utils.get_raw_peer_id(forum_topic.from_id)
+        raw_creator: raw.base.User | raw.base.Chat | None = users.get(peer_id) or chats.get(peer_id)
 
         return ForumTopic(
             id=forum_topic.id,
@@ -154,7 +155,9 @@ class ForumTopic(Object):
             date=utils.timestamp_to_datetime(forum_topic.date),
             icon_color=forum_topic.icon_color,
             icon_custom_emoji_id=str(forum_topic.icon_emoji_id),
-            creator=await types.Chat._parse_chat(client, users.get(peer_id) or chats.get(peer_id)),
+            creator=await types.Chat._parse_chat(client, raw_creator)
+            if raw_creator is not None
+            else None,
             top_message=messages.get(forum_topic.top_message),
             unread_count=forum_topic.unread_count,
             unread_mentions_count=forum_topic.unread_mentions_count,
@@ -188,6 +191,9 @@ class ForumTopic(Object):
                 topic_id = message.reply_to.reply_to_top_id
 
             peer_id = utils.get_raw_peer_id(message.from_id)
+            raw_creator: raw.base.User | raw.base.Chat | None = users.get(peer_id) or chats.get(
+                peer_id
+            )
 
             return ForumTopic(
                 id=topic_id,
@@ -195,9 +201,9 @@ class ForumTopic(Object):
                 date=utils.timestamp_to_datetime(message.date),
                 icon_color=getattr(message.action, "icon_color", None),
                 icon_custom_emoji_id=str(message.action.icon_emoji_id),
-                creator=await types.Chat._parse_chat(
-                    client, users.get(peer_id) or chats.get(peer_id)
-                ),
+                creator=await types.Chat._parse_chat(client, raw_creator)
+                if raw_creator is not None
+                else None,
                 is_closed=getattr(message.action, "closed", None),
                 is_hidden=getattr(message.action, "hidden", None),
             )

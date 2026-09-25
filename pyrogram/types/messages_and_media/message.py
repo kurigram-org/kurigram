@@ -1063,13 +1063,30 @@ class Message(Object, Update):
                 else:
                     users.update({i.id: i for i in r})
 
-        from_user = await types.User._parse(client, users.get(from_id or peer_id))
+        raw_from_user = users.get(from_id or peer_id)
+        from_user = (
+            await types.User._parse(client, raw_from_user) if raw_from_user is not None else None
+        )
+
+        raw_sender_chat = types.Chat._find_message_chat(
+            message,
+            users=users,
+            chats=chats,
+            is_chat=False,
+        )
         sender_chat = (
-            await types.Chat._parse(client, message, users, chats, is_chat=False)
-            if not from_user
+            await types.Chat._parse_chat(client, raw_sender_chat)
+            if from_user is None and raw_sender_chat is not None
             else None
         )
-        chat = await types.Chat._parse(client, message, users, chats, is_chat=True)
+
+        raw_chat = types.Chat._find_message_chat(
+            message,
+            users=users,
+            chats=chats,
+            is_chat=True,
+        )
+        chat = await types.Chat._parse_chat(client, raw_chat) if raw_chat is not None else None
 
         action = message.action
 
@@ -1253,7 +1270,7 @@ class Message(Object, Update):
             giveaway_completed = await types.GiveawayCompleted._parse(
                 client,
                 action,
-                await types.Chat._parse(client, message, users, chats, is_chat=True),
+                chat,
                 getattr(getattr(message, "reply_to", None), "reply_to_msg_id", None),
             )
         elif isinstance(action, raw.types.MessageActionManagedBotCreated):
@@ -1613,13 +1630,30 @@ class Message(Object, Update):
                 else:
                     users.update({i.id: i for i in r})
 
-        from_user = await types.User._parse(client, users.get(from_id or peer_id))
+        raw_from_user = users.get(from_id or peer_id)
+        from_user = (
+            await types.User._parse(client, raw_from_user) if raw_from_user is not None else None
+        )
+
+        raw_sender_chat = types.Chat._find_message_chat(
+            message,
+            users=users,
+            chats=chats,
+            is_chat=False,
+        )
         sender_chat = (
-            await types.Chat._parse(client, message, users, chats, is_chat=False)
-            if not from_user
+            await types.Chat._parse_chat(client, raw_sender_chat)
+            if from_user is None and raw_sender_chat is not None
             else None
         )
-        chat = await types.Chat._parse(client, message, users, chats, is_chat=True)
+
+        raw_chat = types.Chat._find_message_chat(
+            message,
+            users=users,
+            chats=chats,
+            is_chat=True,
+        )
+        chat = await types.Chat._parse_chat(client, raw_chat) if raw_chat is not None else None
 
         entities = types.List(
             filter(
@@ -1829,6 +1863,12 @@ class Message(Object, Update):
 
         reactions = await types.MessageReactions._parse(client, message.reactions, users, chats)
 
+        raw_sender_business_bot = users.get(getattr(message, "via_business_bot_id", None))
+        raw_via_bot = users.get(message.via_bot_id)
+        guest_bot_caller_id = utils.get_raw_peer_id(message.guestchat_via_from)
+        raw_guest_bot_caller_user = users.get(guest_bot_caller_id)
+        raw_guest_bot_caller_chat = chats.get(guest_bot_caller_id)
+
         parsed_message = Message(
             id=message.id,
             effect_id=getattr(message, "effect", None),
@@ -1838,9 +1878,9 @@ class Message(Object, Update):
             chat=chat,
             from_user=from_user,
             sender_chat=sender_chat,
-            sender_business_bot=await types.User._parse(
-                client, users.get(getattr(message, "via_business_bot_id", None))
-            ),
+            sender_business_bot=await types.User._parse(client, raw_sender_business_bot)
+            if raw_sender_business_bot is not None
+            else None,
             sender_tag=message.from_rank,
             text=(
                 Str(message.message).init(entities) or None
@@ -1894,7 +1934,9 @@ class Message(Object, Update):
             views=message.views,
             forwards=message.forwards,
             sender_boost_count=message.from_boosts_applied,
-            via_bot=await types.User._parse(client, users.get(message.via_bot_id)),
+            via_bot=await types.User._parse(client, raw_via_bot)
+            if raw_via_bot is not None
+            else None,
             outgoing=message.out,
             business_connection_id=business_connection_id,
             reply_markup=reply_markup,
@@ -1914,12 +1956,12 @@ class Message(Object, Update):
             channel_post=message.post,
             repeat_period=message.schedule_repeat_period,
             summary_language_code=message.summary_from_language,
-            guest_bot_caller_user=await types.User._parse(
-                client, users.get(utils.get_raw_peer_id(message.guestchat_via_from))
-            ),
-            guest_bot_caller_chat=await types.Chat._parse_chat(
-                client, chats.get(utils.get_raw_peer_id(message.guestchat_via_from))
-            ),
+            guest_bot_caller_user=await types.User._parse(client, raw_guest_bot_caller_user)
+            if raw_guest_bot_caller_user is not None
+            else None,
+            guest_bot_caller_chat=await types.Chat._parse_chat(client, raw_guest_bot_caller_chat)
+            if raw_guest_bot_caller_chat is not None
+            else None,
             raw=message,
             client=client,
         )
@@ -2045,13 +2087,30 @@ class Message(Object, Update):
                 else:
                     users.update({i.id: i for i in r})
 
-        from_user = await types.User._parse(client, users.get(from_id or peer_id))
+        raw_from_user = users.get(from_id or peer_id)
+        from_user = (
+            await types.User._parse(client, raw_from_user) if raw_from_user is not None else None
+        )
+
+        raw_sender_chat = types.Chat._find_message_chat(
+            message,
+            users=users,
+            chats=chats,
+            is_chat=False,
+        )
         sender_chat = (
-            await types.Chat._parse(client, message, users, chats, is_chat=False)
-            if not from_user
+            await types.Chat._parse_chat(client, raw_sender_chat)
+            if from_user is None and raw_sender_chat is not None
             else None
         )
-        chat = await types.Chat._parse(client, message, users, chats, is_chat=True)
+
+        raw_chat = types.Chat._find_message_chat(
+            message,
+            users=users,
+            chats=chats,
+            is_chat=True,
+        )
+        chat = await types.Chat._parse_chat(client, raw_chat) if raw_chat is not None else None
 
         entities = types.List(
             filter(
@@ -2247,6 +2306,8 @@ class Message(Object, Update):
             else:
                 reply_markup = None
 
+        raw_receiver_user = users.get(message.receiver_id)
+
         parsed_message = Message(
             id=0,
             ephemeral_message_id=message.id,
@@ -2254,7 +2315,9 @@ class Message(Object, Update):
             chat=chat,
             from_user=from_user,
             sender_chat=sender_chat,
-            receiver_user=await types.User._parse(client, users.get(message.receiver_id)),
+            receiver_user=await types.User._parse(client, raw_receiver_user)
+            if raw_receiver_user is not None
+            else None,
             text=(
                 Str(message.message).init(entities) or None
                 if media is None or web_page is not None

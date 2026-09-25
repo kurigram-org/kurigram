@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING
 
 import pyrogram
 from pyrogram import enums, raw, types, utils
+from pyrogram.errors import EmptyObjectError
 
 from ..object import Object
 from ..update import Update
@@ -687,9 +688,9 @@ class User(Object, Update):
     # endregion
 
     @staticmethod
-    async def _parse(client, user: raw.base.User) -> User | None:
-        if not isinstance(user, raw.types.User):
-            return None
+    async def _parse(client: pyrogram.Client, user: raw.base.User) -> User:
+        if isinstance(user, raw.types.UserEmpty):
+            raise EmptyObjectError(user)
 
         accent_color_id = None
         background_custom_emoji_id = None
@@ -773,7 +774,7 @@ class User(Object, Update):
         user: raw.types.UserFull,
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
-    ) -> User | None:
+    ) -> User:
         parsed_user = await User._parse(client, users[user.id])
         parsed_user.raw = user
 

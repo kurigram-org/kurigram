@@ -152,6 +152,8 @@ class ChatSettings(Object):
         if not chat_settings:
             return None
 
+        raw_business_bot = users.get(getattr(chat_settings, "business_bot_id", None))
+
         return ChatSettings(
             can_report_spam=getattr(chat_settings, "report_spam", None),
             can_add_contact=getattr(chat_settings, "add_contact", None),
@@ -169,9 +171,9 @@ class ChatSettings(Object):
             request_chat_date=utils.timestamp_to_datetime(
                 getattr(chat_settings, "request_chat_date", None)
             ),
-            business_bot=await types.User._parse(
-                client, users.get(getattr(chat_settings, "business_bot_id", None))
-            ),
+            business_bot=await types.User._parse(client, raw_business_bot)
+            if raw_business_bot is not None
+            else None,
             business_bot_manage_url=getattr(chat_settings, "business_bot_manage_url", None),
             charge_paid_message_stars=getattr(chat_settings, "charge_paid_message_stars", None),
             registration_date=getattr(chat_settings, "registration_month", None),
