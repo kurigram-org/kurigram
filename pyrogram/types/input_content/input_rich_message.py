@@ -20,6 +20,7 @@ from __future__ import annotations as _annotations
 
 import pyrogram
 from pyrogram import raw, types
+from pyrogram.parser.rich_media import resolve_media
 from pyrogram.raw.core import TLObject
 
 from ..object import Object
@@ -58,12 +59,14 @@ class InputRichMessage(Object):
         html (``str``, *optional*):
             Content of the rich message to send described using HTML formatting.
             See `rich message formatting options <https://core.telegram.org/bots/api#rich-message-formatting-options>`__ for more details.
-            Use *media* field to specify the media used in the message.
+            Media links can embed reusable file IDs directly.
+            Use *media* for explicit aliases and uploads.
 
         markdown (``str``, *optional*):
             Content of the rich message to send described using Markdown formatting.
             See `rich message formatting options <https://core.telegram.org/bots/api#rich-message-formatting-options>`__ for more details.
-            Use *media* field to specify the media used in the message.
+            Media links can embed reusable file IDs directly.
+            Use *media* for explicit aliases and uploads.
 
         media (List of :obj:`~pyrogram.types.InputRichMessageMedia`, *optional*):
             List of media that are specified in the *markdown* or *html* fields using
@@ -118,23 +121,21 @@ class InputRichMessage(Object):
                 for item in self.media
             ]
 
-        if self.html:
-            return raw.types.InputRichMessageHTML(
-                html=self.html,
-                rtl=self.is_rtl,
-                noautolink=self.skip_entity_detection,
-                files=files,
-            )
+        if self.html is not None and self.markdown is not None:
+            raise ValueError("You must provide exactly one of blocks, markdown or html")
 
-        if self.markdown:
-            return raw.types.InputRichMessageMarkdown(
-                markdown=self.markdown,
-                rtl=self.is_rtl,
-                noautolink=self.skip_entity_detection,
-                files=files,
-            )
+        content = self.html if self.html is not None else self.markdown
 
-        raise ValueError("You must provide either blocks, markdown or html in the rich message")
+        if not isinstance(content, str) or not content:
+            raise ValueError("You must provide either blocks, markdown or html in the rich message")
+
+        content, files = resolve_media(content, self.html is not None, files)
+        options = {"rtl": self.is_rtl, "noautolink": self.skip_entity_detection, "files": files}
+
+        if self.html is not None:
+            return raw.types.InputRichMessageHTML(html=content, **options)
+
+        return raw.types.InputRichMessageMarkdown(markdown=content, **options)
 
     async def _write_blocks(
         self,

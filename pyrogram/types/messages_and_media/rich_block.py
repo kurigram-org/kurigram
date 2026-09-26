@@ -124,40 +124,40 @@ class RichBlock(Object):
 
         if isinstance(rich_block, raw.types.PageBlockParagraph):
             return RichBlockParagraph(
-                text=await types.RichText._parse(client, rich_block.text),
+                text=await types.RichText._parse(client, rich_block.text, users, chats),
             )
         if isinstance(rich_block, raw.types.PageBlockHeading1):
             return RichBlockSectionHeading(
-                text=await types.RichText._parse(client, rich_block.text), size=1
+                text=await types.RichText._parse(client, rich_block.text, users, chats), size=1
             )
         if isinstance(rich_block, raw.types.PageBlockHeading2):
             return RichBlockSectionHeading(
-                text=await types.RichText._parse(client, rich_block.text), size=2
+                text=await types.RichText._parse(client, rich_block.text, users, chats), size=2
             )
         if isinstance(rich_block, raw.types.PageBlockHeading3):
             return RichBlockSectionHeading(
-                text=await types.RichText._parse(client, rich_block.text), size=3
+                text=await types.RichText._parse(client, rich_block.text, users, chats), size=3
             )
         if isinstance(rich_block, raw.types.PageBlockHeading4):
             return RichBlockSectionHeading(
-                text=await types.RichText._parse(client, rich_block.text), size=4
+                text=await types.RichText._parse(client, rich_block.text, users, chats), size=4
             )
         if isinstance(rich_block, raw.types.PageBlockHeading5):
             return RichBlockSectionHeading(
-                text=await types.RichText._parse(client, rich_block.text), size=5
+                text=await types.RichText._parse(client, rich_block.text, users, chats), size=5
             )
         if isinstance(rich_block, raw.types.PageBlockHeading6):
             return RichBlockSectionHeading(
-                text=await types.RichText._parse(client, rich_block.text), size=6
+                text=await types.RichText._parse(client, rich_block.text, users, chats), size=6
             )
         if isinstance(rich_block, raw.types.PageBlockPreformatted):
             return RichBlockPreformatted(
-                text=await types.RichText._parse(client, rich_block.text),
+                text=await types.RichText._parse(client, rich_block.text, users, chats),
                 language=rich_block.language,
             )
         if isinstance(rich_block, raw.types.PageBlockFooter):
             return RichBlockFooter(
-                text=await types.RichText._parse(client, rich_block.text),
+                text=await types.RichText._parse(client, rich_block.text, users, chats),
             )
         if isinstance(rich_block, raw.types.PageBlockDivider):
             return RichBlockDivider()
@@ -197,25 +197,29 @@ class RichBlock(Object):
                         for nested_block in rich_block.blocks
                     ]
                 ),
-                credit=await types.RichText._parse(client, rich_block.caption),
+                credit=await types.RichText._parse(client, rich_block.caption, users, chats),
             )
         if isinstance(rich_block, raw.types.PageBlockBlockquote):
             if rich_block.collapsed:
                 return RichBlockExpandableBlockQuotation(
-                    text=await types.RichText._parse(client, rich_block.text),
-                    credit=await types.RichText._parse(client, rich_block.caption),
+                    text=await types.RichText._parse(client, rich_block.text, users, chats),
+                    credit=await types.RichText._parse(client, rich_block.caption, users, chats),
                 )
 
             return RichBlockBlockQuotation(
                 blocks=types.List(
-                    [RichBlockParagraph(text=await types.RichText._parse(client, rich_block.text))]
+                    [
+                        RichBlockParagraph(
+                            text=await types.RichText._parse(client, rich_block.text, users, chats)
+                        )
+                    ]
                 ),
-                credit=await types.RichText._parse(client, rich_block.caption),
+                credit=await types.RichText._parse(client, rich_block.caption, users, chats),
             )
         if isinstance(rich_block, raw.types.PageBlockPullquote):
             return RichBlockPullQuotation(
-                text=await types.RichText._parse(client, rich_block.text),
-                credit=await types.RichText._parse(client, rich_block.caption),
+                text=await types.RichText._parse(client, rich_block.text, users, chats),
+                credit=await types.RichText._parse(client, rich_block.caption, users, chats),
             )
         if isinstance(rich_block, raw.types.PageBlockCollage):
             return RichBlockCollage(
@@ -227,7 +231,9 @@ class RichBlock(Object):
                         for nested_block in rich_block.items
                     ]
                 ),
-                caption=await types.RichBlockCaption._parse_caption(client, rich_block.caption),
+                caption=await types.RichBlockCaption._parse_caption(
+                    client, rich_block.caption, users, chats
+                ),
             )
         if isinstance(rich_block, raw.types.PageBlockSlideshow):
             return RichBlockSlideshow(
@@ -239,13 +245,16 @@ class RichBlock(Object):
                         for nested_block in rich_block.items
                     ]
                 ),
-                caption=await types.RichBlockCaption._parse_caption(client, rich_block.caption),
+                caption=await types.RichBlockCaption._parse_caption(
+                    client, rich_block.caption, users, chats
+                ),
             )
         if isinstance(rich_block, raw.types.PageBlockTable):
-            return await RichBlockTable._parse_table(client, rich_block)
+            return await RichBlockTable._parse_table(client, rich_block, users, chats)
+
         if isinstance(rich_block, raw.types.PageBlockDetails):
             return RichBlockDetails(
-                summary=await types.RichText._parse(client, rich_block.title),
+                summary=await types.RichText._parse(client, rich_block.title, users, chats),
                 blocks=types.List(
                     [
                         await types.RichBlock._parse(
@@ -264,7 +273,9 @@ class RichBlock(Object):
                 zoom=rich_block.zoom,
                 width=rich_block.w,
                 height=rich_block.h,
-                caption=await types.RichBlockCaption._parse_caption(client, rich_block.caption),
+                caption=await types.RichBlockCaption._parse_caption(
+                    client, rich_block.caption, users, chats
+                ),
             )
         if isinstance(rich_block, raw.types.PageBlockButtonRow):
             align = None
@@ -289,7 +300,7 @@ class RichBlock(Object):
             doc = documents.get(rich_block.video_id)
 
             if not isinstance(doc, raw.types.Document):
-                return RichBlockUnsupported()
+                return RichBlockUnsupported(original_type=type(rich_block).__name__, raw=rich_block)
 
             attributes = {type(i): i for i in doc.attributes}
 
@@ -303,7 +314,9 @@ class RichBlock(Object):
                 return RichBlockAnimation(
                     animation=types.Animation._parse(client, doc, video_attributes, file_name),
                     has_spoiler=rich_block.spoiler,
-                    caption=await types.RichBlockCaption._parse_caption(client, rich_block.caption),
+                    caption=await types.RichBlockCaption._parse_caption(
+                        client, rich_block.caption, users, chats
+                    ),
                 )
             elif raw.types.DocumentAttributeVideo in attributes:
                 video_attributes = attributes[raw.types.DocumentAttributeVideo]
@@ -311,7 +324,9 @@ class RichBlock(Object):
                 return RichBlockVideo(
                     video=types.Video._parse(client, doc, video_attributes, file_name),
                     has_spoiler=rich_block.spoiler,
-                    caption=await types.RichBlockCaption._parse_caption(client, rich_block.caption),
+                    caption=await types.RichBlockCaption._parse_caption(
+                        client, rich_block.caption, users, chats
+                    ),
                 )
             elif raw.types.DocumentAttributeAudio in attributes:
                 audio_attributes = attributes[raw.types.DocumentAttributeAudio]
@@ -320,21 +335,21 @@ class RichBlock(Object):
                     return RichBlockVoiceNote(
                         voice_note=types.Voice._parse(client, doc, audio_attributes),
                         caption=await types.RichBlockCaption._parse_caption(
-                            client, rich_block.caption
+                            client, rich_block.caption, users, chats
                         ),
                     )
                 else:
                     return RichBlockAudio(
                         audio=types.Audio._parse(client, doc, audio_attributes, file_name),
                         caption=await types.RichBlockCaption._parse_caption(
-                            client, rich_block.caption
+                            client, rich_block.caption, users, chats
                         ),
                     )
         if isinstance(rich_block, raw.types.PageBlockDocument):
             doc = documents.get(rich_block.document_id)
 
             if not isinstance(doc, raw.types.Document):
-                return RichBlockUnsupported()
+                return RichBlockUnsupported(original_type=type(rich_block).__name__, raw=rich_block)
 
             attributes = {type(i): i for i in doc.attributes}
 
@@ -344,13 +359,15 @@ class RichBlock(Object):
 
             return RichBlockDocument(
                 document=types.Document._parse(client, doc, file_name),
-                caption=await types.RichBlockCaption._parse_caption(client, rich_block.caption),
+                caption=await types.RichBlockCaption._parse_caption(
+                    client, rich_block.caption, users, chats
+                ),
             )
         if isinstance(rich_block, raw.types.PageBlockAudio):
             doc = documents.get(rich_block.audio_id)
 
             if not isinstance(doc, raw.types.Document):
-                return RichBlockUnsupported()
+                return RichBlockUnsupported(original_type=type(rich_block).__name__, raw=rich_block)
 
             attributes = {type(i): i for i in doc.attributes}
 
@@ -360,18 +377,32 @@ class RichBlock(Object):
 
             audio_attributes = attributes[raw.types.DocumentAttributeAudio]
 
+            if audio_attributes.voice:
+                return RichBlockVoiceNote(
+                    voice_note=types.Voice._parse(client, doc, audio_attributes),
+                    caption=await types.RichBlockCaption._parse_caption(
+                        client, rich_block.caption, users, chats
+                    ),
+                )
+
             return RichBlockAudio(
                 audio=types.Audio._parse(client, doc, audio_attributes, file_name),
-                caption=await types.RichBlockCaption._parse_caption(client, rich_block.caption),
+                caption=await types.RichBlockCaption._parse_caption(
+                    client, rich_block.caption, users, chats
+                ),
             )
         if isinstance(rich_block, raw.types.PageBlockPhoto):
             return RichBlockPhoto(
                 photo=types.Photo._parse(client, photos.get(rich_block.photo_id)),
                 has_spoiler=rich_block.spoiler,
-                caption=await types.RichBlockCaption._parse_caption(client, rich_block.caption),
+                caption=await types.RichBlockCaption._parse_caption(
+                    client, rich_block.caption, users, chats
+                ),
             )
         if isinstance(rich_block, raw.types.PageBlockThinking):
-            return RichBlockThinking(text=await types.RichText._parse(client, rich_block.text))
+            return RichBlockThinking(
+                text=await types.RichText._parse(client, rich_block.text, users, chats)
+            )
 
         # if isinstance(rich_block, raw.types.PageBlockAuthorDate):
         # if isinstance(rich_block, raw.types.PageBlockChannel):
@@ -386,16 +417,17 @@ class RichBlock(Object):
         # if isinstance(rich_block, raw.types.PageBlockTitle):
         # if isinstance(rich_block, raw.types.PageBlockUnsupported):
 
-        return RichBlockUnsupported()
+        return RichBlockUnsupported(original_type=type(rich_block).__name__, raw=rich_block)
 
 
 class RichBlockUnsupported(RichBlock):
-    """A rich block unsupported yet."""
+    """An unsupported rich block, identified by its original raw constructor name."""
 
-    def __init__(
-        self,
-    ):
+    def __init__(self, original_type: str | None = None, raw: raw.base.PageBlock | None = None):
         super().__init__()
+
+        self.original_type = original_type
+        self.raw = raw
 
 
 class RichBlockCaption(RichBlock):
@@ -423,10 +455,12 @@ class RichBlockCaption(RichBlock):
     async def _parse_caption(
         client: pyrogram.Client,
         caption: raw.types.PageCaption,
+        users: dict[int, raw.base.User] | None = None,
+        chats: dict[int, raw.base.Chat] | None = None,
     ) -> RichBlockCaption:
         return RichBlockCaption(
-            text=await types.RichText._parse(client, caption.text),
-            credit=await types.RichText._parse(client, caption.credit),
+            text=await types.RichText._parse(client, caption.text, users, chats),
+            credit=await types.RichText._parse(client, caption.credit, users, chats),
         )
 
     async def write(self, client: pyrogram.Client) -> raw.types.PageCaption:
@@ -481,7 +515,12 @@ class RichBlockTableCell(RichBlock):
         self.valign = valign
 
     @staticmethod
-    async def _parse_table_cell(client, table_cell: raw.base.PageTableCell):
+    async def _parse_table_cell(
+        client,
+        table_cell: raw.base.PageTableCell,
+        users: dict[int, raw.base.User] | None = None,
+        chats: dict[int, raw.base.Chat] | None = None,
+    ):
         align = "left"
         if table_cell.align_center:
             align = "center"
@@ -495,7 +534,7 @@ class RichBlockTableCell(RichBlock):
             valign = "bottom"
 
         return RichBlockTableCell(
-            text=await types.RichText._parse(client, table_cell.text),
+            text=await types.RichText._parse(client, table_cell.text, users, chats),
             is_header=table_cell.header,
             colspan=max(table_cell.colspan or 1, 1),
             rowspan=max(table_cell.rowspan or 1, 1),
@@ -586,7 +625,11 @@ class RichBlockListItem(RichBlock):
 
         elif isinstance(list_item, raw.types.PageListItemText):
             blocks = types.List(
-                [types.RichBlockParagraph(text=await types.RichText._parse(client, list_item.text))]
+                [
+                    types.RichBlockParagraph(
+                        text=await types.RichText._parse(client, list_item.text, users, chats)
+                    )
+                ]
             )
             label = "•"
             has_checkbox = list_item.checkbox
@@ -613,7 +656,11 @@ class RichBlockListItem(RichBlock):
 
         elif isinstance(list_item, raw.types.PageListOrderedItemText):
             blocks = types.List(
-                [types.RichBlockParagraph(text=await types.RichText._parse(client, list_item.text))]
+                [
+                    types.RichBlockParagraph(
+                        text=await types.RichText._parse(client, list_item.text, users, chats)
+                    )
+                ]
             )
             has_checkbox = list_item.checkbox
             is_checked = list_item.checked
@@ -625,7 +672,7 @@ class RichBlockListItem(RichBlock):
             else:
                 label = list_item.num
         else:
-            raise TypeError(f"Unexpected {type(list_item).__name__}")
+            return RichBlockUnsupported(original_type=type(list_item).__name__)
 
         return RichBlockListItem(
             label=label,
@@ -893,7 +940,12 @@ class RichBlockTable(RichBlock):
         self.caption = caption
 
     @staticmethod
-    async def _parse_table(client, page_block: raw.types.PageBlockTable):
+    async def _parse_table(
+        client,
+        page_block: raw.types.PageBlockTable,
+        users: dict[int, raw.base.User] | None = None,
+        chats: dict[int, raw.base.Chat] | None = None,
+    ):
         cells = []
 
         if page_block.rows:
@@ -901,7 +953,9 @@ class RichBlockTable(RichBlock):
                 row_cells = []
                 if row.cells:
                     for table_cell in row.cells:
-                        cell = await RichBlockTableCell._parse_table_cell(client, table_cell)
+                        cell = await RichBlockTableCell._parse_table_cell(
+                            client, table_cell, users, chats
+                        )
                         row_cells.append(cell)
 
                 if row_cells:
@@ -912,7 +966,9 @@ class RichBlockTable(RichBlock):
             is_bordered=page_block.bordered,
             is_striped=page_block.striped,
             is_compact=page_block.compact,
-            caption=await types.RichText._parse(client, page_block.title),
+            caption=RichBlockCaption(
+                text=await types.RichText._parse(client, page_block.title, users, chats)
+            ),
         )
 
 
