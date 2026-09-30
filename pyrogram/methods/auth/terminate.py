@@ -18,6 +18,8 @@
 
 from __future__ import annotations as _annotations
 
+import asyncio
+import contextlib
 import logging
 
 import pyrogram
@@ -64,7 +66,12 @@ class Terminate:
         self.updates_watchdog_event.set()
 
         if self.updates_watchdog_task is not None:
-            await self.updates_watchdog_task
+            self.updates_watchdog_task.cancel()
+
+            with contextlib.suppress(asyncio.CancelledError):
+                await self.updates_watchdog_task
+
+            self.updates_watchdog_task = None
 
         self.updates_watchdog_event.clear()
 
