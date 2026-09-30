@@ -8265,25 +8265,32 @@ class Message(Object, Update):
         """
         return await self._client.get_media_group(chat_id=self.chat.id, message_id=self.id)
 
-    async def reply_chat_action(self, action: enums.ChatAction) -> bool:
+    async def reply_chat_action(
+        self,
+        action: enums.ChatAction | types.ChatAction,
+    ) -> bool:
         """Shortcut for method :obj:`~pyrogram.Client.send_chat_action` will automatically fill method attributes:
 
         * chat_id
         * business_connection_id
 
         Parameters:
-            action (:obj:`~pyrogram.enums.ChatAction`):
-                Type of action to broadcast.
+            action (:obj:`~pyrogram.enums.ChatAction` | :obj:`~pyrogram.types.ChatAction`):
+                Type of action to broadcast. An enum member broadcasts the action with its default
+                fields; a :obj:`~pyrogram.types.ChatAction` instance carries the fields the caller
+                chose, and is the only way to send the actions that require them, such as
+                :obj:`~pyrogram.types.ChatActionEmojiInteraction`.
 
         Returns:
             ``bool``: On success, True is returned.
 
         Raises:
             RPCError: In case of a Telegram RPC error.
-            ValueError: In case the provided string is not a valid chat action.
         """
         return await self._client.send_chat_action(
-            chat_id=self.chat.id, action=action, business_connection_id=self.business_connection_id
+            chat_id=self.chat.id,
+            action=action,
+            business_connection_id=self.business_connection_id,
         )
 
     async def reply_inline_bot_result(

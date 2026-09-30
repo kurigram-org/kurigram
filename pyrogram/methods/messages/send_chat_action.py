@@ -21,7 +21,7 @@ from __future__ import annotations as _annotations
 from typing import TYPE_CHECKING, Final
 
 import pyrogram
-from pyrogram import raw, enums
+from pyrogram import raw, enums, types
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -54,7 +54,7 @@ class SendChatAction:
     async def send_chat_action(
         self: pyrogram.Client,
         chat_id: int | str,
-        action: enums.ChatAction,
+        action: enums.ChatAction | types.ChatAction,
         business_connection_id: str | None = None,
     ) -> bool:
         """Tell the other party that something is happening on your side.
@@ -67,8 +67,11 @@ class SendChatAction:
                 For your personal cloud (Saved Messages) you can simply use "me" or "self".
                 For a contact that exists in your Telegram address book you can use his phone number (str).
 
-            action (:obj:`~pyrogram.enums.ChatAction`):
-                Type of action to broadcast.
+            action (:obj:`~pyrogram.enums.ChatAction` | :obj:`~pyrogram.types.ChatAction`):
+                Type of action to broadcast. An enum member broadcasts the action with its default
+                fields; a :obj:`~pyrogram.types.ChatAction` instance carries the fields the caller
+                chose, and is the only way to send the actions that require them, such as
+                :obj:`~pyrogram.types.ChatActionEmojiInteraction`.
 
             business_connection_id (``str``, *optional*):
                 Unique identifier of the business connection on behalf of which the message will be sent.
@@ -76,30 +79,43 @@ class SendChatAction:
         Returns:
             ``bool``: On success, True is returned.
 
-        Raises:
-            ValueError: In case the provided string is not a valid chat action.
-
         Example:
             .. code-block:: python
 
-                from pyrogram import enums
+                from pyrogram import enums, types
 
                 # Send "typing" chat action
                 await app.send_chat_action(chat_id, enums.ChatAction.TYPING)
 
-                # Send "upload_video" chat action
-                await app.send_chat_action(chat_id, enums.ChatAction.UPLOAD_VIDEO)
+                # Send "upload_video" chat action with an explicit progress
+                await app.send_chat_action(chat_id, types.ChatActionUploadVideo(progress=42))
 
-                # Send "playing" chat action
-                await app.send_chat_action(chat_id, enums.ChatAction.PLAYING)
+                # Report two taps on an animated emoji sent in message 1234
+                await app.send_chat_action(
+                    chat_id,
+                    types.ChatActionEmojiInteraction(
+                        "👍",
+                        message_id=1234,
+                        interaction='{"v": 1, "a": [{"i": 1, "t": 0.0}, {"i": 3, "t": 0.4}]}',
+                    ),
+                )
+
+                # Acknowledge the animation the other party sent back
+                await app.send_chat_action(chat_id, types.ChatActionEmojiInteractionSeen("👍"))
 
                 # Cancel any current chat action
                 await app.send_chat_action(chat_id, enums.ChatAction.CANCEL)
         """
 
+        if isinstance(action, types.ChatAction):
+            raw_action = action.write()
+        else:
+            raw_action = _ACTIONS[action]()
+
         return await self.invoke(
             raw.functions.messages.SetTyping(
-                peer=await self.resolve_peer(chat_id), action=_ACTIONS[action]()
+                peer=await self.resolve_peer(chat_id),
+                action=raw_action,
             ),
             business_connection_id=business_connection_id,
         )
