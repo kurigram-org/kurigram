@@ -83,7 +83,12 @@ class BanChatMember:
         chat_peer = await self.resolve_peer(chat_id)
         user_peer = await self.resolve_peer(user_id)
 
-        if isinstance(chat_peer, (raw.types.InputPeerSelf, raw.types.InputPeerUser)):
+        # `resolve_peer()` never returns `InputPeerUserFromMessage` itself, but a
+        #  custom client overriding it may, so every user-peer check here accepts it too.
+        if isinstance(
+            chat_peer,
+            (raw.types.InputPeerSelf, raw.types.InputPeerUser, raw.types.InputPeerUserFromMessage),
+        ):
             raise ValueError("Can't ban members in private chats")
 
         if isinstance(chat_peer, raw.types.InputPeerChannel):
@@ -112,7 +117,9 @@ class BanChatMember:
                     )
                 )
         else:
-            if not isinstance(user_peer, raw.types.InputPeerUser):
+            if not isinstance(
+                user_peer, (raw.types.InputPeerUser, raw.types.InputPeerUserFromMessage)
+            ):
                 raise ValueError("Can't ban chats in basic groups")
 
             r = await self.invoke(
