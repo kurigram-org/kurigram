@@ -322,13 +322,14 @@ class Session:
 
         self.stored_msg_ids.clear()
 
-        # The unsent acks name msg ids of the connection this stop closes, which the
-        #  server cannot match after a reconnect.
-        self.pending_acks.clear()
+        # `pending_acks` is kept: a msg id belongs to the session, which outlives a
+        #  restart, so the server re-sends what was not acked to the next connection
+        #  and `handle_packet` skips it by this set. Cleared, the re-sent message fails
+        #  the msg id check and the restart loops.
+        #  https://core.telegram.org/mtproto/description#message-identifier-msg-id
 
-        # A pending waiter's msg id also dies with the connection and nothing re-sends
-        #  the request, so no answer can arrive: failing each waiter here turns a
-        #  silent `WAIT_TIMEOUT` into an immediate, accurate error.
+        # Nothing re-sends a pending waiter's request, so no answer can arrive:
+        #  failing each waiter here turns a silent `WAIT_TIMEOUT` into an immediate, accurate error.
         for result in self.results.values():
             result.exception = TimeoutError("Session stopped before an answer arrived")
             result.event.set()

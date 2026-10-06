@@ -398,15 +398,17 @@ async def test_stop_fails_the_request_still_waiting_for_its_answer() -> None:
     assert session.results == {}
 
 
-async def test_stop_drops_the_acks_owed_to_the_closed_connection() -> None:
+async def test_a_restart_keeps_the_acks_the_session_still_owes() -> None:
     session = _started_session()
 
     # A server message identity is odd, and its ack was never flushed.
-    session.pending_acks.add(await session.msg_factory.allocate_message_identity() + 1)
+    unacked_msg_id: int = await session.msg_factory.allocate_message_identity() + 1
+    session.pending_acks.add(unacked_msg_id)
 
-    await session.stop()
+    # The half of `restart()` that runs before it reconnects.
+    await session._stop()
 
-    assert session.pending_acks == set()
+    assert session.pending_acks == {unacked_msg_id}
 
 
 async def test_a_bad_server_salt_nobody_awaits_still_updates_the_salt() -> None:
