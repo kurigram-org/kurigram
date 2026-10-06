@@ -29,7 +29,7 @@ import pytest
 import pyrogram
 from pyrogram import raw
 from pyrogram.crypto import aes, mtproto
-from pyrogram.raw.core import FutureSalt, FutureSalts, Long, Message, TLObject
+from pyrogram.raw.core import FutureSalt, FutureSalts, Long, Message, MsgContainer, TLObject
 from pyrogram.session.session import Result, Session, SessionState
 
 if TYPE_CHECKING:
@@ -409,6 +409,51 @@ async def test_a_restart_keeps_the_acks_the_session_still_owes() -> None:
     await session._stop()
 
     assert session.pending_acks == {unacked_msg_id}
+
+
+async def test_a_rejected_message_does_not_drop_the_rest_of_its_container() -> None:
+    session = _started_session()
+
+    ping_msg_id = await session.msg_factory.allocate_message_identity()
+    session.results[ping_msg_id] = Result()
+
+    # Server identities are odd: 1 modulo 4 for an answer, 3 for anything else. The
+    #  re-sent message keeps its older identity, which is below the one stored first.
+    base_msg_id = await session.msg_factory.allocate_message_identity()
+    resent_msg_id: int = base_msg_id + 3
+    new_session_msg_id: int = base_msg_id + 7
+    pong_msg_id: int = base_msg_id + 9
+    container_msg_id: int = base_msg_id + 13
+
+    new_session_created = raw.types.NewSessionCreated(
+        first_msg_id=ping_msg_id,
+        unique_id=0,
+        server_salt=0,
+    )
+    resent_update = raw.types.UpdatesTooLong()
+    pong = raw.types.Pong(
+        msg_id=ping_msg_id,
+        ping_id=0,
+    )
+    container = MsgContainer(
+        [
+            Message(new_session_created, new_session_msg_id, 2, len(new_session_created)),
+            Message(resent_update, resent_msg_id, 3, len(resent_update)),
+            Message(pong, pong_msg_id, 4, len(pong)),
+        ],
+    )
+
+    await session.handle_packet(
+        _pack_as_server(
+            Message(container, container_msg_id, 4, len(container)),
+            session_id=session.session_id,
+            auth_key=session.auth_key,
+        ),
+    )
+
+    # Was "Restarting session due to - TimeoutError - Request timed out" from `start()`.
+    assert session.results[ping_msg_id].event.is_set()
+    assert session.stored_msg_ids == [new_session_msg_id, pong_msg_id]
 
 
 async def test_a_bad_server_salt_nobody_awaits_still_updates_the_salt() -> None:

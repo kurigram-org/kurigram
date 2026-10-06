@@ -456,7 +456,9 @@ class Session:
                     log.info("Restarting session due to - %s - %s", e.__class__.__name__, e)
                     asyncio.create_task(self.restart())
 
-                return
+                # A container mixes re-sent messages with new ones, so the rest of it,
+                #  the `Pong` that `start()` waits for included, is still handled.
+                continue
             else:
                 bisect.insort(self.stored_msg_ids, msg.msg_id)
 
