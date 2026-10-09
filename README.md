@@ -103,7 +103,7 @@ pip install kurigram
 Dev version
 
 ``` bash
-pip install https://github.com/kurigram-org/kurigram/archive/dev.zip --force-reinstall
+pip install https://github.com/kurigram-org/kurigram/archive/main.zip --force-reinstall
 ```
 
 Optional dependencies
