@@ -1000,6 +1000,8 @@ def pyrogram_api():
             CommunityChatAdded
             CommunityChatJoined
             CommunityChatRemoved
+            TonWalletTransfer
+            TonConnectRequest
             Checklist
             RefundedPayment
             ReplyParameters

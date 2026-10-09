@@ -1,20 +1,22 @@
-#  Pyrogram - Telegram MTProto API Client Library for Python
+#  Kurigram - Telegram MTProto API Client Library for Python
+#
 #  Copyright (C) 2017-present Dan <https://github.com/delivrance>
+#  Copyright (C) 2024-present KurimuzonAkuma <https://github.com/KurimuzonAkuma>
 #
-#  This file is part of Pyrogram.
+#  This file is part of Kurigram.
 #
-#  Pyrogram is free software: you can redistribute it and/or modify
+#  Kurigram is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Lesser General Public License as published
 #  by the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  Pyrogram is distributed in the hope that it will be useful,
+#  Kurigram is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 #  GNU Lesser General Public License for more details.
 #
 #  You should have received a copy of the GNU Lesser General Public License
-#  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
+#  along with Kurigram. If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations as _annotations
 
@@ -498,6 +500,12 @@ class Message(Object, Update):
         community_chat_joined (:obj:`~pyrogram.types.CommunityChatJoined`, *optional*):
             Service message: chat was joined by a user from a :obj:`~pyrogram.types.Community`.
 
+        ton_wallet_transfer (:obj:`~pyrogram.types.TonWalletTransfer`, *optional*):
+            Service message: a transfer with the TON wallet of the current user.
+
+        ton_connect_request (:obj:`~pyrogram.types.TonConnectRequest`, *optional*):
+            Service message: a request from a dApp was received through TON Connect.
+
         premium_gift_code (:obj:`~pyrogram.types.PremiumGiftCode`, *optional*):
             Service message: premium gift code information.
 
@@ -800,6 +808,8 @@ class Message(Object, Update):
         community_chat_added: types.CommunityChatAdded | None = None,
         community_chat_removed: types.CommunityChatRemoved | None = None,
         community_chat_joined: types.CommunityChatJoined | None = None,
+        ton_wallet_transfer: types.TonWalletTransfer | None = None,
+        ton_connect_request: types.TonConnectRequest | None = None,
         premium_gift_code: types.PremiumGiftCode | None = None,
         gifted_premium: types.GiftedPremium | None = None,
         gifted_stars: types.GiftedStars | None = None,
@@ -990,6 +1000,8 @@ class Message(Object, Update):
         self.community_chat_added = community_chat_added
         self.community_chat_removed = community_chat_removed
         self.community_chat_joined = community_chat_joined
+        self.ton_wallet_transfer = ton_wallet_transfer
+        self.ton_connect_request = ton_connect_request
         self.premium_gift_code = premium_gift_code
         self.gifted_premium = gifted_premium
         self.gifted_stars = gifted_stars
@@ -1147,6 +1159,8 @@ class Message(Object, Update):
         community_chat_added = None
         community_chat_removed = None
         community_chat_joined = None
+        ton_wallet_transfer = None
+        ton_connect_request = None
 
         service_type = enums.MessageServiceType.UNSUPPORTED
 
@@ -1434,6 +1448,14 @@ class Message(Object, Update):
         elif isinstance(action, raw.types.MessageActionChatJoinedViaCommunity):
             service_type = enums.MessageServiceType.COMMUNITY_CHAT_JOINED
             community_chat_joined = await types.CommunityChatJoined._parse(client, action, chats)
+        elif isinstance(action, raw.types.MessageActionGramTransfer):
+            service_type = enums.MessageServiceType.TON_WALLET_TRANSFER
+            ton_wallet_transfer = await types.TonWalletTransfer._parse(
+                client, action, from_id or peer_id, users
+            )
+        elif isinstance(action, raw.types.MessageActionWalletTonConnectRequest):
+            service_type = enums.MessageServiceType.TON_CONNECT_REQUEST
+            ton_connect_request = await types.TonConnectRequest._parse(action)
 
         parsed_message = Message(
             id=message.id,
@@ -1513,6 +1535,8 @@ class Message(Object, Update):
             community_chat_added=community_chat_added,
             community_chat_removed=community_chat_removed,
             community_chat_joined=community_chat_joined,
+            ton_wallet_transfer=ton_wallet_transfer,
+            ton_connect_request=ton_connect_request,
             reactions=await types.MessageReactions._parse(client, message.reactions, users, chats),
             business_connection_id=business_connection_id,
             raw=message,

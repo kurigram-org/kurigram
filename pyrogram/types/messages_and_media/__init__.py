@@ -180,6 +180,8 @@ from .rich_text import (
     RichTextUnderline,
     RichTextUrl,
 )
+from .ton_wallet_transfer import TonWalletTransfer
+from .ton_connect_request import TonConnectRequest
 from .saved_credentials import SavedCredentials
 from .screenshot_taken import ScreenshotTaken
 from .star_amount import StarAmount
@@ -224,8 +226,18 @@ from .voice import Voice
 from .web_app_data import WebAppData
 from .web_page import WebPage
 from .write_access_allowed import WriteAccessAllowed
+from .ton_connect_request_state import (
+    TonConnectRequestState,
+    TonConnectRequestStatePending,
+    TonConnectRequestStateAccepted,
+    TonConnectRequestStateRejected,
+)
 
 __all__ = [
+    "TonConnectRequestState",
+    "TonConnectRequestStatePending",
+    "TonConnectRequestStateAccepted",
+    "TonConnectRequestStateRejected",
     "Animation",
     "AuctionBid",
     "AuctionRound",
@@ -251,6 +263,8 @@ __all__ = [
     "CommunityChatAdded",
     "CommunityChatJoined",
     "CommunityChatRemoved",
+    "TonWalletTransfer",
+    "TonConnectRequest",
     "Contact",
     "StickerSet",
     "ContactRegistered",
