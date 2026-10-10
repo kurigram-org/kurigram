@@ -339,14 +339,15 @@ class Session:
         self.ping_task_event.set()
 
         if self.ping_task is not None:
-            await self.ping_task
+            await self._wait_worker(self.ping_task)
+            self.ping_task = None
 
         self.ping_task_event.clear()
 
         await self.connection.close()
 
-        if self.recv_task:
-            await self.recv_task
+        if self.recv_task is not None:
+            await self._wait_worker(self.recv_task)
             self.recv_task = None
 
         await self._wait_pending_tasks()
@@ -360,6 +361,16 @@ class Session:
                 await self.client.disconnect_handler(self.client, self)
             except Exception as e:
                 log.exception(e)
+
+    @staticmethod
+    async def _wait_worker(task: asyncio.Task) -> None:
+        # `await task` re-raised what a dead worker died with, which aborted `_stop()`
+        #  in `STOPPING` for good: every later call failed with `Waited 15s to invoke`.
+        #  `asyncio.wait` never raises it. https://docs.python.org/3/library/asyncio-task.html#asyncio.wait
+        await asyncio.wait([task])
+
+        if not task.cancelled() and task.exception() is not None:
+            log.error("Worker failed before the session stopped", exc_info=task.exception())
 
     async def restart(self):
         async with self.restart_lock:

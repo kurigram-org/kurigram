@@ -382,6 +382,39 @@ async def test_a_restart_already_starting_is_stopped_again() -> None:
     assert not session.is_started.is_set()
 
 
+@pytest.mark.parametrize(
+    "worker",
+    [
+        pytest.param("ping_task", id="ping"),
+        pytest.param("recv_task", id="recv"),
+    ],
+)
+async def test_a_restart_gets_past_a_worker_that_died(worker: str) -> None:
+    session = _started_session()
+
+    async def die() -> None:
+        raise AttributeError("'BadMsgNotification' object has no attribute 'salts'")
+
+    setattr(session, worker, asyncio.create_task(die()))
+    await asyncio.sleep(0)
+
+    started: bool = False
+
+    async def start() -> None:
+        nonlocal started
+
+        started = True
+
+    session.start = start
+
+    # Before: `restart()` raised the worker's `AttributeError` and the session stayed
+    #  `STOPPING`, so every later `invoke` failed after `WAIT_TIMEOUT`.
+    await session.restart()
+
+    assert started
+    assert getattr(session, worker) is None
+
+
 async def test_stop_fails_the_request_still_waiting_for_its_answer() -> None:
     session = _started_session()
 
