@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import errors, raw
+from pyrogram import errors, raw, utils
 
 
 class ToggleJoinToSend:
@@ -52,7 +52,8 @@ class ToggleJoinToSend:
         try:
             r = await self.invoke(
                 raw.functions.channels.ToggleJoinToSend(
-                    channel=await self.resolve_peer(chat_id), enabled=enabled
+                    channel=utils.get_input_user_or_channel(await self.resolve_peer(chat_id)),
+                    enabled=enabled,
                 )
             )
 

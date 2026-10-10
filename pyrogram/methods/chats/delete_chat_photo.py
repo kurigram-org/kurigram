@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 
 class DeleteChatPhoto:
@@ -53,10 +53,11 @@ class DeleteChatPhoto:
                     chat_id=peer.chat_id, photo=raw.types.InputChatPhotoEmpty()
                 )
             )
-        elif isinstance(peer, raw.types.InputPeerChannel):
+        elif isinstance(peer, utils.PEERS_WITH_A_CHANNEL_ID):
             await self.invoke(
                 raw.functions.channels.EditPhoto(
-                    channel=peer, photo=raw.types.InputChatPhotoEmpty()
+                    channel=utils.get_input_user_or_channel(peer),
+                    photo=raw.types.InputChatPhotoEmpty(),
                 )
             )
         else:

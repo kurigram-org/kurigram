@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 
 class EditUserStarSubscription:
@@ -53,7 +53,7 @@ class EditUserStarSubscription:
         #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/telegram/StarManager.cpp#L1100
         return await self.invoke(
             raw.functions.payments.BotCancelStarsSubscription(
-                user_id=await self.resolve_peer(user_id),
+                user_id=utils.get_input_user_or_channel(await self.resolve_peer(user_id)),
                 charge_id=telegram_payment_charge_id,
                 restore=not is_canceled,
             )

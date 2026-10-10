@@ -25,6 +25,78 @@ from .peers import get_channel_id, get_peer_id, get_raw_peer_id
 from .text import parse_text_entities
 
 
+async def get_message_min_peer_ids(
+    client: pyrogram.Client, message: types.Message
+) -> set[int] | None:
+    """Get the ids of the `min` users and channels a parsed message references.
+
+    Returns:
+        ``None`` when the message cannot be used to address a `min` peer, that is: the account
+        is a bot, the message is scheduled, or it is not in a channel or supergroup.
+        Otherwise the set of marked ids, which is empty when no referenced peer is `min`.
+    """
+    # Scheduled messages are left out, their ids are not ids of messages in the chat.
+    if message.scheduled or message.chat is None:
+        return None
+
+    # Only channels and supergroups: "Usually `min` constructors are encountered in messages
+    #  inside of groups or channels" (https://core.telegram.org/api/min), and TDLib records
+    #  them for no other dialog type:
+    #  https://github.com/tdlib/td/blob/42e6a5259551178d1dab54a22ad96d14bd906e20/td/telegram/UserManager.cpp#L7795-L7797
+    #  https://github.com/tdlib/td/blob/42e6a5259551178d1dab54a22ad96d14bd906e20/td/telegram/MessagesManager.cpp#L31561-L31566
+    #  A monoforum (`DIRECT`) is left out as well: `CHANNEL_MONOFORUM_UNSUPPORTED` is listed
+    #  among the errors of `users.getUsers`, https://core.telegram.org/method/users.getUsers
+    if message.chat.type not in (
+        enums.ChatType.CHANNEL,
+        enums.ChatType.SUPERGROUP,
+        enums.ChatType.FORUM,
+    ):
+        return None
+
+    # Bots get `FROM_MESSAGE_BOT_DISABLED` for these and use `access_hash=0` instead:
+    #  https://core.telegram.org/api/peers
+    #  `me` is in memory once `start()` has loaded it, the storage is read only until then.
+    if client.me.is_bot if client.me else await client.storage.is_bot():
+        return None
+
+    # "sender, forwarder or forwardee, et cetera": `from_id`, `fwd_from` and
+    #  `messageEntityMentionName`, per https://core.telegram.org/api/min
+    peers: list[types.Chat | types.User] = []
+
+    # `sender_chat` is only parsed when there is no `from_user`, so they never both apply.
+    if message.from_user is not None:
+        peers.append(message.from_user)
+    elif message.sender_chat is not None:
+        peers.append(message.sender_chat)
+
+    # A hidden user or an imported message carries no peer to address.
+    origin = message.forward_origin
+    origin_peer = (
+        origin.sender_user
+        if isinstance(origin, types.MessageOriginUser)
+        else origin.sender_chat
+        if isinstance(origin, types.MessageOriginChat)
+        else origin.chat
+        if isinstance(origin, types.MessageOriginChannel)
+        else None
+    )
+
+    if origin_peer is not None:
+        peers.append(origin_peer)
+
+    # Only text mentions carry a `user`, `MessageEntity._parse` fills it from the `user_id`.
+    for entities in (message.entities, message.caption_entities):
+        peers.extend(entity.user for entity in entities or () if entity.user is not None)
+
+    # Only `min` objects: a full one is stored with a real `access_hash`, which `resolve_peer`
+    #  reads before this cache. A channel posting in itself is not a sighting in another chat.
+    return {
+        peer.id
+        for peer in peers
+        if peer.id is not None and peer.is_min and peer.id != message.chat.id
+    }
+
+
 async def parse_messages(
     client: pyrogram.Client,
     messages: raw.base.messages.Messages | raw.base.Updates,

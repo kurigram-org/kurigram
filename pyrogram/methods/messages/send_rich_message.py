@@ -126,7 +126,9 @@ class SendRichMessage:
         if ephemeral_message_parameters:
             rpc = raw.functions.ephemeral.SendMessage(
                 peer=await self.resolve_peer(chat_id),
-                receiver_id=await self.resolve_peer(ephemeral_message_parameters.receiver_user_id),
+                receiver_id=utils.get_input_user_or_channel(
+                    await self.resolve_peer(ephemeral_message_parameters.receiver_user_id)
+                ),
                 query_id=int(ephemeral_message_parameters.callback_query_id)
                 if ephemeral_message_parameters.callback_query_id is not None
                 else None,
@@ -169,7 +171,9 @@ class SendRichMessage:
         if isinstance(r, raw.types.UpdateShortSentMessage):
             peer = await self.resolve_peer(chat_id)
 
-            peer_id = peer.user_id if isinstance(peer, raw.types.InputPeerUser) else -peer.chat_id
+            peer_id = (
+                peer.user_id if isinstance(peer, utils.PEERS_WITH_A_USER_ID) else -peer.chat_id
+            )
 
             return types.Message(
                 id=r.id,

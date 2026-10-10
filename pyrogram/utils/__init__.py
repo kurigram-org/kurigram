@@ -24,7 +24,7 @@ from .amounts import (
     get_premium_duration_month_count,
     to_nano,
 )
-from .cache import Cache
+from .cache import Cache, MinPeerCache
 from .console import ainput
 from .crypto import btoi, compute_password_check, compute_password_hash, itob, sha256, xor
 from .datetimes import datetime_to_timestamp, max_datetime, timestamp_to_datetime, zero_datetime
@@ -37,7 +37,7 @@ from .file_ids import (
 from .gifts import get_input_stargift
 from .inline import pack_inline_message_id, unpack_inline_message_id
 from .json_values import jsonvalue_to_obj, obj_to_jsonvalue
-from .messages import get_reply_to, parse_deleted_messages, parse_messages
+from .messages import get_message_min_peer_ids, get_reply_to, parse_deleted_messages, parse_messages
 from .parsing import require_parsed
 from .peers import (
     MAX_CHANNEL_ID,
@@ -51,6 +51,7 @@ from .peers import (
     ZERO_CHANNEL_ID,
     ZERO_SECRET_CHAT_ID,
     get_channel_id,
+    get_input_user_or_channel,
     get_peer_id,
     get_peer_type,
     get_raw_peer_id,
@@ -64,6 +65,7 @@ __all__ = [
     "MAX_MONOFORUM_CHANNEL_ID",
     "MAX_USER_ID",
     "MIN_MONOFORUM_CHANNEL_ID",
+    "MinPeerCache",
     "PEERS_WITH_A_CHANNEL_ID",
     "PEERS_WITH_A_CHAT_ID",
     "PEERS_WITH_A_USER_ID",
@@ -82,6 +84,8 @@ __all__ = [
     "get_first_url",
     "get_input_media_from_file_id",
     "get_input_stargift",
+    "get_input_user_or_channel",
+    "get_message_min_peer_ids",
     "get_peer_id",
     "get_peer_type",
     "get_premium_duration_day_count",

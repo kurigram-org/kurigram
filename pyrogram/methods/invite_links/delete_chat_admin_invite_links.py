@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 
 class DeleteChatAdminInviteLinks:
@@ -49,6 +49,6 @@ class DeleteChatAdminInviteLinks:
         return await self.invoke(
             raw.functions.messages.DeleteRevokedExportedChatInvites(
                 peer=await self.resolve_peer(chat_id),
-                admin_id=await self.resolve_peer(admin_id),
+                admin_id=utils.get_input_user_or_channel(await self.resolve_peer(admin_id)),
             )
         )

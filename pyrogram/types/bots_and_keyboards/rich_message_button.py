@@ -21,7 +21,7 @@ from __future__ import annotations as _annotations
 from typing import Literal, overload
 
 import pyrogram
-from pyrogram import enums, raw, types
+from pyrogram import enums, raw, types, utils
 
 from ..object import Object
 
@@ -326,7 +326,9 @@ class RichMessageButton(Object):
                 url=self.login_url.url,
                 request_write_access=self.login_url.request_write_access,
                 fwd_text=self.login_url.forward_text,
-                bot=await client.resolve_peer(self.login_url.bot_username or "self"),
+                bot=utils.get_input_user_or_channel(
+                    await client.resolve_peer(self.login_url.bot_username or "self")
+                ),
             )
 
         if self.web_app is not None:

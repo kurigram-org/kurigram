@@ -64,6 +64,7 @@ async def test_start_rebuilds_everything_that_binds_to_a_loop(
         client.updates_watchdog_event,
         client.message_cache._lock,
         client.topic_cache._lock,
+        client.min_peer_cache._lock,
     ]
 
     with pytest.raises(RuntimeError, match="far enough"):
@@ -76,6 +77,7 @@ async def test_start_rebuilds_everything_that_binds_to_a_loop(
         client.updates_watchdog_event,
         client.message_cache._lock,
         client.topic_cache._lock,
+        client.min_peer_cache._lock,
     ]
 
     assert all(

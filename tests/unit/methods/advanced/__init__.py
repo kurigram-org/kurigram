@@ -15,35 +15,3 @@
 #
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
-
-from __future__ import annotations as _annotations
-
-import pyrogram
-from pyrogram import raw, utils
-
-
-class DeleteChannel:
-    async def delete_channel(self: pyrogram.Client, chat_id: int | str) -> bool:
-        """Delete a channel.
-
-        .. include:: /_includes/usable-by/users.rst
-
-        Parameters:
-            chat_id (``int`` | ``str``):
-                The id of the channel to be deleted.
-
-        Returns:
-            ``bool``: On success, True is returned.
-
-        Example:
-            .. code-block:: python
-
-                await app.delete_channel(channel_id)
-        """
-        await self.invoke(
-            raw.functions.channels.DeleteChannel(
-                channel=utils.get_input_user_or_channel(await self.resolve_peer(chat_id))
-            )
-        )
-
-        return True

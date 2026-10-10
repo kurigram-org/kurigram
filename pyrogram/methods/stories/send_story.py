@@ -227,21 +227,30 @@ class SendStory:
             if privacy == enums.StoriesPrivacyRules.PUBLIC:
                 privacy_rules.append(raw.types.InputPrivacyValueAllowAll())
                 if disallowed_users:
-                    users = [await self.resolve_peer(user_id) for user_id in disallowed_users]
+                    users = [
+                        utils.get_input_user_or_channel(await self.resolve_peer(user_id))
+                        for user_id in disallowed_users
+                    ]
                     privacy_rules.append(raw.types.InputPrivacyValueDisallowUsers(users=users))
             elif privacy == enums.StoriesPrivacyRules.CONTACTS:
                 privacy_rules.append(raw.types.InputPrivacyValueAllowContacts())
                 if disallowed_users:
-                    users = [await self.resolve_peer(user_id) for user_id in disallowed_users]
+                    users = [
+                        utils.get_input_user_or_channel(await self.resolve_peer(user_id))
+                        for user_id in disallowed_users
+                    ]
                     privacy_rules.append(raw.types.InputPrivacyValueDisallowUsers(users=users))
             elif privacy == enums.StoriesPrivacyRules.CLOSE_FRIENDS:
                 privacy_rules.append(raw.types.InputPrivacyValueAllowCloseFriends())
                 if allowed_users:
-                    users = [await self.resolve_peer(user_id) for user_id in allowed_users]
+                    users = [
+                        utils.get_input_user_or_channel(await self.resolve_peer(user_id))
+                        for user_id in allowed_users
+                    ]
                     privacy_rules.append(raw.types.InputPrivacyValueAllowUsers(users=users))
                 else:
                     privacy_rules.append(
-                        raw.types.InputPrivacyValueAllowUsers(users=[raw.types.InputPeerEmpty()])
+                        raw.types.InputPrivacyValueAllowUsers(users=[raw.types.InputUserEmpty()])
                     )
             elif privacy == enums.StoriesPrivacyRules.SELECTED_USERS:
                 _allowed_users = []
@@ -250,15 +259,15 @@ class SendStory:
                 if allowed_users:
                     for user in allowed_users:
                         peer = await self.resolve_peer(user)
-                        if isinstance(peer, raw.types.InputPeerUser):
-                            _allowed_users.append(peer)
+                        if isinstance(peer, utils.PEERS_WITH_A_USER_ID):
+                            _allowed_users.append(utils.get_input_user_or_channel(peer))
                         elif isinstance(
-                            peer, (raw.types.InputPeerChat, raw.types.InputPeerChannel)
+                            peer, (raw.types.InputPeerChat, *utils.PEERS_WITH_A_CHANNEL_ID)
                         ):
                             _allowed_chats.append(peer)
                 else:
                     privacy_rules.append(
-                        raw.types.InputPrivacyValueAllowUsers(users=[raw.types.InputPeerEmpty()])
+                        raw.types.InputPrivacyValueAllowUsers(users=[raw.types.InputUserEmpty()])
                     )
 
                 if _allowed_users:

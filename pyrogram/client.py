@@ -245,6 +245,12 @@ class Client(Methods):
             Set the maximum size of the sticker set name cache.
             Defaults to 250.
 
+        max_min_peer_cache_size (``int``, *optional*):
+            Set the maximum size of the "min" peer cache: users and channels seen in groups and
+            channels without a usable access hash, kept with the messages they were seen in so
+            they can still be resolved.
+            Defaults to 5000.
+
         storage_engine (:obj:`~pyrogram.storage.Storage`, *optional*):
             Pass an instance of your own implementation of session storage engine.
             Useful when you want to store your session in databases like Mongo, Redis, etc.
@@ -311,6 +317,7 @@ class Client(Methods):
     MAX_MESSAGE_CACHE_SIZE = 1000
     MAX_TOPIC_CACHE_SIZE = 1000
     MAX_STICKER_SET_NAME_CACHE_SIZE = 250
+    MAX_MIN_PEER_CACHE_SIZE = 5000
 
     mimetypes = MimeTypes()
     with (Path(__file__).parent / "mime_types.txt").open(encoding="utf-8") as mime_types:
@@ -349,6 +356,7 @@ class Client(Methods):
         max_message_cache_size: int = MAX_MESSAGE_CACHE_SIZE,
         max_topic_cache_size: int = MAX_TOPIC_CACHE_SIZE,
         max_sticker_set_name_cache_size: int = MAX_STICKER_SET_NAME_CACHE_SIZE,
+        max_min_peer_cache_size: int = MAX_MIN_PEER_CACHE_SIZE,
         storage_engine: Storage | None = None,
         client_platform: enums.ClientPlatform = enums.ClientPlatform.OTHER,
         link_preview_options: LinkPreviewOptions | None = None,
@@ -393,6 +401,7 @@ class Client(Methods):
         self.max_message_cache_size = max_message_cache_size
         self.max_topic_cache_size = max_topic_cache_size
         self.max_sticker_set_name_cache_size = max_sticker_set_name_cache_size
+        self.max_min_peer_cache_size = max_min_peer_cache_size
         self.client_platform = client_platform
         self.link_preview_options = link_preview_options
         self.fetch_replies = fetch_replies
@@ -453,6 +462,7 @@ class Client(Methods):
         self.message_cache = utils.Cache(self.max_message_cache_size)
         self.topic_cache = utils.Cache(self.max_topic_cache_size)
         self.sticker_set_name_cache = utils.Cache(self.max_sticker_set_name_cache_size)
+        self.min_peer_cache = utils.MinPeerCache(self.max_min_peer_cache_size)
 
         # Sometimes, for some reason, the server will stop sending updates and will only respond to pings.
         # This watchdog will invoke updates.GetState in order to wake up the server and enable it sending updates again
@@ -506,6 +516,7 @@ class Client(Methods):
         self.message_cache.reset_lock()
         self.topic_cache.reset_lock()
         self.sticker_set_name_cache.reset_lock()
+        self.min_peer_cache.reset_lock()
 
     async def updates_watchdog(self):
         while True:
@@ -937,8 +948,8 @@ class Client(Methods):
                         try:
                             diff = await self.invoke(
                                 raw.functions.updates.GetChannelDifference(
-                                    channel=await self.resolve_peer(
-                                        utils.get_channel_id(channel_id)
+                                    channel=utils.get_input_user_or_channel(
+                                        await self.resolve_peer(utils.get_channel_id(channel_id))
                                     ),
                                     filter=raw.types.ChannelMessagesFilter(
                                         ranges=[

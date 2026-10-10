@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 
 class GetBotInfoDescription:
@@ -55,7 +55,9 @@ class GetBotInfoDescription:
 
         bot_info = await self.invoke(
             raw.functions.bots.GetBotInfo(
-                bot=await self.resolve_peer(for_my_bot) if for_my_bot else None,
+                bot=utils.get_input_user_or_channel(await self.resolve_peer(for_my_bot))
+                if for_my_bot
+                else None,
                 lang_code=language_code,
             )
         )
