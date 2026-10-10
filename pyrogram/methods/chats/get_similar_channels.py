@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 
 class GetSimilarChannels:
@@ -46,8 +46,12 @@ class GetSimilarChannels:
         """
         chat = await self.resolve_peer(chat_id)
 
-        if isinstance(chat, raw.types.InputPeerChannel):
-            r = await self.invoke(raw.functions.channels.GetChannelRecommendations(channel=chat))
+        if isinstance(chat, utils.PEERS_WITH_A_CHANNEL_ID):
+            r = await self.invoke(
+                raw.functions.channels.GetChannelRecommendations(
+                    channel=utils.get_input_user_or_channel(chat)
+                )
+            )
 
             return (
                 types.List([await types.Chat._parse_channel_chat(self, chat) for chat in r.chats])

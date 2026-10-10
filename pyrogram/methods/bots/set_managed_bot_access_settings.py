@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 
 class SetManagedBotAccessSettings:
@@ -53,9 +53,12 @@ class SetManagedBotAccessSettings:
 
         return await self.invoke(
             raw.functions.bots.EditAccessSettings(
-                bot=await self.resolve_peer(user_id),
+                bot=utils.get_input_user_or_channel(await self.resolve_peer(user_id)),
                 restricted=is_access_restricted,
-                add_users=[await self.resolve_peer(i) for i in added_user_ids]
+                add_users=[
+                    utils.get_input_user_or_channel(await self.resolve_peer(i))
+                    for i in added_user_ids
+                ]
                 if added_user_ids is not None
                 else None,
             )

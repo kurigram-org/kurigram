@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 
 class SetChatDiscussionGroup:
@@ -71,7 +71,7 @@ class SetChatDiscussionGroup:
         else:
             channel_peer = await self.resolve_peer(chat_id)
 
-            if not isinstance(channel_peer, raw.types.InputPeerChannel):
+            if not isinstance(channel_peer, utils.PEERS_WITH_A_CHANNEL_ID):
                 raise ValueError(f'The chat_id "{chat_id}" does not belong to a channel')
 
         if discussion_chat_id is None:
@@ -79,7 +79,7 @@ class SetChatDiscussionGroup:
         else:
             discussion_peer = await self.resolve_peer(discussion_chat_id)
 
-            if not isinstance(discussion_peer, raw.types.InputPeerChannel):
+            if not isinstance(discussion_peer, utils.PEERS_WITH_A_CHANNEL_ID):
                 raise ValueError(
                     f'The discussion_chat_id "{discussion_chat_id}" does not belong to a chat'
                 )
@@ -87,7 +87,8 @@ class SetChatDiscussionGroup:
         return bool(
             await self.invoke(
                 raw.functions.channels.SetDiscussionGroup(
-                    broadcast=channel_peer, group=discussion_peer
+                    broadcast=utils.get_input_user_or_channel(channel_peer),
+                    group=utils.get_input_user_or_channel(discussion_peer),
                 )
             )
         )

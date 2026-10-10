@@ -73,7 +73,7 @@ class AddContact:
 
         r = await self.invoke(
             raw.functions.contacts.AddContact(
-                id=await self.resolve_peer(user_id),
+                id=utils.get_input_user_or_channel(await self.resolve_peer(user_id)),
                 first_name=first_name,
                 last_name=last_name,
                 phone=phone_number,

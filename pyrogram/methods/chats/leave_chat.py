@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 
 class LeaveChat:
@@ -48,9 +48,9 @@ class LeaveChat:
         """
         peer = await self.resolve_peer(chat_id)
 
-        if isinstance(peer, raw.types.InputPeerChannel):
+        if isinstance(peer, utils.PEERS_WITH_A_CHANNEL_ID):
             return await self.invoke(
-                raw.functions.channels.LeaveChannel(channel=await self.resolve_peer(chat_id))
+                raw.functions.channels.LeaveChannel(channel=utils.get_input_user_or_channel(peer))
             )
         elif isinstance(peer, raw.types.InputPeerChat):
             r = await self.invoke(

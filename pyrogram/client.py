@@ -937,8 +937,8 @@ class Client(Methods):
                         try:
                             diff = await self.invoke(
                                 raw.functions.updates.GetChannelDifference(
-                                    channel=await self.resolve_peer(
-                                        utils.get_channel_id(channel_id)
+                                    channel=utils.get_input_user_or_channel(
+                                        await self.resolve_peer(utils.get_channel_id(channel_id))
                                     ),
                                     filter=raw.types.ChannelMessagesFilter(
                                         ranges=[

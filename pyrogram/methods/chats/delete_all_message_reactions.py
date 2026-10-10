@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 
 class DeleteAllMessageReactions:
@@ -56,12 +56,12 @@ class DeleteAllMessageReactions:
         if user_id is not None:
             peer = await self.resolve_peer(user_id)
 
-            if not isinstance(peer, (raw.types.InputPeerUser, raw.types.InputPeerSelf)):
+            if not isinstance(peer, (*utils.PEERS_WITH_A_USER_ID, raw.types.InputPeerSelf)):
                 return False
         elif actor_chat_id is not None:
             peer = await self.resolve_peer(actor_chat_id)
 
-            if not isinstance(peer, raw.types.InputPeerChannel):
+            if not isinstance(peer, utils.PEERS_WITH_A_CHANNEL_ID):
                 return False
         else:
             raise ValueError("Invalid user_id or actor_chat_id")

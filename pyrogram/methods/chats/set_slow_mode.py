@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 
 class SetSlowMode:
@@ -51,7 +51,8 @@ class SetSlowMode:
 
         await self.invoke(
             raw.functions.channels.ToggleSlowMode(
-                channel=await self.resolve_peer(chat_id), seconds=seconds or 0
+                channel=utils.get_input_user_or_channel(await self.resolve_peer(chat_id)),
+                seconds=seconds or 0,
             )
         )
 

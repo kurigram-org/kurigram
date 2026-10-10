@@ -56,7 +56,8 @@ class CreateGroup:
 
         r = await self.invoke(
             raw.functions.messages.CreateChat(
-                title=title, users=[await self.resolve_peer(u) for u in users]
+                title=title,
+                users=[utils.get_input_user_or_channel(await self.resolve_peer(u)) for u in users],
             )
         )
 

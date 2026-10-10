@@ -75,7 +75,7 @@ class OpenWebApp:
         r = await self.invoke(
             raw.functions.messages.RequestWebView(
                 peer=await self.resolve_peer(chat_id),
-                bot=await self.resolve_peer(bot_user_id),
+                bot=utils.get_input_user_or_channel(await self.resolve_peer(bot_user_id)),
                 platform=platform.value,
                 from_bot_menu=True if url is None else None,
                 url=url,

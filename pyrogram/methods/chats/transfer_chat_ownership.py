@@ -65,16 +65,16 @@ class TransferChatOwnership:
         peer_channel = await self.resolve_peer(chat_id)
         peer_user = await self.resolve_peer(user_id)
 
-        if not isinstance(peer_channel, raw.types.InputPeerChannel):
+        if not isinstance(peer_channel, utils.PEERS_WITH_A_CHANNEL_ID):
             raise ValueError("The chat_id must belong to a channel/supergroup.")
 
-        if not isinstance(peer_user, raw.types.InputPeerUser):
+        if not isinstance(peer_user, utils.PEERS_WITH_A_USER_ID):
             raise ValueError("The user_id must belong to a user.")
 
         r = await self.invoke(
             raw.functions.messages.EditChatCreator(
                 peer=peer_channel,
-                user_id=peer_user,
+                user_id=utils.get_input_user_or_channel(peer_user),
                 password=utils.compute_password_check(
                     await self.invoke(raw.functions.account.GetPassword()), password
                 ),

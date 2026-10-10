@@ -27,9 +27,21 @@ if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
 
+def _access_hash_in(peers: list[raw.base.User] | list[raw.base.Chat], peer_id: int | None) -> int:
+    """Get the `access_hash` an answer's `users` or `chats` carries for `peer_id`, `0` if none."""
+    for peer in peers:
+        if (
+            isinstance(peer, (raw.types.User, raw.types.Channel, raw.types.ChannelForbidden))
+            and peer.id == peer_id
+        ):
+            return peer.access_hash or 0
+
+    return 0
+
+
 async def get_chunk(
     client: pyrogram.Client,
-    peer: raw.types.InputPeerChannel,
+    peer: raw.types.InputPeerChannel | raw.types.InputPeerChannelFromMessage,
     peer_id: int,
     peer_access_hash: int,
     offset: int = 0,
@@ -109,17 +121,28 @@ class GetChatPhotos:
             peer_access_hash = 0
         else:
             peer_id = utils.get_raw_peer_id(peer)
-            peer_access_hash = peer.access_hash
+            # A `*FromMessage` peer carries none: it is taken from the answers below, whose
+            #  `min` one is still valid for profile photos (https://core.telegram.org/api/min).
+            #  TDLib keeps it the same way, off the answer's own `users`:
+            #  https://github.com/tdlib/td/blob/42e6a5259551178d1dab54a22ad96d14bd906e20/td/telegram/UserManager.cpp#L1521
+            #  Only a photo without a concrete size keeps an id that carries it
+            #  (`ChatPhoto._parse()`), every other one is downloaded by its own `access_hash`.
+            peer_access_hash = getattr(peer, "access_hash", 0)
 
         current = 0
         total = limit or (1 << 31)
         limit = min(100, total)
         offset = 0
 
-        if isinstance(peer, raw.types.InputPeerChannel):
+        if isinstance(peer, utils.PEERS_WITH_A_CHANNEL_ID):
             current_photo = None
 
-            r = await self.invoke(raw.functions.channels.GetFullChannel(channel=peer))
+            r = await self.invoke(
+                raw.functions.channels.GetFullChannel(channel=utils.get_input_user_or_channel(peer))
+            )
+
+            if isinstance(peer, raw.types.InputPeerChannelFromMessage):
+                peer_access_hash = _access_hash_in(r.chats, peer_id)
 
             if not isinstance(r.full_chat.chat_photo, raw.types.PhotoEmpty):
                 current_photo = await types.ChatPhoto._parse(
@@ -170,9 +193,15 @@ class GetChatPhotos:
             while True:
                 r = await self.invoke(
                     raw.functions.photos.GetUserPhotos(
-                        user_id=peer, offset=offset, max_id=0, limit=limit
+                        user_id=utils.get_input_user_or_channel(peer),
+                        offset=offset,
+                        max_id=0,
+                        limit=limit,
                     )
                 )
+
+                if isinstance(peer, raw.types.InputPeerUserFromMessage):
+                    peer_access_hash = _access_hash_in(r.users, peer_id) or peer_access_hash
 
                 photos = [
                     await types.ChatPhoto._parse(

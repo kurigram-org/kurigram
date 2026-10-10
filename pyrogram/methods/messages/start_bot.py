@@ -21,6 +21,7 @@ from __future__ import annotations as _annotations
 import pyrogram
 from pyrogram import raw
 from pyrogram import types
+from pyrogram import utils
 
 
 class StartBot:
@@ -60,7 +61,10 @@ class StartBot:
 
         r = await self.invoke(
             raw.functions.messages.StartBot(
-                bot=peer, peer=peer, random_id=self.rnd_id(), start_param=param
+                bot=utils.get_input_user_or_channel(peer),
+                peer=peer,
+                random_id=self.rnd_id(),
+                start_param=param,
             )
         )
 
