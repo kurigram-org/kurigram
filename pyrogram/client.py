@@ -964,7 +964,11 @@ class Client(Methods):
                                 users.update({u.id: u for u in diff.users})
                                 chats.update({c.id: c for c in diff.chats})
 
-                self.dispatcher.updates_queue.put_nowait((update, users, chats))
+                self.dispatcher.enqueue(
+                    update,
+                    users=users,
+                    chats=chats,
+                )
 
             await self.storage.set_update_state(
                 UpdateState(0, None, None, updates.date, updates.seq)
@@ -984,20 +988,28 @@ class Client(Methods):
             chats = {c.id: c for c in diff.chats}
 
             for message in diff.new_messages:
-                self.dispatcher.updates_queue.put_nowait(
-                    (
-                        raw.types.UpdateNewMessage(
-                            message=message, pts=updates.pts, pts_count=updates.pts_count
-                        ),
-                        users,
-                        chats,
-                    )
+                self.dispatcher.enqueue(
+                    raw.types.UpdateNewMessage(
+                        message=message,
+                        pts=updates.pts,
+                        pts_count=updates.pts_count,
+                    ),
+                    users=users,
+                    chats=chats,
                 )
 
             for update in diff.other_updates:
-                self.dispatcher.updates_queue.put_nowait((update, users, chats))
+                self.dispatcher.enqueue(
+                    update,
+                    users=users,
+                    chats=chats,
+                )
         elif isinstance(updates, raw.types.UpdateShort):
-            self.dispatcher.updates_queue.put_nowait((updates.update, {}, {}))
+            self.dispatcher.enqueue(
+                updates.update,
+                users={},
+                chats={},
+            )
         elif isinstance(updates, raw.types.UpdatesTooLong):
             log.info(updates)
 

@@ -29,21 +29,30 @@ from __future__ import annotations as _annotations
 import asyncio
 import sys
 import threading
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Any, Final, Protocol
 
 import pytest
 
 from pyrogram import Client, raw
-from pyrogram.handlers import MessageHandler, RawUpdateHandler
+from pyrogram.handlers import MessageHandler, RawUpdateHandler, StartHandler
+from pyrogram.storage import UpdateState
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import AsyncGenerator, Iterator
 
     from pyrogram.handlers.handler import Handler
     from pyrogram.types import Message
 
 _REGISTERING_THREADS: Final[int] = 2
 _HANDLERS_PER_THREAD: Final[int] = 500
+_UPDATES_SENT: Final[int] = 3
+
+# `UpdateShort` reaches the queue without touching storage, and no parser claims the
+#  inner update, so a worker hands it to a raw handler untouched.
+_UNPARSED_UPDATE: Final[raw.types.UpdateShort] = raw.types.UpdateShort(
+    update=raw.types.UpdateDcOptions(dc_options=[]),
+    date=0,
+)
 
 
 # The dispatcher calls a handler callback positionally.
@@ -163,6 +172,234 @@ async def test_start_rebuilds_the_queue_for_the_loop_about_to_read_it(
     await dispatcher.start()
 
     assert dispatcher.updates_queue is not built_by_the_constructor
+
+
+async def test_an_update_is_dropped_while_no_worker_runs(client: Client) -> None:
+    """A client that only called `connect()`: nothing drains the queue, so nothing enters it."""
+    for _ in range(_UPDATES_SENT):
+        await client.handle_updates(_UNPARSED_UPDATE)
+
+    assert client.dispatcher.updates_queue.qsize() == 0
+
+
+async def test_a_started_dispatcher_delivers_every_update(client: Client) -> None:
+    fired: list[int] = []
+    client.add_handler(_recording_handler(0, fired=fired))
+
+    await client.dispatcher.start()
+
+    for _ in range(_UPDATES_SENT):
+        await client.handle_updates(_UNPARSED_UPDATE)
+
+    await client.dispatcher.stop()
+
+    assert fired == [0] * _UPDATES_SENT
+
+
+async def test_an_update_after_stop_is_dropped(client: Client) -> None:
+    await client.dispatcher.start()
+    await client.dispatcher.stop(clear_handlers=False)
+
+    await client.handle_updates(_UNPARSED_UPDATE)
+
+    assert client.dispatcher.updates_queue.qsize() == 0
+
+
+async def test_an_update_during_the_start_callback_is_delivered(client: Client) -> None:
+    """The network delivers while `start_handler` runs; the workers start only after it."""
+    fired: list[int] = []
+    client.add_handler(_recording_handler(0, fired=fired))
+
+    async def receive(client: Client, /) -> None:
+        await client.handle_updates(_UNPARSED_UPDATE)
+
+    client.add_handler(StartHandler(receive))
+
+    await client.dispatcher.start()
+    await client.dispatcher.stop()
+
+    assert fired == [0]
+
+
+async def test_an_update_while_stop_is_pending_is_dropped(client: Client) -> None:
+    handling = asyncio.Event()
+    released = asyncio.Event()
+
+    async def hold(
+        client: Client,
+        update: raw.base.Update,
+        users: dict[int, raw.base.User],
+        chats: dict[int, raw.base.Chat],
+        /,
+    ) -> None:
+        handling.set()
+        await released.wait()
+
+    client.add_handler(RawUpdateHandler(hold))
+
+    await client.dispatcher.start()
+    await client.handle_updates(_UNPARSED_UPDATE)
+    await handling.wait()
+
+    # One yield lets `stop()` queue its sentinels while every worker is still busy.
+    stopping = asyncio.create_task(client.dispatcher.stop(clear_handlers=False))
+    await asyncio.sleep(0)
+
+    await client.handle_updates(_UNPARSED_UPDATE)
+    released.set()
+    await stopping
+
+    assert client.dispatcher.updates_queue.qsize() == 0
+
+
+async def test_a_restart_keeping_handlers_runs_only_the_new_workers(client: Client) -> None:
+    fired: list[int] = []
+    client.add_handler(_recording_handler(0, fired=fired))
+
+    await client.dispatcher.start()
+    await client.dispatcher.stop(clear_handlers=False)
+
+    assert client.dispatcher.handler_worker_tasks == []
+
+    await client.dispatcher.start()
+    await client.handle_updates(_UNPARSED_UPDATE)
+    await client.dispatcher.stop(clear_handlers=False)
+
+    assert client.dispatcher.handler_worker_tasks == []
+    assert fired == [0]
+
+
+async def test_a_started_client_without_updates_queues_nothing(
+    client_without_updates: Client,
+) -> None:
+    """`start()` spawns no worker under `no_updates`, so admission stays closed."""
+    await client_without_updates.dispatcher.start()
+
+    await client_without_updates.handle_updates(_UNPARSED_UPDATE)
+
+    assert client_without_updates.dispatcher.updates_queue.qsize() == 0
+
+
+class _Route(Protocol):
+    """Feeds the client one way an update reaches `Dispatcher.enqueue()`."""
+
+    async def __call__(self, client: Client, /) -> None: ...
+
+
+# Answers every `GetDifference` with one message and one other update, so a route
+#  through a difference reaches both of its `enqueue()` calls.
+_DIFFERENCE: Final[raw.types.updates.Difference] = raw.types.updates.Difference(
+    new_messages=[raw.types.MessageEmpty(id=1)],
+    new_encrypted_messages=[],
+    other_updates=[raw.types.UpdateDcOptions(dc_options=[])],
+    chats=[],
+    users=[],
+    state=raw.types.updates.State(
+        pts=2,
+        qts=0,
+        date=1,
+        seq=1,
+        unread_count=0,
+    ),
+)
+
+
+async def _answer_with_difference(query: raw.core.TLObject, /) -> raw.types.updates.Difference:
+    return _DIFFERENCE
+
+
+async def _send_updates_container(client: Client, /) -> None:
+    updates = raw.types.Updates(
+        updates=[raw.types.UpdateDcOptions(dc_options=[])],
+        users=[],
+        chats=[],
+        date=1,
+        seq=1,
+    )
+    await client.handle_updates(updates)
+
+
+async def _send_short_message(client: Client, /) -> None:
+    short_message = raw.types.UpdateShortMessage(
+        id=1,
+        user_id=1,
+        message="",
+        pts=2,
+        pts_count=1,
+        date=1,
+    )
+    await client.handle_updates(short_message)
+
+
+async def _recover_a_gap(client: Client, /) -> None:
+    await client.storage.set_update_state(UpdateState(0, 1, None, 1, 1))
+    await client.recover_gaps()
+
+
+_ROUTES: Final[tuple[Any, ...]] = (
+    pytest.param(_send_updates_container, ["UpdateDcOptions"], id="updates-container"),
+    pytest.param(
+        _send_short_message,
+        ["UpdateDcOptions", "UpdateNewMessage"],
+        id="short-message-difference",
+    ),
+    pytest.param(
+        _recover_a_gap,
+        ["UpdateDcOptions", "UpdateNewMessage"],
+        id="recovered-difference",
+    ),
+)
+
+
+@pytest.fixture
+async def client_with_storage(
+    client: Client,
+    monkeypatch: pytest.MonkeyPatch,
+) -> AsyncGenerator[Client]:
+    """Peers and update states are written on every route, and `invoke` stays offline."""
+    monkeypatch.setattr(client, "invoke", _answer_with_difference)
+    await client.storage.open()
+
+    yield client
+
+    await client.storage.close()
+
+
+@pytest.mark.parametrize(("route", "delivered"), _ROUTES)
+async def test_every_route_drops_while_no_worker_runs(
+    client_with_storage: Client,
+    route: _Route,
+    delivered: list[str],
+) -> None:
+    await route(client_with_storage)
+
+    assert client_with_storage.dispatcher.updates_queue.qsize() == 0
+
+
+@pytest.mark.parametrize(("route", "delivered"), _ROUTES)
+async def test_every_route_delivers_once_started(
+    client_with_storage: Client,
+    route: _Route,
+    delivered: list[str],
+) -> None:
+    received: list[str] = []
+
+    async def record(
+        client: Client,
+        update: raw.base.Update,
+        users: dict[int, raw.base.User],
+        chats: dict[int, raw.base.Chat],
+        /,
+    ) -> None:
+        received.append(type(update).__name__)
+
+    client_with_storage.add_handler(RawUpdateHandler(record))
+
+    await client_with_storage.dispatcher.start()
+    await route(client_with_storage)
+    await client_with_storage.dispatcher.stop()
+
+    assert sorted(received) == delivered
 
 
 @pytest.fixture
