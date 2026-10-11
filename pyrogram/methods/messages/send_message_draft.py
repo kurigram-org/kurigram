@@ -80,7 +80,7 @@ class SendMessageDraft:
             .. code-block:: python
 
 
-                text = "Hello! I'm your Pyrogram bot! How can I help you?"
+                text = "Hello! I'm your Kurigram bot! How can I help you?"
                 words = text.split()
                 draft_id = app.rnd_id()
 

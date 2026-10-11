@@ -70,7 +70,7 @@ class SendRichMessageDraft:
             .. code-block:: python
 
 
-                text = "Hello! I'm your <b>Pyrogram bot</b>! How can I help you?"
+                text = "Hello! I'm your <b>Kurigram bot</b>! How can I help you?"
                 words = text.split()
                 draft_id = app.rnd_id()
 

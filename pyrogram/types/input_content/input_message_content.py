@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 class InputMessageContent(Object):
     """Content of a message to be sent as a result of an inline query.
 
-    Pyrogram currently supports the following types:
+    Kurigram currently supports the following types:
 
     - :obj:`~pyrogram.types.InputTextMessageContent`
     - :obj:`~pyrogram.types.InputRichMessageContent`

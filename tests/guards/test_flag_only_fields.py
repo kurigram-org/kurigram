@@ -40,7 +40,7 @@ from dataclasses import dataclass
 from typing import Final, TYPE_CHECKING
 
 from compiler.api.compiler import ARGS_RE, COMBINATOR_RE, SECTION_RE, camel
-from tests.guards.name_resolution import REPOSITORY_ROOT, hand_written_files
+from tests.guards.name_resolution import REPOSITORY_ROOT, hand_written_files, source_of
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -281,7 +281,7 @@ def test_no_module_binds_the_raw_namespace_under_another_name() -> None:
     bound = [
         f"{path.relative_to(REPOSITORY_ROOT).as_posix()}: {name}"
         for path in hand_written_files()
-        for name in raw_bound_under_another_name(ast.parse(path.read_text()))
+        for name in raw_bound_under_another_name(ast.parse(source_of(path)))
     ]
 
     assert bound == []

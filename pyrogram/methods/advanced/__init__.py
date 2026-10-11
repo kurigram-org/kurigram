@@ -16,11 +16,12 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from .get_app_config import GetAppConfig
 from .invoke import Invoke
 from .recover_gaps import RecoverGaps
 from .resolve_peer import ResolvePeer
 from .save_file import SaveFile
 
 
-class Advanced(Invoke, RecoverGaps, ResolvePeer, SaveFile):
+class Advanced(GetAppConfig, Invoke, RecoverGaps, ResolvePeer, SaveFile):
     pass
