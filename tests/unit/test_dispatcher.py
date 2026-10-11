@@ -252,6 +252,34 @@ async def test_an_update_while_stop_is_pending_is_dropped(client: Client) -> Non
     assert client.dispatcher.updates_queue.qsize() == 0
 
 
+async def test_a_restart_keeping_handlers_runs_only_the_new_workers(client: Client) -> None:
+    fired: list[int] = []
+    client.add_handler(_recording_handler(0, fired=fired))
+
+    await client.dispatcher.start()
+    await client.dispatcher.stop(clear_handlers=False)
+
+    assert client.dispatcher.handler_worker_tasks == []
+
+    await client.dispatcher.start()
+    await client.handle_updates(_UNPARSED_UPDATE)
+    await client.dispatcher.stop(clear_handlers=False)
+
+    assert client.dispatcher.handler_worker_tasks == []
+    assert fired == [0]
+
+
+async def test_a_started_client_without_updates_queues_nothing(
+    client_without_updates: Client,
+) -> None:
+    """`start()` spawns no worker under `no_updates`, so admission stays closed."""
+    await client_without_updates.dispatcher.start()
+
+    await client_without_updates.handle_updates(_UNPARSED_UPDATE)
+
+    assert client_without_updates.dispatcher.updates_queue.qsize() == 0
+
+
 class _Route(Protocol):
     """Feeds the client one way an update reaches `Dispatcher.enqueue()`."""
 
