@@ -34,7 +34,7 @@ from typing import TYPE_CHECKING, Any, Final
 import pytest
 
 from pyrogram import Client, raw
-from pyrogram.handlers import MessageHandler, RawUpdateHandler
+from pyrogram.handlers import MessageHandler, RawUpdateHandler, StartHandler
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -200,6 +200,53 @@ async def test_an_update_after_stop_is_dropped(client: Client) -> None:
     await client.dispatcher.stop(clear_handlers=False)
 
     await client.handle_updates(_UNPARSED_UPDATE)
+
+    assert client.dispatcher.updates_queue.qsize() == 0
+
+
+async def test_an_update_during_the_start_callback_is_delivered(client: Client) -> None:
+    """The network delivers while `start_handler` runs; the workers start only after it."""
+    fired: list[int] = []
+    client.add_handler(_recording_handler(0, fired=fired))
+
+    async def receive(client: Client, /) -> None:
+        await client.handle_updates(_UNPARSED_UPDATE)
+
+    client.add_handler(StartHandler(receive))
+
+    await client.dispatcher.start()
+    await client.dispatcher.stop()
+
+    assert fired == [0]
+
+
+async def test_an_update_while_stop_is_pending_is_dropped(client: Client) -> None:
+    handling = asyncio.Event()
+    released = asyncio.Event()
+
+    async def hold(
+        client: Client,
+        update: raw.base.Update,
+        users: dict[int, raw.base.User],
+        chats: dict[int, raw.base.Chat],
+        /,
+    ) -> None:
+        handling.set()
+        await released.wait()
+
+    client.add_handler(RawUpdateHandler(hold))
+
+    await client.dispatcher.start()
+    await client.handle_updates(_UNPARSED_UPDATE)
+    await handling.wait()
+
+    # One yield lets `stop()` queue its sentinels while every worker is still busy.
+    stopping = asyncio.create_task(client.dispatcher.stop(clear_handlers=False))
+    await asyncio.sleep(0)
+
+    await client.handle_updates(_UNPARSED_UPDATE)
+    released.set()
+    await stopping
 
     assert client.dispatcher.updates_queue.qsize() == 0
 

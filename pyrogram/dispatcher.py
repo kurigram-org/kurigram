@@ -157,6 +157,8 @@ class Dispatcher:
         #  not exist yet.
         self._groups_lock = threading.Lock()
 
+        self._accepting_updates: bool = False
+
         async def message_parser(update, users, chats):
             return (
                 await pyrogram.types.Message._parse(
@@ -370,6 +372,10 @@ class Dispatcher:
     async def start(self):
         self._rebuild_loop_bound_state()
 
+        # Open before `start_handler`, not when the workers exist: an update arriving while it
+        #  runs is delivered once they start, and its `pts` is already saved by then.
+        self._accepting_updates = not self.client.no_updates
+
         if callable(self.client.start_handler):
             try:
                 await self.client.start_handler(self.client)
@@ -393,15 +399,17 @@ class Dispatcher:
                 log.exception(e)
 
         if not self.client.no_updates:
-            # Emptied before the sentinels go in, so `enqueue` drops what arrives from here on
+            # Closed before the sentinels go in, so `enqueue` drops what arrives from here on
             #  instead of queueing it behind them for no worker.
-            handler_worker_tasks, self.handler_worker_tasks = self.handler_worker_tasks, []
+            self._accepting_updates = False
 
             for _ in range(self.client.workers):
                 self.updates_queue.put_nowait(None)
 
-            for handler_worker_task in handler_worker_tasks:
+            for handler_worker_task in self.handler_worker_tasks:
                 await handler_worker_task
+
+            self.handler_worker_tasks.clear()
 
             if clear_handlers:
                 with self._groups_lock:
@@ -419,7 +427,7 @@ class Dispatcher:
         # Only `start()` spawns the workers that drain the queue, so a client that only called
         #  `connect()` queued every update forever. Nothing is lost by dropping: `start()`
         #  replaces the queue, so a packet put before it never reached a worker either.
-        if not self.handler_worker_tasks:
+        if not self._accepting_updates:
             return
 
         self.updates_queue.put_nowait((update, users, chats))
