@@ -76,7 +76,7 @@ class ChatPhotoSticker(Object):
                 return ChatPhotoSticker(
                     type=enums.ChatPhotoStickerType.REGULAR_OR_MASK,
                     set_name=await types.Sticker._get_sticker_set_name(
-                        client.invoke, (sticker_set.id, sticker_set.access_hash)
+                        client, (sticker_set.id, sticker_set.access_hash)
                     ),
                     sticker_id=video_size.sticker_id,
                 )
