@@ -38,7 +38,7 @@ from pyrogram import raw, types
 from pyrogram.errors import PeerIdInvalid
 
 from . import utils
-from .entities import EntitySpec, Insertion, spec_for_tag, spec_for_type
+from .entities import EntitySpec, Insertion, InsertionKind, spec_for_tag, spec_for_type
 
 
 @dataclass(frozen=True, slots=True)
@@ -353,6 +353,7 @@ class HTML:
                 Insertion(
                     text=spec.html_open(entity),
                     offset=entity.offset,
+                    kind=InsertionKind.OPEN,
                 )
             )
 
@@ -365,6 +366,7 @@ class HTML:
                 Insertion(
                     text=spec.html_close(entity),
                     offset=end,
+                    kind=InsertionKind.CLOSE,
                 )
             )
 

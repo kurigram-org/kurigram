@@ -18,6 +18,8 @@
 
 from __future__ import annotations as _annotations
 
+from typing import Final
+
 import pytest
 
 import pyrogram
@@ -102,6 +104,28 @@ def test_markdown_unparse_url() -> None:
     assert Markdown.unparse(text=text, entities=entities) == expected
 
 
+def test_markdown_unparse_url_left_empty() -> None:
+    # `MessageEntity.url` is optional, and `HTML.unparse` writes an empty `href` for it.
+    expected: str = "[URL]()"
+    text: str = "URL"
+    entities = pyrogram.types.List(
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.TEXT_LINK,
+                offset=0,
+                length=3,
+            )
+        ]
+    )
+
+    markup: str = Markdown.unparse(
+        text=text,
+        entities=entities,
+    )
+
+    assert markup == expected
+
+
 def test_markdown_unparse_emoji() -> None:
     expected: str = "![🥲](tg://emoji?id=5195264424893488796) im crying"
     text: str = "🥲 im crying"
@@ -175,9 +199,38 @@ def test_markdown_unparse_blockquote() -> None:
     assert Markdown.unparse(text=text, entities=entities) == expected
 
 
+def test_markdown_unparse_marks_every_fence_line_inside_a_quote() -> None:
+    expected: str = "> ```\n> a\n> b\n> ```\nc"
+
+    text: str = "a\nb\nc"
+
+    entities = pyrogram.types.List(
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=0,
+                length=3,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.PRE,
+                offset=0,
+                length=3,
+                language="",
+            ),
+        ]
+    )
+
+    markup: str = Markdown.unparse(
+        text=text,
+        entities=entities,
+    )
+
+    assert markup == expected
+
+
 def test_markdown_unparse_mixed() -> None:
     expected: str = (
-        "**aaaaaaa__aaabbb**__~~dddddddd||ddeee~~||||eeeeeeefff||ffff`fffggggggg`ggghhhhhhhhhh"
+        "**aaaaaaa__aaabbb__**~~dddddddd||ddeee||~~||eeeeeeefff||ffff`fffggggggg`ggghhhhhhhhhh"
     )
     text: str = "aaaaaaaaaabbbddddddddddeeeeeeeeeeffffffffffgggggggggghhhhhhhhhh"
     entities = pyrogram.types.List(
@@ -204,6 +257,32 @@ def test_markdown_unparse_mixed() -> None:
     )
 
     assert Markdown.unparse(text=text, entities=entities) == expected
+
+
+def test_markdown_unparse_closes_entities_on_one_span_inner_first() -> None:
+    expected: str = "**__ab__**"
+    text: str = "ab"
+    entities = pyrogram.types.List(
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=0,
+                length=2,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.ITALIC,
+                offset=0,
+                length=2,
+            ),
+        ]
+    )
+
+    markup: str = Markdown.unparse(
+        text=text,
+        entities=entities,
+    )
+
+    assert markup == expected
 
 
 def test_markdown_unparse_no_entities() -> None:
@@ -432,6 +511,1305 @@ async def test_markdown_parse_unterminated_expandable_quote_runs_to_the_end() ->
     parsed = await Markdown(None).parse("**> a\nplain\nmore")
 
     assert parsed["message"] == "a\nplain\nmore"
+    assert [repr(entity) for entity in parsed["entities"]] == [repr(expected)]
+
+
+# The round-trip corpus: texts where `unparse` then `parse` must give back the
+#  same text and the same entity list, because `message.text.markdown` re-sent
+#  with `ParseMode.MARKDOWN` is supposed to be the identity. Parsing runs with
+#  `strict=True`, which is what `ParseMode.MARKDOWN` passes; the non-strict mode
+#  also reads HTML tags, so a literal `<b>` cannot round-trip there by design.
+#  Passing cases stay in the table as regressions.
+_UNWRITABLE_IN_FIXED_WIDTH: Final[pytest.MarkDecorator] = pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "with fixed delimiters, a backtick inside code or ``` inside pre cannot be"
+        " written: no backslash escapes the closing backtick of a run"
+    ),
+)
+
+_ROUND_TRIP_CORPUS: Final[tuple[pytest.ParameterSet, ...]] = (
+    # Literal markdown in plain text: nothing here is an entity, so nothing may
+    #  come back as one.
+    pytest.param(
+        "**not bold**",
+        [],
+        [],
+        id="literal-bold-in-plain-text",
+    ),
+    pytest.param(
+        r"a\*b",
+        [],
+        [],
+        id="literal-backslash-in-plain-text",
+    ),
+    pytest.param(
+        "`code`",
+        [],
+        [],
+        id="literal-backtick-in-plain-text",
+    ),
+    pytest.param(
+        "[click](https://example.com)",
+        [],
+        [],
+        id="literal-link-in-plain-text",
+    ),
+    pytest.param(
+        "> not a quote",
+        [],
+        [],
+        id="literal-quote-marker-in-plain-text",
+    ),
+    pytest.param(
+        "a\n> b",
+        [],
+        [],
+        id="literal-quote-marker-on-a-later-line",
+    ),
+    pytest.param(
+        "snake_case, 5 > 3, a-b, x|y, ~z",
+        [],
+        [],
+        id="single-specials-stay-plain",
+    ),
+    pytest.param(
+        "<b>not bold</b>",
+        [],
+        [],
+        id="html-tag-stays-text-in-strict",
+    ),
+    # Literal markdown characters inside an entity.
+    pytest.param(
+        "a**b",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=0,
+                length=4,
+            )
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBold(
+                offset=0,
+                length=4,
+            )
+        ],
+        id="stars-inside-bold",
+    ),
+    pytest.param(
+        "__init__",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=0,
+                length=8,
+            )
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBold(
+                offset=0,
+                length=8,
+            )
+        ],
+        id="dunder-inside-bold",
+    ),
+    pytest.param(
+        "a||b||c",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=0,
+                length=7,
+            )
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBold(
+                offset=0,
+                length=7,
+            )
+        ],
+        id="delimiter-pair-inside-bold",
+    ),
+    pytest.param(
+        "a`b",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.CODE,
+                offset=0,
+                length=3,
+            )
+        ],
+        [
+            pyrogram.raw.types.MessageEntityCode(
+                offset=0,
+                length=3,
+            )
+        ],
+        id="backtick-inside-code",
+        marks=_UNWRITABLE_IN_FIXED_WIDTH,
+    ),
+    pytest.param(
+        r"a\*b",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.CODE,
+                offset=0,
+                length=4,
+            )
+        ],
+        [
+            pyrogram.raw.types.MessageEntityCode(
+                offset=0,
+                length=4,
+            )
+        ],
+        id="backslash-inside-code",
+    ),
+    pytest.param(
+        "[x](y)",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.CODE,
+                offset=0,
+                length=6,
+            )
+        ],
+        [
+            pyrogram.raw.types.MessageEntityCode(
+                offset=0,
+                length=6,
+            )
+        ],
+        id="link-syntax-inside-code",
+    ),
+    pytest.param(
+        "a```b",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.PRE,
+                offset=0,
+                length=5,
+                language="",
+            )
+        ],
+        [
+            pyrogram.raw.types.MessageEntityPre(
+                offset=0,
+                length=5,
+                language="",
+            )
+        ],
+        id="fence-inside-pre",
+        marks=_UNWRITABLE_IN_FIXED_WIDTH,
+    ),
+    pytest.param(
+        "a\n> b",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.PRE,
+                offset=0,
+                length=5,
+                language="",
+            )
+        ],
+        [
+            pyrogram.raw.types.MessageEntityPre(
+                offset=0,
+                length=5,
+                language="",
+            )
+        ],
+        id="quote-marker-line-inside-pre",
+    ),
+    pytest.param(
+        "a*",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=0,
+                length=2,
+            )
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBold(
+                offset=0,
+                length=2,
+            )
+        ],
+        id="star-touching-bold-close",
+    ),
+    pytest.param(
+        "> a",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=0,
+                length=3,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBold(
+                offset=0,
+                length=3,
+            ),
+        ],
+        id="quote-marker-at-the-start-of-bold",
+    ),
+    pytest.param(
+        "a\n> b",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=2,
+                length=3,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBold(
+                offset=2,
+                length=3,
+            ),
+        ],
+        id="quote-marker-at-the-start-of-bold-on-a-later-line",
+    ),
+    pytest.param(
+        r"a\-",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.UNDERLINE,
+                offset=0,
+                length=3,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityUnderline(
+                offset=0,
+                length=3,
+            ),
+        ],
+        id="escaped-backslash-touching-underline-close",
+    ),
+    pytest.param(
+        "a--",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.UNDERLINE,
+                offset=0,
+                length=3,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityUnderline(
+                offset=0,
+                length=3,
+            ),
+        ],
+        id="run-of-dashes-touching-underline-close",
+    ),
+    # Nested entities.
+    pytest.param(
+        "bold italic",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.ITALIC,
+                offset=0,
+                length=11,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=0,
+                length=4,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityItalic(
+                offset=0,
+                length=11,
+            ),
+            pyrogram.raw.types.MessageEntityBold(
+                offset=0,
+                length=4,
+            ),
+        ],
+        id="bold-inside-italic",
+    ),
+    pytest.param(
+        "code",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.TEXT_LINK,
+                offset=0,
+                length=4,
+                url="https://example.com/",
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.CODE,
+                offset=0,
+                length=4,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityTextUrl(
+                offset=0,
+                length=4,
+                url="https://example.com/",
+            ),
+            pyrogram.raw.types.MessageEntityCode(
+                offset=0,
+                length=4,
+            ),
+        ],
+        id="code-as-link-text",
+    ),
+    pytest.param(
+        "code x",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.CODE,
+                offset=0,
+                length=4,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.TEXT_LINK,
+                offset=0,
+                length=6,
+                url="https://example.com/",
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityTextUrl(
+                offset=0,
+                length=6,
+                url="https://example.com/",
+            ),
+            pyrogram.raw.types.MessageEntityCode(
+                offset=0,
+                length=4,
+            ),
+        ],
+        id="code-at-the-start-of-a-longer-link",
+    ),
+    pytest.param(
+        "x code",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.CODE,
+                offset=2,
+                length=4,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.TEXT_LINK,
+                offset=0,
+                length=6,
+                url="https://example.com/",
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityTextUrl(
+                offset=0,
+                length=6,
+                url="https://example.com/",
+            ),
+            pyrogram.raw.types.MessageEntityCode(
+                offset=2,
+                length=4,
+            ),
+        ],
+        id="code-at-the-end-of-a-longer-link",
+    ),
+    # Listed shorter first, so only the length nests them: by arrival order the bold
+    #  opens outside the link and closes inside it.
+    pytest.param(
+        "ab",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=0,
+                length=1,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.TEXT_LINK,
+                offset=0,
+                length=2,
+                url="https://example.com/",
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityTextUrl(
+                offset=0,
+                length=2,
+                url="https://example.com/",
+            ),
+            pyrogram.raw.types.MessageEntityBold(
+                offset=0,
+                length=1,
+            ),
+        ],
+        id="bold-at-the-start-of-a-longer-link",
+    ),
+    pytest.param(
+        "ab",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.TEXT_LINK,
+                offset=1,
+                length=1,
+                url="https://example.com/",
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=0,
+                length=2,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBold(
+                offset=0,
+                length=2,
+            ),
+            pyrogram.raw.types.MessageEntityTextUrl(
+                offset=1,
+                length=1,
+                url="https://example.com/",
+            ),
+        ],
+        id="link-at-the-end-of-a-longer-bold",
+    ),
+    pytest.param(
+        "list[int]",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.TEXT_LINK,
+                offset=0,
+                length=9,
+                url="https://example.com/",
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.CODE,
+                offset=0,
+                length=9,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityTextUrl(
+                offset=0,
+                length=9,
+                url="https://example.com/",
+            ),
+            pyrogram.raw.types.MessageEntityCode(
+                offset=0,
+                length=9,
+            ),
+        ],
+        id="code-with-brackets-as-link-text",
+    ),
+    pytest.param(
+        "code",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.CODE,
+                offset=0,
+                length=4,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.TEXT_LINK,
+                offset=0,
+                length=4,
+                url="https://example.com/",
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityTextUrl(
+                offset=0,
+                length=4,
+                url="https://example.com/",
+            ),
+            pyrogram.raw.types.MessageEntityCode(
+                offset=0,
+                length=4,
+            ),
+        ],
+        id="code-listed-before-a-link-on-one-span",
+    ),
+    pytest.param(
+        "code",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.CODE,
+                offset=0,
+                length=4,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=0,
+                length=4,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBold(
+                offset=0,
+                length=4,
+            ),
+            pyrogram.raw.types.MessageEntityCode(
+                offset=0,
+                length=4,
+            ),
+        ],
+        id="code-listed-before-bold-on-one-span",
+    ),
+    pytest.param(
+        "a[ b",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.CODE,
+                offset=0,
+                length=2,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.TEXT_LINK,
+                offset=3,
+                length=1,
+                url="https://example.com/",
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityCode(
+                offset=0,
+                length=2,
+            ),
+            pyrogram.raw.types.MessageEntityTextUrl(
+                offset=3,
+                length=1,
+                url="https://example.com/",
+            ),
+        ],
+        id="bracket-in-code-before-a-link",
+    ),
+    pytest.param(
+        "quote",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=0,
+                length=5,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=0,
+                length=5,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBlockquote(
+                offset=0,
+                length=5,
+                collapsed=False,
+            ),
+            pyrogram.raw.types.MessageEntityBold(
+                offset=0,
+                length=5,
+            ),
+        ],
+        id="bold-inside-blockquote",
+    ),
+    pytest.param(
+        "a\nb",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=0,
+                length=3,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=0,
+                length=3,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBlockquote(
+                offset=0,
+                length=3,
+                collapsed=False,
+            ),
+            pyrogram.raw.types.MessageEntityBold(
+                offset=0,
+                length=3,
+            ),
+        ],
+        id="bold-across-quote-lines",
+    ),
+    pytest.param(
+        "a\nb",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=0,
+                length=3,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=0,
+                length=2,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBlockquote(
+                offset=0,
+                length=3,
+                collapsed=False,
+            ),
+            pyrogram.raw.types.MessageEntityBold(
+                offset=0,
+                length=2,
+            ),
+        ],
+        id="bold-closing-at-a-quote-line-start",
+    ),
+    pytest.param(
+        "x\na\n> b",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=0,
+                length=7,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.PRE,
+                offset=2,
+                length=5,
+                language="",
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBlockquote(
+                offset=0,
+                length=7,
+                collapsed=False,
+            ),
+            pyrogram.raw.types.MessageEntityPre(
+                offset=2,
+                length=5,
+                language="",
+            ),
+        ],
+        id="fence-inside-a-quote",
+    ),
+    pytest.param(
+        "a\nb\nc",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=0,
+                length=3,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.PRE,
+                offset=0,
+                length=3,
+                language="",
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBlockquote(
+                offset=0,
+                length=3,
+                collapsed=False,
+            ),
+            pyrogram.raw.types.MessageEntityPre(
+                offset=0,
+                length=3,
+                language="",
+            ),
+        ],
+        id="fence-filling-a-quote",
+    ),
+    pytest.param(
+        "q",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=0,
+                length=1,
+                expandable=True,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=0,
+                length=1,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBlockquote(
+                offset=0,
+                length=1,
+                collapsed=True,
+            ),
+            pyrogram.raw.types.MessageEntityBold(
+                offset=0,
+                length=1,
+            ),
+        ],
+        id="bold-inside-expandable-quote",
+    ),
+    pytest.param(
+        "q",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=0,
+                length=1,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=0,
+                length=1,
+                expandable=True,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBlockquote(
+                offset=0,
+                length=1,
+                collapsed=True,
+            ),
+            pyrogram.raw.types.MessageEntityBold(
+                offset=0,
+                length=1,
+            ),
+        ],
+        id="bold-then-expandable-quote-on-one-span",
+    ),
+    pytest.param(
+        "a\nq",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=0,
+                length=3,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=2,
+                length=1,
+                expandable=True,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBold(
+                offset=0,
+                length=3,
+            ),
+            pyrogram.raw.types.MessageEntityBlockquote(
+                offset=2,
+                length=1,
+                collapsed=True,
+            ),
+        ],
+        id="bold-ending-with-an-expandable-quote",
+    ),
+    pytest.param(
+        "a\nb",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=0,
+                length=3,
+                expandable=True,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.SPOILER,
+                offset=0,
+                length=1,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBlockquote(
+                offset=0,
+                length=3,
+                collapsed=True,
+            ),
+            pyrogram.raw.types.MessageEntitySpoiler(
+                offset=0,
+                length=1,
+            ),
+        ],
+        id="spoiler-ending-a-line-of-an-expandable-quote",
+    ),
+    pytest.param(
+        "a\nb\nc",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=0,
+                length=5,
+                expandable=True,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.SPOILER,
+                offset=0,
+                length=3,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBlockquote(
+                offset=0,
+                length=5,
+                collapsed=True,
+            ),
+            pyrogram.raw.types.MessageEntitySpoiler(
+                offset=0,
+                length=3,
+            ),
+        ],
+        id="spoiler-across-lines-of-an-expandable-quote",
+    ),
+    pytest.param(
+        "a\nb",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.SPOILER,
+                offset=0,
+                length=3,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=2,
+                length=1,
+                expandable=True,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntitySpoiler(
+                offset=0,
+                length=3,
+            ),
+            pyrogram.raw.types.MessageEntityBlockquote(
+                offset=2,
+                length=1,
+                collapsed=True,
+            ),
+        ],
+        id="spoiler-closing-inside-an-expandable-quote",
+    ),
+    pytest.param(
+        "a\n\nb\nc",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=0,
+                length=1,
+                expandable=True,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=3,
+                length=3,
+                expandable=True,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.SPOILER,
+                offset=3,
+                length=1,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBlockquote(
+                offset=0,
+                length=1,
+                collapsed=True,
+            ),
+            pyrogram.raw.types.MessageEntityBlockquote(
+                offset=3,
+                length=3,
+                collapsed=True,
+            ),
+            pyrogram.raw.types.MessageEntitySpoiler(
+                offset=3,
+                length=1,
+            ),
+        ],
+        id="spoiler-in-a-second-expandable-quote",
+    ),
+    # A `||` inside code is text, so it does not count toward the spoilers that decide
+    #  whether the `||` after it ends the quote.
+    pytest.param(
+        "a||\nc",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=0,
+                length=3,
+                expandable=True,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.CODE,
+                offset=0,
+                length=3,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBlockquote(
+                offset=0,
+                length=3,
+                collapsed=True,
+            ),
+            pyrogram.raw.types.MessageEntityCode(
+                offset=0,
+                length=3,
+            ),
+        ],
+        id="bars-in-code-ending-an-expandable-quote",
+    ),
+    pytest.param(
+        "text",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=0,
+                length=4,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.ITALIC,
+                offset=0,
+                length=4,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBold(
+                offset=0,
+                length=4,
+            ),
+            pyrogram.raw.types.MessageEntityItalic(
+                offset=0,
+                length=4,
+            ),
+        ],
+        id="same-span-bold-and-italic",
+    ),
+    # Entities that touch.
+    pytest.param(
+        "ab",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=0,
+                length=1,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=1,
+                length=1,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBold(
+                offset=0,
+                length=1,
+            ),
+            pyrogram.raw.types.MessageEntityBold(
+                offset=1,
+                length=1,
+            ),
+        ],
+        id="adjacent-bold-runs",
+    ),
+    pytest.param(
+        "ab",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=0,
+                length=1,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.ITALIC,
+                offset=1,
+                length=1,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBold(
+                offset=0,
+                length=1,
+            ),
+            pyrogram.raw.types.MessageEntityItalic(
+                offset=1,
+                length=1,
+            ),
+        ],
+        id="adjacent-bold-and-italic",
+    ),
+    pytest.param(
+        "abc",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=0,
+                length=2,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.ITALIC,
+                offset=1,
+                length=2,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBold(
+                offset=0,
+                length=2,
+            ),
+            pyrogram.raw.types.MessageEntityItalic(
+                offset=1,
+                length=2,
+            ),
+        ],
+        id="crossing-bold-and-italic",
+    ),
+    # Offsets: UTF-16 units, boundaries, the empty entity.
+    pytest.param(
+        "\U0001f600 bold",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=3,
+                length=4,
+            )
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBold(
+                offset=3,
+                length=4,
+            )
+        ],
+        id="bold-after-an-emoji",
+    ),
+    pytest.param(
+        "x\U0001f600y",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=0,
+                length=4,
+            )
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBold(
+                offset=0,
+                length=4,
+            )
+        ],
+        id="emoji-inside-bold",
+    ),
+    pytest.param(
+        "ab",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=1,
+                length=1,
+            )
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBold(
+                offset=1,
+                length=1,
+            )
+        ],
+        id="bold-at-the-last-char",
+    ),
+    # Markdown cannot express a zero-width span, so the empty entity is dropped
+    #  rather than corrupting its neighbours.
+    pytest.param(
+        "ab",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BOLD,
+                offset=1,
+                length=0,
+            )
+        ],
+        [],
+        id="empty-entity-is-dropped",
+    ),
+    # Urls whose own characters collide with the link markup.
+    pytest.param(
+        "wiki",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.TEXT_LINK,
+                offset=0,
+                length=4,
+                url="https://en.wikipedia.org/wiki/Example_(page)",
+            )
+        ],
+        [
+            pyrogram.raw.types.MessageEntityTextUrl(
+                offset=0,
+                length=4,
+                url="https://en.wikipedia.org/wiki/Example_(page)",
+            )
+        ],
+        id="url-with-a-closing-paren",
+    ),
+    pytest.param(
+        "a",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.TEXT_LINK,
+                offset=0,
+                length=1,
+                url="https://example.com/\\)",
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityTextUrl(
+                offset=0,
+                length=1,
+                url="https://example.com/\\)",
+            ),
+        ],
+        id="url-with-a-backslash-before-a-paren",
+    ),
+    pytest.param(
+        "a\nb",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.TEXT_LINK,
+                offset=0,
+                length=3,
+                url="https://example.com/",
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityTextUrl(
+                offset=0,
+                length=3,
+                url="https://example.com/",
+            ),
+        ],
+        id="link-text-across-lines",
+    ),
+    pytest.param(
+        "x a\n> b",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.TEXT_LINK,
+                offset=2,
+                length=5,
+                url="https://example.com/",
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.CODE,
+                offset=2,
+                length=5,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityTextUrl(
+                offset=2,
+                length=5,
+                url="https://example.com/",
+            ),
+            pyrogram.raw.types.MessageEntityCode(
+                offset=2,
+                length=5,
+            ),
+        ],
+        id="code-across-lines-as-link-text",
+    ),
+    pytest.param(
+        "!a",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.TEXT_LINK,
+                offset=1,
+                length=1,
+                url="https://example.com/",
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityTextUrl(
+                offset=1,
+                length=1,
+                url="https://example.com/",
+            ),
+        ],
+        id="bang-before-a-link",
+    ),
+    pytest.param(
+        "date",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.DATE_TIME,
+                offset=0,
+                length=4,
+                unix_time=1700000000,
+                date_time_format="wD",
+            )
+        ],
+        [
+            pyrogram.raw.types.MessageEntityFormattedDate(
+                offset=0,
+                length=4,
+                date=1700000000,
+                relative=False,
+                short_time=False,
+                long_time=False,
+                short_date=False,
+                long_date=True,
+                day_of_week=True,
+            )
+        ],
+        id="date-time-format-survives-strict",
+    ),
+)
+
+
+@pytest.mark.parametrize(("text", "entities", "expected"), _ROUND_TRIP_CORPUS)
+async def test_markdown_round_trip_corpus(
+    text: str,
+    *,
+    entities: list[pyrogram.types.MessageEntity],
+    expected: list[pyrogram.raw.base.MessageEntity],
+) -> None:
+    markup: str = Markdown.unparse(
+        text=text,
+        entities=entities,
+    )
+
+    parsed = await Markdown(None).parse(markup, strict=True)
+
+    assert parsed["message"] == text
+    # `TLObject.__eq__` compares the slots and NOT the class, so `repr` is what tells
+    #  two entity types apart.
+    assert [repr(each) for each in (parsed["entities"] or [])] == [repr(each) for each in expected]
+
+
+async def test_markdown_parse_code_run_wins_over_a_link_label() -> None:
+    # CommonMark example 525: https://spec.commonmark.org/0.31.2/#example-525
+    expected = pyrogram.raw.types.MessageEntityCode(
+        offset=4,
+        length=7,
+    )
+
+    parsed = await Markdown(None).parse("[foo`](/uri)`")
+
+    assert parsed["message"] == "[foo](/uri)"
+    assert [repr(entity) for entity in parsed["entities"]] == [repr(expected)]
+
+
+async def test_markdown_parse_escaped_bar_does_not_end_an_expandable_quote() -> None:
+    expected = pyrogram.raw.types.MessageEntityBlockquote(
+        offset=0,
+        length=5,
+        collapsed=True,
+    )
+
+    parsed = await Markdown(None).parse("**> a\\||\nc", strict=True)
+
+    assert parsed["message"] == "a||\nc"
     assert [repr(entity) for entity in parsed["entities"]] == [repr(expected)]
 
 
@@ -670,4 +2048,58 @@ async def test_markdown_parse_time_link_format_in_strict_mode() -> None:
     parsed = await Markdown(None).parse("![t](tg://time?unix=5&format=t)", strict=True)
 
     assert parsed["message"] == "t"
+    assert [repr(entity) for entity in parsed["entities"]] == [repr(expected)]
+
+
+async def test_markdown_parse_keeps_a_quote_marker_inside_a_fence() -> None:
+    expected = pyrogram.raw.types.MessageEntityPre(
+        offset=0,
+        length=5,
+        language="",
+    )
+
+    parsed = await Markdown(None).parse("```\na\n> b\n```")
+
+    assert parsed["message"] == "a\n> b"
+    assert [repr(entity) for entity in parsed["entities"]] == [repr(expected)]
+
+
+async def test_markdown_parse_keeps_a_backslash_before_a_letter_in_a_url() -> None:
+    expected = pyrogram.raw.types.MessageEntityTextUrl(
+        offset=0,
+        length=1,
+        url="https://x.com/\\d)",
+    )
+
+    parsed = await Markdown(None).parse(r"[a](https://x.com/\d\))")
+
+    assert parsed["message"] == "a"
+    assert [repr(entity) for entity in parsed["entities"]] == [repr(expected)]
+
+
+async def test_markdown_parse_link_label_holds_a_matched_pair_of_brackets() -> None:
+    expected = pyrogram.raw.types.MessageEntityTextUrl(
+        offset=0,
+        length=7,
+        url="https://example.com/",
+    )
+
+    parsed = await Markdown(None).parse("[see [1]](https://example.com/)")
+
+    assert parsed["message"] == "see [1]"
+    assert [repr(entity) for entity in parsed["entities"]] == [repr(expected)]
+
+
+async def test_markdown_parse_unmatched_bracket_ends_a_link_label() -> None:
+    # As in CommonMark, an unmatched `[` cannot be link text, so the link is the
+    #  innermost one; a label that read past it is what made a run of `[` quadratic.
+    expected = pyrogram.raw.types.MessageEntityTextUrl(
+        offset=3,
+        length=1,
+        url="https://example.com/",
+    )
+
+    parsed = await Markdown(None).parse("[a [b](https://example.com/)")
+
+    assert parsed["message"] == "[a b"
     assert [repr(entity) for entity in parsed["entities"]] == [repr(expected)]
