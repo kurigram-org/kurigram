@@ -576,12 +576,18 @@ def start(format: bool = False):
             if flag:
                 number, index, flag_type = flag.groups()
 
+                # Write under the bit already computed, never a second test on the field: the
+                #  two drifted apart once each way (an empty lone vector written with its bit
+                #  clear, a quiz's `solution_entities` skipped with its bit set by `solution`).
+                #  https://github.com/kurigram-org/kurigram/issues/351
+                write_if_flag_set = f"if flags{number} & (1 << {index}):\n            "
+
                 if flag_type == "true":
                     read_types += "\n        "
                     read_types += f"{arg_name} = True if flags{number} & (1 << {index}) else False"
                 elif flag_type in CORE_TYPES:
                     write_types += "\n        "
-                    write_types += f"if self.{arg_name} is not None:\n            "
+                    write_types += write_if_flag_set
                     write_types += f"b.write({flag_type.title()}(self.{arg_name}))\n        "
 
                     read_types += "\n        "
@@ -590,8 +596,11 @@ def start(format: bool = False):
                     sub_type = arg_type.split("<")[1][:-1]
 
                     write_types += "\n        "
-                    write_types += f"if self.{arg_name} is not None:\n            "
-                    write_types += "b.write(Vector(self.{}{}))\n        ".format(
+                    write_types += write_if_flag_set
+
+                    # A sibling may set the shared bit while this vector is `None`, as
+                    #  `inputMediaPoll` does with `solution` and `solution_entities`.
+                    write_types += "b.write(Vector(self.{} or []{}))\n        ".format(
                         arg_name, f", {sub_type.title()}" if sub_type in CORE_TYPES else ""
                     )
 
@@ -606,7 +615,7 @@ def start(format: bool = False):
                     )
                 else:
                     write_types += "\n        "
-                    write_types += f"if self.{arg_name} is not None:\n            "
+                    write_types += write_if_flag_set
                     write_types += f"b.write(self.{arg_name}.write())\n        "
 
                     read_types += "\n        "
