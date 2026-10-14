@@ -2,6 +2,7 @@ id	message
 2FA_CONFIRM_WAIT_X	A wait of {seconds} seconds is required because this account is active and protected by a 2FA password.
 ADDRESS_INVALID	The specified geopoint address is invalid.
 FLOOD_PREMIUM_WAIT_X	Please wait {seconds} seconds before repeating the action, or purchase a [Telegram Premium subscription](https://core.telegram.org/api/premium) to remove this rate limit.
+FLOOD_SKIP_FAILED_WAIT	A short wait is required before repeating the request.
 FLOOD_TEST_PHONE_WAIT_X	A wait of {seconds} seconds is required in the test servers.
 FLOOD_WAIT_X	Please wait {seconds} seconds before repeating the action.
 FROZEN_METHOD_INVALID	The method can't be used by frozen account. You can appeal via @SpamBot if you believe this was a mistake.
