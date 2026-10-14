@@ -34,7 +34,7 @@ class ChatAdminWithInviteLinks(Object):
         chat_invite_links_count (``int``):
             The number of valid chat invite links created by this administrator.
 
-        revoked_chat_invite_links_count (``int``):
+        revoked_chat_invite_links_count (``int``, *optional*):
             The number of revoked chat invite links created by this administrator.
     """
 

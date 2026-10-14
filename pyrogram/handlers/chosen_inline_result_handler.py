@@ -45,7 +45,7 @@ class ChosenInlineResultHandler(Handler[ChosenInlineResultCallbackType]):
             It takes *(client, chosen_inline_result)* as positional arguments (look at the section below for a
             detailed description).
 
-        filters (:obj:`~pyrogram.filters.Filter`):
+        filters (:obj:`~pyrogram.filters.Filter`, *optional*):
             Pass one or more filters to allow only a subset of chosen inline results to be passed
             in your callback function.
 
