@@ -21,7 +21,7 @@ from __future__ import annotations as _annotations
 from typing import overload
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 
 class DeleteContacts:
@@ -62,7 +62,9 @@ class DeleteContacts:
             user_ids = [user_ids]
 
         r = await self.invoke(
-            raw.functions.contacts.DeleteContacts(id=[await self.resolve_peer(i) for i in user_ids])
+            raw.functions.contacts.DeleteContacts(
+                id=[utils.get_input_user_or_channel(await self.resolve_peer(i)) for i in user_ids]
+            )
         )
 
         if not r.updates:

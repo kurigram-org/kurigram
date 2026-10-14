@@ -121,3 +121,37 @@ def get_peer_type(peer_id: int) -> str:
 
 def get_channel_id(peer_id: int) -> int:
     return ZERO_CHANNEL_ID - peer_id
+
+
+def get_input_user_or_channel(
+    peer: raw.base.InputPeer | raw.base.InputUser | raw.base.InputChannel,
+) -> raw.base.InputPeer | raw.base.InputUser | raw.base.InputChannel:
+    """Get the `InputUser` or `InputChannel` of a peer, for the fields that expect one.
+
+    A user peer gives an `InputUser` and a channel peer an `InputChannel`, a `*FromMessage`
+    one, which is how a `min` peer is addressed (https://core.telegram.org/api/min), keeping
+    its form. Anything else is returned as is: a value that already is one of them, and a peer
+    that has neither form, which the server then rejects as it did before this conversion.
+    """
+    if isinstance(peer, raw.types.InputPeerUser):
+        return raw.types.InputUser(user_id=peer.user_id, access_hash=peer.access_hash)
+
+    if isinstance(peer, raw.types.InputPeerUserFromMessage):
+        return raw.types.InputUserFromMessage(
+            peer=peer.peer, msg_id=peer.msg_id, user_id=peer.user_id
+        )
+
+    if isinstance(peer, raw.types.InputPeerSelf):
+        return raw.types.InputUserSelf()
+
+    if isinstance(peer, raw.types.InputPeerChannel):
+        return raw.types.InputChannel(channel_id=peer.channel_id, access_hash=peer.access_hash)
+
+    if isinstance(peer, raw.types.InputPeerChannelFromMessage):
+        return raw.types.InputChannelFromMessage(
+            peer=peer.peer, msg_id=peer.msg_id, channel_id=peer.channel_id
+        )
+
+    # Already an `InputUser` or `InputChannel`, or `InputPeerChat` with neither form, or
+    #  `InputPeerEmpty` that could be either.
+    return peer
