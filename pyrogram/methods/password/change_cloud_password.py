@@ -76,9 +76,10 @@ class ChangeCloudPassword:
         new_hash = itob(pow(r.new_algo.g, new_hash, btoi(r.new_algo.p)))
 
         # The hint shares flag bit 0 with `new_algo` and `new_password_hash`
-        #  (`compiler/api/source/main_api.tl:687`), which a password change always sends, so a
-        #  hint is on the wire either way and there is no way to say "leave it alone". Sending
-        #  the account's current one back is what leaves it unchanged.
+        #  (`account.passwordInputSettings` in `compiler/api/source/main_api.tl`), which a
+        #  password change always sends, so a hint is on the wire either way and there is no
+        #  way to say "leave it alone". Sending the account's current one back is what leaves
+        #  it unchanged.
         hint = new_hint if new_hint is not None else (r.hint or "")
 
         await self.invoke(
