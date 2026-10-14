@@ -31,7 +31,7 @@ import pathlib
 from typing import TYPE_CHECKING, Any, Final
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Sequence
+    from collections.abc import Generator, Iterator, Sequence
 
 REPOSITORY_ROOT: Final[pathlib.Path] = pathlib.Path(__file__).resolve().parents[2]
 PACKAGE_ROOT: Final[pathlib.Path] = REPOSITORY_ROOT / "pyrogram"
@@ -84,6 +84,15 @@ def hand_written_files() -> Iterator[pathlib.Path]:
     for path in sorted(PACKAGE_ROOT.rglob("*.py")):
         if not is_generated(path):
             yield path
+
+
+def generated_files() -> Generator[pathlib.Path]:
+    """Every module `make api` writes, so nothing until it has run."""
+    for root in GENERATED:
+        if root.is_dir():
+            yield from sorted(root.rglob("*.py"))
+        elif root.is_file():
+            yield root
 
 
 def tooling_files() -> Iterator[pathlib.Path]:
