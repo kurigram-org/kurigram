@@ -188,6 +188,18 @@ class Poll(Object, Update):
                 if result.correct:
                     correct_option_ids.append(i)
 
+            # User, chat and channel ids overlap, so the peer type picks the map to look in.
+            #  https://core.telegram.org/api/peers
+            raw_added_by = (
+                types.Chat._find_peer_chat(
+                    answer.added_by,
+                    users=users,
+                    chats=chats,
+                )
+                if answer.added_by is not None
+                else None
+            )
+
             options.append(
                 types.PollOption(
                     persistent_id=answer.option.decode(),
@@ -201,24 +213,27 @@ class Poll(Object, Update):
                     vote_percentage=vote_percentages[i],
                     recent_voters=types.List(
                         [
-                            await types.Chat._parse_chat(
-                                client,
-                                users.get(
-                                    utils.get_raw_peer_id(voter_peer)
-                                    or chats.get(utils.get_raw_peer_id(voter_peer))
-                                ),
+                            await types.Chat._parse_chat(client, raw_voter)
+                            if raw_voter is not None
+                            else None
+                            for raw_voter in (
+                                types.Chat._find_peer_chat(
+                                    voter_peer,
+                                    users=users,
+                                    chats=chats,
+                                )
+                                for voter_peer in result.recent_voters
                             )
-                            for voter_peer in result.recent_voters
                         ]
                     )
                     if result and result.recent_voters
                     else None,
-                    added_by_user=await types.User._parse(
-                        client, users.get(utils.get_raw_peer_id(answer.added_by))
-                    ),
-                    added_by_chat=await types.Chat._parse_chat(
-                        client, chats.get(utils.get_raw_peer_id(answer.added_by))
-                    ),
+                    added_by_user=await types.User._parse(client, raw_added_by)
+                    if isinstance(raw_added_by, raw.base.User)
+                    else None,
+                    added_by_chat=await types.Chat._parse_chat(client, raw_added_by)
+                    if isinstance(raw_added_by, raw.base.Chat)
+                    else None,
                     addition_date=utils.datetime_to_timestamp(getattr(answer, "date", None)),
                     client=client,
                 )
@@ -313,6 +328,8 @@ class Poll(Object, Update):
             )
 
         if isinstance(update, raw.types.UpdateMessagePollVote):
+            raw_voter = users.get(update.peer.user_id)
+
             return Poll(
                 id=str(update.poll_id),
                 options=[
@@ -320,7 +337,7 @@ class Poll(Object, Update):
                     for option in update.options
                 ],
                 is_closed=False,
-                voter=await types.User._parse(client, users[update.peer.user_id]),
+                voter=await types.User._parse(client, raw_voter) if raw_voter is not None else None,
                 client=client,
             )
 

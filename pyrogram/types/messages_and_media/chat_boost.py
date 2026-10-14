@@ -97,12 +97,16 @@ class ChatBoost(Object):
 
     @staticmethod
     async def _parse(client: pyrogram.Client, boost: raw.types.Boost, users) -> ChatBoost:
+        raw_from_user = users.get(boost.user_id)
+
         return ChatBoost(
             id=boost.id,
             date=utils.timestamp_to_datetime(boost.date),
             expire_date=utils.timestamp_to_datetime(boost.expires),
             multiplier=getattr(boost, "multiplier", 1),
-            from_user=await types.User._parse(client, users.get(boost.user_id)),
+            from_user=await types.User._parse(client, raw_from_user)
+            if raw_from_user is not None
+            else None,
             is_gift=getattr(boost, "gift", None),
             is_giveaway=getattr(boost, "giveaway", None),
             is_unclaimed=getattr(boost, "unclaimed", None),

@@ -51,10 +51,7 @@ class MaskPosition(Object):
         self.scale = scale
 
     @staticmethod
-    def _parse(coords: raw.types.MaskCoords) -> MaskPosition | None:
-        if not coords:
-            return None
-
+    def _parse(coords: raw.types.MaskCoords) -> MaskPosition:
         return MaskPosition(
             point=enums.MaskPointType(coords.n),
             x_shift=coords.x,

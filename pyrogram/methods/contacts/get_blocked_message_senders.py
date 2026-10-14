@@ -81,13 +81,14 @@ class GetBlockedMessageSenders:
 
             for blocked_user in r.blocked:
                 peer_id = utils.get_raw_peer_id(blocked_user.peer_id)
+                raw_chat: raw.base.User | raw.base.Chat | None = users.get(peer_id) or chats.get(
+                    peer_id
+                )
 
-                chat = await types.Chat._parse_chat(self, users.get(peer_id) or chats.get(peer_id))
-
-                if chat is None:
+                if raw_chat is None:
                     continue
 
-                yield chat
+                yield await types.Chat._parse_chat(self, raw_chat)
 
                 current += 1
 

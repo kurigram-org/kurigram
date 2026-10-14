@@ -467,9 +467,28 @@ class Dispatcher:
                 update, users, chats = packet
                 parser = self.update_parsers.get(type(update), None)
 
+                # Telegram lists `userEmpty` or `chatEmpty` for an id with nothing behind it,
+                #  and the parsers reject both, so the whole update was dropped. Parsers see
+                #  them as missing; raw handlers still get them, as `RawUpdateHandler` documents.
+                parsed_users = {
+                    user_id: user
+                    for user_id, user in users.items()
+                    if not isinstance(user, raw.types.UserEmpty)
+                }
+                parsed_chats = {
+                    chat_id: chat
+                    for chat_id, chat in chats.items()
+                    if not isinstance(chat, raw.types.ChatEmpty)
+                }
                 parsed_update, handler_type = (
-                    await parser(update, users, chats) if parser is not None else (None, type(None))
+                    await parser(update, parsed_users, parsed_chats)
+                    if parser is not None
+                    else (None, type(None))
                 )
+                # A parser stores the users and chats it fetches in the dicts it reads, and raw
+                #  handlers get them too. The copies lack only the empty entries, which stay.
+                users.update(parsed_users)
+                chats.update(parsed_chats)
 
                 for group in self.groups.values():
                     for handler in group:

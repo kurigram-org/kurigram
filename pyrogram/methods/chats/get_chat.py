@@ -92,9 +92,14 @@ class GetChat:
             else:
                 r = await self.invoke(raw.functions.messages.GetChats(id=[peer.chat_id]))
 
-            return await types.Chat._parse_chat(
-                self,
+            raw_chat = (
                 r.chats[0]
                 if isinstance(r, (raw.types.messages.Chats, raw.types.messages.ChatsSlice))
-                else r[0],
+                else r[0]
             )
+
+            # An empty peer means the chat is no longer visible, which the docstring maps to `None`.
+            if isinstance(raw_chat, (raw.types.UserEmpty, raw.types.ChatEmpty)):
+                return None
+
+            return await types.Chat._parse_chat(self, raw_chat)

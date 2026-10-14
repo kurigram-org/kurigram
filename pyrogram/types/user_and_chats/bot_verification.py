@@ -52,12 +52,11 @@ class BotVerification(Object):
         client: pyrogram.Client,
         verification: raw.types.BotVerification,
         users: dict[int, raw.base.User],
-    ) -> BotVerification | None:
-        if not verification:
-            return None
+    ) -> BotVerification:
+        raw_bot = users.get(verification.bot_id)
 
         return BotVerification(
-            bot=await types.User._parse(client, users.get(verification.bot_id)),
+            bot=await types.User._parse(client, raw_bot) if raw_bot is not None else None,
             custom_emoji_id=str(verification.icon),
             description=await types.FormattedText._parse(client, verification.description),
         )

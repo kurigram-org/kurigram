@@ -34,7 +34,23 @@ from typing import TYPE_CHECKING, Any, Final, Protocol
 import pytest
 
 from pyrogram import Client, raw
-from pyrogram.handlers import MessageHandler, RawUpdateHandler, StartHandler
+from pyrogram.handlers import (
+    CallbackQueryHandler,
+    ChatJoinRequestHandler,
+    ChatMemberUpdatedHandler,
+    ChosenInlineResultHandler,
+    DeletedMessagesHandler,
+    InlineQueryHandler,
+    MessageHandler,
+    MessageReactionCountHandler,
+    MessageReactionHandler,
+    PollHandler,
+    PreCheckoutQueryHandler,
+    RawUpdateHandler,
+    ShippingQueryHandler,
+    StartHandler,
+    StoryHandler,
+)
 from pyrogram.storage import UpdateState
 
 if TYPE_CHECKING:
@@ -52,6 +68,20 @@ _UPDATES_SENT: Final[int] = 3
 _UNPARSED_UPDATE: Final[raw.types.UpdateShort] = raw.types.UpdateShort(
     update=raw.types.UpdateDcOptions(dc_options=[]),
     date=0,
+)
+
+_GROUP_ID: Final[int] = 7
+_EMPTY_ID: Final[int] = 8
+_SENDER_ID: Final[int] = 9
+_RECIPIENT_ID: Final[int] = 10
+
+_GROUP: Final[raw.types.Chat] = raw.types.Chat(
+    id=_GROUP_ID,
+    title="Group",
+    photo=raw.types.ChatPhotoEmpty(),
+    participants_count=2,
+    date=1,
+    version=1,
 )
 
 
@@ -400,6 +430,670 @@ async def test_every_route_delivers_once_started(
     await client_with_storage.dispatcher.stop()
 
     assert sorted(received) == delivered
+
+
+def _updates_with_an_empty_entity(kind: str) -> raw.types.Updates:
+    """A group message reading the empty entity Telegram listed beside it in the update."""
+    if kind == "user":
+        # A TON wallet transfer reads its `sender` from `users` by the sender's id.
+        message: raw.base.Message = raw.types.MessageService(
+            id=1,
+            peer_id=raw.types.PeerChat(chat_id=_GROUP_ID),
+            from_id=raw.types.PeerUser(user_id=_EMPTY_ID),
+            date=1,
+            action=raw.types.MessageActionGramTransfer(
+                transaction_id="transaction",
+                peer_address="address",
+                amount=1,
+            ),
+        )
+        users: list[raw.base.User] = [raw.types.UserEmpty(id=_EMPTY_ID)]
+        chats: list[raw.base.Chat] = [_GROUP]
+    else:
+        # `guest_bot_caller_chat` reads `chats` by the id of `guestchat_via_from`.
+        message = raw.types.Message(
+            id=1,
+            peer_id=raw.types.PeerChat(chat_id=_GROUP_ID),
+            from_id=raw.types.PeerUser(user_id=_SENDER_ID),
+            guestchat_via_from=raw.types.PeerChat(chat_id=_EMPTY_ID),
+            date=1,
+            message="text",
+            # What `Message.read` gives for an absent flag, and what the parser iterates.
+            restriction_reason=[],
+        )
+        users = [
+            raw.types.User(
+                id=_SENDER_ID,
+                first_name="Sender",
+                access_hash=0,
+            ),
+        ]
+        chats = [_GROUP, raw.types.ChatEmpty(id=_EMPTY_ID)]
+
+    update = raw.types.UpdateNewMessage(
+        message=message,
+        pts=2,
+        pts_count=1,
+    )
+
+    return raw.types.Updates(
+        updates=[update],
+        users=users,
+        chats=chats,
+        date=1,
+        seq=1,
+    )
+
+
+@pytest.mark.parametrize(
+    "kind",
+    [
+        pytest.param("user", id="user-empty"),
+        pytest.param("chat", id="chat-empty"),
+    ],
+)
+async def test_an_empty_entity_in_an_update_reaches_parsers_as_a_missing_one(
+    client_with_storage: Client,
+    kind: str,
+) -> None:
+    # The strict parsers raise on `userEmpty` and `chatEmpty`, which dropped the whole
+    #  update, raw handlers included; on `main` the field was `None`.
+    messages: list[Message] = []
+    raw_entities: list[str] = []
+
+    async def record_message(client: Client, message: Message, /) -> None:
+        messages.append(message)
+
+    async def record_raw(
+        client: Client,
+        update: raw.base.Update,
+        users: dict[int, raw.base.User],
+        chats: dict[int, raw.base.Chat],
+        /,
+    ) -> None:
+        raw_entities.extend(type(entity).__name__ for entity in [*users.values(), *chats.values()])
+
+    client_with_storage.add_handler(MessageHandler(record_message), group=0)
+    client_with_storage.add_handler(RawUpdateHandler(record_raw), group=1)
+
+    await client_with_storage.dispatcher.start()
+    await client_with_storage.handle_updates(_updates_with_an_empty_entity(kind))
+    await client_with_storage.dispatcher.stop()
+
+    [message] = messages
+    empty_field = (
+        message.ton_wallet_transfer.sender if kind == "user" else message.guest_bot_caller_chat
+    )
+    empty_name = "UserEmpty" if kind == "user" else "ChatEmpty"
+
+    assert (message.chat.id, empty_field, empty_name in raw_entities) == (-_GROUP_ID, None, True)
+
+
+@pytest.mark.parametrize(
+    "listed",
+    [
+        pytest.param([], id="no-empty-entity"),
+        pytest.param([raw.types.UserEmpty(id=_EMPTY_ID)], id="user-empty"),
+        # The parser takes the listed sender as missing and fetches it, so raw handlers get
+        #  the fetched user, the one the parsed message names, in place of `userEmpty`.
+        pytest.param([raw.types.UserEmpty(id=_SENDER_ID)], id="sender-user-empty"),
+    ],
+)
+async def test_a_user_a_parser_fetches_reaches_raw_handlers(
+    client_with_storage: Client,
+    monkeypatch: pytest.MonkeyPatch,
+    listed: list[raw.base.User],
+) -> None:
+    # A private message parser fetches a sender missing from the update and replaces the
+    #  listed recipient with the fetched one, in a copy of `users` without the empty
+    #  entries, so raw handlers see both only if the copy is merged back.
+    recipient = raw.types.User(
+        id=_RECIPIENT_ID,
+        first_name="Recipient",
+        access_hash=0,
+    )
+    fetched_recipient = raw.types.User(
+        id=_RECIPIENT_ID,
+        first_name="Fetched recipient",
+        access_hash=0,
+    )
+    sender = raw.types.User(
+        id=_SENDER_ID,
+        first_name="Sender",
+        access_hash=0,
+    )
+
+    async def resolve_peer(peer_id: int) -> raw.types.InputPeerUser:
+        return raw.types.InputPeerUser(
+            user_id=peer_id,
+            access_hash=0,
+        )
+
+    async def invoke(query: raw.functions.users.GetUsers) -> list[raw.base.User]:
+        return [sender, fetched_recipient]
+
+    monkeypatch.setattr(client_with_storage, "resolve_peer", resolve_peer)
+    monkeypatch.setattr(client_with_storage, "invoke", invoke)
+
+    raw_users: dict[int, raw.base.User] = {}
+
+    async def record_raw(
+        client: Client,
+        update: raw.base.Update,
+        users: dict[int, raw.base.User],
+        chats: dict[int, raw.base.Chat],
+        /,
+    ) -> None:
+        raw_users.update(users)
+
+    client_with_storage.add_handler(RawUpdateHandler(record_raw))
+
+    await client_with_storage.dispatcher.start()
+    await client_with_storage.handle_updates(
+        raw.types.Updates(
+            updates=[
+                raw.types.UpdateNewMessage(
+                    message=raw.types.Message(
+                        id=1,
+                        peer_id=raw.types.PeerUser(user_id=_RECIPIENT_ID),
+                        from_id=raw.types.PeerUser(user_id=_SENDER_ID),
+                        date=1,
+                        message="text",
+                        restriction_reason=[],
+                    ),
+                    pts=2,
+                    pts_count=1,
+                ),
+            ],
+            users=[recipient, *listed],
+            chats=[],
+            date=1,
+            seq=1,
+        ),
+    )
+    await client_with_storage.dispatcher.stop()
+
+    assert (raw_users[_SENDER_ID], raw_users[_RECIPIENT_ID]) == (sender, fetched_recipient)
+
+
+async def test_a_channel_a_parser_fetches_reaches_raw_handlers(
+    client_with_storage: Client,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # A story parser fetches a channel missing from the update into the dict it reads,
+    #  which is a copy, so raw handlers see the channel only if it is copied back.
+    channel = raw.types.Channel(
+        id=_GROUP_ID,
+        title="Channel",
+        photo=raw.types.ChatPhotoEmpty(),
+        date=1,
+        access_hash=0,
+        # What `Channel.read` gives for absent flags, and what the parser iterates.
+        usernames=[],
+        restriction_reason=[],
+    )
+
+    async def invoke(query: raw.functions.channels.GetChannels) -> raw.types.messages.Chats:
+        return raw.types.messages.Chats(chats=[channel])
+
+    monkeypatch.setattr(client_with_storage, "invoke", invoke)
+
+    raw_chats: dict[int, raw.base.Chat] = {}
+
+    async def record_raw(
+        client: Client,
+        update: raw.base.Update,
+        users: dict[int, raw.base.User],
+        chats: dict[int, raw.base.Chat],
+        /,
+    ) -> None:
+        raw_chats.update(chats)
+
+    client_with_storage.add_handler(RawUpdateHandler(record_raw))
+
+    await client_with_storage.dispatcher.start()
+    await client_with_storage.handle_updates(
+        raw.types.Updates(
+            updates=[
+                raw.types.UpdateStory(
+                    peer=raw.types.PeerChannel(channel_id=_GROUP_ID),
+                    story=raw.types.StoryItemDeleted(id=1),
+                ),
+            ],
+            users=[],
+            chats=[],
+            date=1,
+            seq=1,
+        ),
+    )
+    await client_with_storage.dispatcher.stop()
+
+    assert raw_chats == {_GROUP_ID: channel}
+
+
+def _service_from(action: raw.base.MessageAction, *, sender_id: int) -> raw.types.UpdateNewMessage:
+    """A basic group service message, the shape every join, leave and invite action takes."""
+    return raw.types.UpdateNewMessage(
+        message=raw.types.MessageService(
+            id=1,
+            peer_id=raw.types.PeerChat(chat_id=_GROUP_ID),
+            from_id=raw.types.PeerUser(user_id=sender_id),
+            date=1,
+            action=action,
+        ),
+        pts=2,
+        pts_count=1,
+    )
+
+
+# Each update names the user or basic group Telegram lists as `userEmpty` or `chatEmpty`,
+#  and the field reading it by id.
+_UPDATES_NAMING_AN_EMPTY_ENTITY: Final[tuple[Any, ...]] = (
+    pytest.param(
+        raw.types.UpdateInlineBotCallbackQuery(
+            query_id=1,
+            user_id=_EMPTY_ID,
+            msg_id=raw.types.InputBotInlineMessageID(
+                dc_id=1,
+                id=1,
+                access_hash=1,
+            ),
+            chat_instance=1,
+        ),
+        CallbackQueryHandler,
+        "from_user",
+        None,
+        id="callback-query",
+    ),
+    pytest.param(
+        raw.types.UpdateBotInlineQuery(
+            query_id=1,
+            user_id=_EMPTY_ID,
+            query="",
+            offset="",
+        ),
+        InlineQueryHandler,
+        "from_user",
+        None,
+        id="inline-query",
+    ),
+    pytest.param(
+        raw.types.UpdateBotInlineSend(
+            user_id=_EMPTY_ID,
+            query="",
+            id="result",
+        ),
+        ChosenInlineResultHandler,
+        "from_user",
+        None,
+        id="chosen-inline-result",
+    ),
+    pytest.param(
+        raw.types.UpdateBotPrecheckoutQuery(
+            query_id=1,
+            user_id=_EMPTY_ID,
+            payload=b"payload",
+            currency="XTR",
+            total_amount=1,
+        ),
+        PreCheckoutQueryHandler,
+        "from_user",
+        None,
+        id="pre-checkout-query",
+    ),
+    pytest.param(
+        raw.types.UpdateBotShippingQuery(
+            query_id=1,
+            user_id=_EMPTY_ID,
+            payload=b"payload",
+            shipping_address=raw.types.PostAddress(
+                street_line1="",
+                street_line2="",
+                city="",
+                state="",
+                country_iso2="",
+                post_code="",
+            ),
+        ),
+        ShippingQueryHandler,
+        "from_user",
+        None,
+        id="shipping-query",
+    ),
+    pytest.param(
+        raw.types.UpdateBotChatInviteRequester(
+            peer=raw.types.PeerChat(chat_id=_GROUP_ID),
+            date=1,
+            user_id=_EMPTY_ID,
+            about="",
+            invite=raw.types.ChatInvitePublicJoinRequests(),
+            qts=1,
+        ),
+        ChatJoinRequestHandler,
+        "from_user",
+        None,
+        id="chat-join-request",
+    ),
+    pytest.param(
+        raw.types.UpdateChatParticipant(
+            chat_id=_GROUP_ID,
+            date=1,
+            actor_id=_EMPTY_ID,
+            user_id=_SENDER_ID,
+            qts=1,
+        ),
+        ChatMemberUpdatedHandler,
+        "from_user",
+        None,
+        id="chat-member-actor",
+    ),
+    pytest.param(
+        raw.types.UpdateChatParticipant(
+            chat_id=_GROUP_ID,
+            date=1,
+            actor_id=_SENDER_ID,
+            user_id=_SENDER_ID,
+            new_participant=raw.types.ChatParticipant(
+                user_id=_SENDER_ID,
+                inviter_id=_EMPTY_ID,
+                date=1,
+            ),
+            qts=1,
+        ),
+        ChatMemberUpdatedHandler,
+        "new_chat_member.invited_by",
+        None,
+        id="chat-member-inviter",
+    ),
+    pytest.param(
+        raw.types.UpdateChatParticipant(
+            chat_id=_GROUP_ID,
+            date=1,
+            actor_id=_SENDER_ID,
+            user_id=_SENDER_ID,
+            invite=raw.types.ChatInviteExported(
+                link="https://t.me/+link",
+                admin_id=_EMPTY_ID,
+                date=1,
+            ),
+            qts=1,
+        ),
+        ChatMemberUpdatedHandler,
+        "invite_link.creator",
+        None,
+        id="chat-member-invite-link-creator",
+    ),
+    pytest.param(
+        raw.types.UpdateBotMessageReaction(
+            peer=raw.types.PeerUser(user_id=_EMPTY_ID),
+            msg_id=1,
+            date=1,
+            actor=raw.types.PeerUser(user_id=_SENDER_ID),
+            old_reactions=[],
+            new_reactions=[],
+            qts=1,
+        ),
+        MessageReactionHandler,
+        "chat",
+        None,
+        id="reaction-chat",
+    ),
+    pytest.param(
+        raw.types.UpdateBotMessageReaction(
+            peer=raw.types.PeerChat(chat_id=_GROUP_ID),
+            msg_id=1,
+            date=1,
+            actor=raw.types.PeerUser(user_id=_EMPTY_ID),
+            old_reactions=[],
+            new_reactions=[],
+            qts=1,
+        ),
+        MessageReactionHandler,
+        "user",
+        None,
+        id="reaction-actor",
+    ),
+    pytest.param(
+        raw.types.UpdateBotMessageReactions(
+            peer=raw.types.PeerUser(user_id=_EMPTY_ID),
+            msg_id=1,
+            date=1,
+            reactions=[],
+            qts=1,
+        ),
+        MessageReactionCountHandler,
+        "chat",
+        None,
+        id="reaction-count-chat",
+    ),
+    pytest.param(
+        raw.types.UpdateMessagePollVote(
+            poll_id=1,
+            peer=raw.types.PeerUser(user_id=_EMPTY_ID),
+            options=[b"0"],
+            positions=[],
+            qts=1,
+        ),
+        PollHandler,
+        "voter",
+        None,
+        id="poll-voter",
+    ),
+    pytest.param(
+        _service_from(
+            raw.types.MessageActionChatAddUser(users=[_EMPTY_ID]),
+            sender_id=_SENDER_ID,
+        ),
+        MessageHandler,
+        "new_chat_members",
+        [None],
+        id="new-chat-members-added",
+    ),
+    pytest.param(
+        _service_from(
+            raw.types.MessageActionChatJoinedByLink(inviter_id=_SENDER_ID),
+            sender_id=_EMPTY_ID,
+        ),
+        MessageHandler,
+        "new_chat_members",
+        [None],
+        id="new-chat-members-by-link",
+    ),
+    pytest.param(
+        _service_from(raw.types.MessageActionChatJoinedByRequest(), sender_id=_EMPTY_ID),
+        MessageHandler,
+        "new_chat_members",
+        [None],
+        id="new-chat-members-by-request",
+    ),
+    pytest.param(
+        _service_from(
+            raw.types.MessageActionChatDeleteUser(user_id=_EMPTY_ID),
+            sender_id=_SENDER_ID,
+        ),
+        MessageHandler,
+        "left_chat_member",
+        None,
+        id="left-chat-member",
+    ),
+    pytest.param(
+        _service_from(
+            raw.types.MessageActionGameScore(
+                game_id=1,
+                score=1,
+            ),
+            sender_id=_EMPTY_ID,
+        ),
+        MessageHandler,
+        "game_high_score.user",
+        None,
+        id="game-high-score",
+    ),
+    pytest.param(
+        _service_from(
+            raw.types.MessageActionInviteToGroupCall(
+                call=raw.types.InputGroupCall(
+                    id=1,
+                    access_hash=1,
+                ),
+                users=[_EMPTY_ID],
+            ),
+            sender_id=_SENDER_ID,
+        ),
+        MessageHandler,
+        "video_chat_members_invited.users",
+        [None],
+        id="video-chat-members-invited",
+    ),
+    pytest.param(
+        raw.types.UpdateStory(
+            peer=raw.types.PeerUser(user_id=_SENDER_ID),
+            story=raw.types.StoryItem(
+                id=1,
+                date=1,
+                expire_date=2,
+                media=raw.types.MessageMediaEmpty(),
+                fwd_from=raw.types.StoryFwdHeader(
+                    from_peer=raw.types.PeerUser(user_id=_EMPTY_ID),
+                    story_id=1,
+                ),
+                # What `StoryItem.read` gives for an absent flag, and what the parser iterates.
+                media_areas=[],
+            ),
+        ),
+        StoryHandler,
+        "forward_from",
+        None,
+        id="story-forward-from",
+    ),
+    pytest.param(
+        raw.types.UpdateDeleteEphemeralMessages(
+            peer=raw.types.PeerUser(user_id=_EMPTY_ID),
+            ids=[1],
+        ),
+        DeletedMessagesHandler,
+        "0.chat",
+        None,
+        id="deleted-messages-chat",
+    ),
+    pytest.param(
+        raw.types.UpdateDeleteEphemeralMessages(
+            peer=raw.types.PeerChat(chat_id=_EMPTY_ID),
+            ids=[1],
+        ),
+        DeletedMessagesHandler,
+        "0.chat",
+        None,
+        id="deleted-messages-basic-group",
+    ),
+)
+
+
+@pytest.mark.parametrize(
+    ("update", "handler_type", "field", "expected"),
+    _UPDATES_NAMING_AN_EMPTY_ENTITY,
+)
+async def test_an_update_naming_an_empty_entity_reaches_its_handler_without_it(
+    client_with_storage: Client,
+    update: raw.base.Update,
+    handler_type: type[Handler[Any]],
+    field: str,
+    expected: list[None] | None,
+) -> None:
+    # The dispatcher drops `userEmpty` and `chatEmpty` from `users` and `chats`, and these
+    #  parsers indexed them by id, so the update raised `KeyError` and no handler ran; on `main` the field was `None`.
+    value = await _handled_field(
+        client_with_storage,
+        update=update,
+        handler_type=handler_type,
+        field=field,
+        listed_user=raw.types.UserEmpty(id=_EMPTY_ID),
+        listed_chat=raw.types.ChatEmpty(id=_EMPTY_ID),
+    )
+
+    assert value == expected
+
+
+@pytest.mark.parametrize(
+    ("update", "handler_type", "field", "expected"),
+    _UPDATES_NAMING_AN_EMPTY_ENTITY,
+)
+async def test_an_update_naming_a_known_entity_reaches_its_handler_with_it(
+    client_with_storage: Client,
+    update: raw.base.Update,
+    handler_type: type[Handler[Any]],
+    field: str,
+    expected: list[None] | None,
+) -> None:
+    # The same parsers now give `None` when the entity is missing, so the entity has to
+    #  survive that check when the update lists it in full.
+    value = await _handled_field(
+        client_with_storage,
+        update=update,
+        handler_type=handler_type,
+        field=field,
+        listed_user=raw.types.User(
+            id=_EMPTY_ID,
+            first_name="Listed",
+            access_hash=0,
+        ),
+        listed_chat=raw.types.Chat(
+            id=_EMPTY_ID,
+            title="Listed",
+            photo=raw.types.ChatPhotoEmpty(),
+            participants_count=2,
+            date=1,
+            version=1,
+        ),
+    )
+
+    # A user id is positive and a basic group id is its negative, so both read as `_EMPTY_ID`.
+    ids = [abs(item.id) for item in value] if isinstance(value, list) else abs(value.id)
+    assert ids == ([_EMPTY_ID] if isinstance(expected, list) else _EMPTY_ID)
+
+
+async def _handled_field(
+    client: Client,
+    *,
+    update: raw.base.Update,
+    handler_type: type[Handler[Any]],
+    field: str,
+    listed_user: raw.base.User,
+    listed_chat: raw.base.Chat,
+) -> Any:
+    """The field of what the handler got for an update listing these entities at `_EMPTY_ID`."""
+    received: list[Any] = []
+
+    async def record(client: Client, parsed: Any, /) -> None:
+        received.append(parsed)
+
+    client.add_handler(handler_type(record))
+
+    await client.dispatcher.start()
+    await client.handle_updates(
+        raw.types.Updates(
+            updates=[update],
+            users=[
+                listed_user,
+                raw.types.User(
+                    id=_SENDER_ID,
+                    first_name="Sender",
+                    access_hash=0,
+                ),
+            ],
+            chats=[_GROUP, listed_chat],
+            date=1,
+            seq=1,
+        ),
+    )
+    await client.dispatcher.stop()
+
+    [parsed] = received
+    value: Any = parsed
+    for name in field.split("."):
+        value = value[int(name)] if name.isdigit() else getattr(value, name)
+
+    return value
 
 
 @pytest.fixture
