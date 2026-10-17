@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 from pyrogram.raw.core import TLObject
 
 from ..object import Object
@@ -156,15 +156,10 @@ class InputRichMessage(Object):
             for block in blocks
         ]
 
-        users: list[raw.base.InputUser] = []
-        for user_id in _collect_mentioned_user_ids(raw_blocks):
-            peer = await client.resolve_peer(user_id)
-            users.append(
-                raw.types.InputUser(
-                    user_id=peer.user_id,
-                    access_hash=peer.access_hash,
-                ),
-            )
+        users = [
+            utils.get_input_user_or_channel(await client.resolve_peer(user_id))
+            for user_id in _collect_mentioned_user_ids(raw_blocks)
+        ]
 
         return raw.types.InputRichMessage(
             rtl=self.is_rtl,

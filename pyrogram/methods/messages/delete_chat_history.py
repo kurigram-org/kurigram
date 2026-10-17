@@ -80,13 +80,12 @@ class DeleteChatHistory:
                 await app.delete_chat_history(chat_id, revoke=True)
         """
         peer = await self.resolve_peer(chat_id)
+        is_channel = isinstance(peer, utils.PEERS_WITH_A_CHANNEL_ID)
 
-        if isinstance(peer, raw.types.InputPeerChannel):
+        if is_channel:
             r = await self.invoke(
                 raw.functions.channels.DeleteHistory(
-                    channel=raw.types.InputChannel(
-                        channel_id=peer.channel_id, access_hash=peer.access_hash
-                    ),
+                    channel=utils.get_input_user_or_channel(peer),
                     max_id=max_id,
                     for_everyone=revoke,
                 )
@@ -103,8 +102,4 @@ class DeleteChatHistory:
                 )
             )
 
-        return (
-            len(r.updates[0].messages)
-            if isinstance(peer, raw.types.InputPeerChannel)
-            else r.pts_count
-        )
+        return len(r.updates[0].messages) if is_channel else r.pts_count

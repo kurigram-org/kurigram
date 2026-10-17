@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 
 class AddChatMembers:
@@ -75,7 +75,7 @@ class AddChatMembers:
                 r = await self.invoke(
                     raw.functions.messages.AddChatUser(
                         chat_id=peer.chat_id,
-                        user_id=await self.resolve_peer(user_id),
+                        user_id=utils.get_input_user_or_channel(await self.resolve_peer(user_id)),
                         fwd_limit=forward_limit,
                     )
                 )
@@ -84,7 +84,11 @@ class AddChatMembers:
         else:
             r = await self.invoke(
                 raw.functions.channels.InviteToChannel(
-                    channel=peer, users=[await self.resolve_peer(user_id) for user_id in user_ids]
+                    channel=utils.get_input_user_or_channel(peer),
+                    users=[
+                        utils.get_input_user_or_channel(await self.resolve_peer(user_id))
+                        for user_id in user_ids
+                    ],
                 )
             )
 

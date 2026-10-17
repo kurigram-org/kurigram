@@ -83,7 +83,7 @@ class RestrictChatMember:
 
         r = await self.invoke(
             raw.functions.channels.EditBanned(
-                channel=await self.resolve_peer(chat_id),
+                channel=utils.get_input_user_or_channel(await self.resolve_peer(chat_id)),
                 participant=await self.resolve_peer(user_id),
                 banned_rights=permissions.write(until_date),
             )

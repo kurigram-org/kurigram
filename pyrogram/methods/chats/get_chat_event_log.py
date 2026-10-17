@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING
 from collections.abc import AsyncGenerator
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
@@ -97,14 +97,17 @@ class GetChatEventLog:
         while True:
             r: raw.base.channels.AdminLogResults = await self.invoke(
                 raw.functions.channels.GetAdminLog(
-                    channel=await self.resolve_peer(chat_id),
+                    channel=utils.get_input_user_or_channel(await self.resolve_peer(chat_id)),
                     q=query,
                     min_id=0,
                     max_id=offset_id,
                     limit=limit,
                     events_filter=filters.write() if filters else None,
                     admins=(
-                        [await self.resolve_peer(i) for i in user_ids]
+                        [
+                            utils.get_input_user_or_channel(await self.resolve_peer(i))
+                            for i in user_ids
+                        ]
                         if user_ids is not None
                         else user_ids
                     ),

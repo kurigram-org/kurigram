@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 
 class CheckUsername:
@@ -45,9 +45,11 @@ class CheckUsername:
         """
         peer = await self.resolve_peer(chat_id)
 
-        if isinstance(peer, raw.types.InputPeerChannel):
+        if isinstance(peer, utils.PEERS_WITH_A_CHANNEL_ID):
             r = await self.invoke(
-                raw.functions.channels.CheckUsername(channel=peer, username=username)
+                raw.functions.channels.CheckUsername(
+                    channel=utils.get_input_user_or_channel(peer), username=username
+                )
             )
         else:
             r = await self.invoke(raw.functions.account.CheckUsername(username=username))

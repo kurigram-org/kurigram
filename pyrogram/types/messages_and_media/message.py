@@ -1066,8 +1066,8 @@ class Message(Object, Update):
                     r = await client.invoke(
                         raw.functions.users.GetUsers(
                             id=[
-                                await client.resolve_peer(from_id),
-                                await client.resolve_peer(peer_id),
+                                utils.get_input_user_or_channel(await client.resolve_peer(from_id)),
+                                utils.get_input_user_or_channel(await client.resolve_peer(peer_id)),
                             ]
                         )
                     )
@@ -1602,6 +1602,9 @@ class Message(Object, Update):
 
         await client.message_cache.set((parsed_message.chat.id, parsed_message.id), parsed_message)
 
+        if min_peer_ids := await utils.get_message_min_peer_ids(client, parsed_message):
+            await client.min_peer_cache.add(min_peer_ids, parsed_message.chat.id, parsed_message.id)
+
         return parsed_message
 
     @staticmethod
@@ -1628,8 +1631,8 @@ class Message(Object, Update):
                     r = await client.invoke(
                         raw.functions.users.GetUsers(
                             id=[
-                                await client.resolve_peer(from_id),
-                                await client.resolve_peer(peer_id),
+                                utils.get_input_user_or_channel(await client.resolve_peer(from_id)),
+                                utils.get_input_user_or_channel(await client.resolve_peer(peer_id)),
                             ]
                         )
                     )
@@ -2039,6 +2042,9 @@ class Message(Object, Update):
                 (parsed_message.chat.id, parsed_message.id), parsed_message
             )
 
+        if min_peer_ids := await utils.get_message_min_peer_ids(client, parsed_message):
+            await client.min_peer_cache.add(min_peer_ids, parsed_message.chat.id, parsed_message.id)
+
         return parsed_message
 
     @staticmethod
@@ -2060,8 +2066,8 @@ class Message(Object, Update):
                     r = await client.invoke(
                         raw.functions.users.GetUsers(
                             id=[
-                                await client.resolve_peer(from_id),
-                                await client.resolve_peer(peer_id),
+                                utils.get_input_user_or_channel(await client.resolve_peer(from_id)),
+                                utils.get_input_user_or_channel(await client.resolve_peer(peer_id)),
                             ]
                         )
                     )

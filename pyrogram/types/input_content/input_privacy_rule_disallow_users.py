@@ -22,7 +22,7 @@ import asyncio
 from typing import TYPE_CHECKING
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 from .input_privacy_rule import InputPrivacyRule
 
@@ -52,4 +52,6 @@ class InputPrivacyRuleDisallowUsers(InputPrivacyRule):
         )
         users = await asyncio.gather(*[client.resolve_peer(i) for i in users])
 
-        return raw.types.InputPrivacyValueDisallowUsers(users=users)
+        return raw.types.InputPrivacyValueDisallowUsers(
+            users=[utils.get_input_user_or_channel(i) for i in users]
+        )

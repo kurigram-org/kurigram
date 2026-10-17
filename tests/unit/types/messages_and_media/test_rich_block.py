@@ -235,6 +235,11 @@ async def test_message_parses_rich_message_with_compact_table() -> None:
     )
 
     cli = pyrogram.Client("test", api_id=1, api_hash="0" * 32, in_memory=True)
+
+    # A channel message is parsed with the account known, as on a started client: without
+    #  `me` the account kind is read from the storage, which is not open here.
+    cli.me = types.User(id=1, is_bot=False)
+
     parsed_msg = await types.Message._parse(cli, raw_msg, users={}, chats={channel_id: raw_chat})
     assert parsed_msg.rich_message is not None
     assert isinstance(parsed_msg.rich_message.blocks[0], types.RichBlockTable)

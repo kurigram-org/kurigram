@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 
 class SetAdministratorTitle:
@@ -61,7 +61,9 @@ class SetAdministratorTitle:
 
         r = (
             await self.invoke(
-                raw.functions.channels.GetParticipant(channel=chat_id, participant=user_id)
+                raw.functions.channels.GetParticipant(
+                    channel=utils.get_input_user_or_channel(chat_id), participant=user_id
+                )
             )
         ).participant
 
@@ -76,7 +78,10 @@ class SetAdministratorTitle:
 
         await self.invoke(
             raw.functions.channels.EditAdmin(
-                channel=chat_id, user_id=user_id, admin_rights=admin_rights, rank=title
+                channel=utils.get_input_user_or_channel(chat_id),
+                user_id=utils.get_input_user_or_channel(user_id),
+                admin_rights=admin_rights,
+                rank=title,
             )
         )
 
