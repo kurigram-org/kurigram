@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 
 class CreateInvoiceLink:
@@ -151,7 +151,10 @@ class CreateInvoiceLink:
                         flexible=is_flexible,
                         phone_to_provider=send_phone_number_to_provider,
                         email_to_provider=send_email_to_provider,
-                        max_tip_amount=max_tip_amount,
+                        max_tip_amount=utils.get_max_tip_amount(
+                            max_tip_amount,
+                            suggested_tip_amounts=suggested_tip_amounts,
+                        ),
                         suggested_tip_amounts=suggested_tip_amounts,
                         subscription_period=subscription_period,
                     ),

@@ -229,7 +229,10 @@ class SendInvoice:
                 flexible=is_flexible,
                 phone_to_provider=send_phone_number_to_provider,
                 email_to_provider=send_email_to_provider,
-                max_tip_amount=max_tip_amount,
+                max_tip_amount=utils.get_max_tip_amount(
+                    max_tip_amount,
+                    suggested_tip_amounts=suggested_tip_amounts,
+                ),
                 suggested_tip_amounts=suggested_tip_amounts,
                 recurring=True if subscription_expiration_date is not None else None,
                 subscription_period=subscription_expiration_date,

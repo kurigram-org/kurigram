@@ -27,6 +27,20 @@ def to_nano(amount: float) -> int:
     return int(amount * 1e9)
 
 
+def get_max_tip_amount(
+    max_tip_amount: int | None,
+    *,
+    suggested_tip_amounts: list[int] | None,
+) -> int | None:
+    # `invoice` in `main_api.tl` puts `max_tip_amount` and `suggested_tip_amounts` on one bit,
+    #  `flags.8`, so tips alone set it with no `long` to write and `write()` raised
+    #  `AttributeError`. 0 is the default the invoice docstrings state.
+    if max_tip_amount is None and suggested_tip_amounts:
+        return 0
+
+    return max_tip_amount
+
+
 def get_premium_duration_month_count(day_count: int) -> int:
     return max(1, day_count // 30)
 
