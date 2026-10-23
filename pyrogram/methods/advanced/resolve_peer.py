@@ -19,10 +19,122 @@
 from __future__ import annotations as _annotations
 
 import re
+from typing import Final
 
 import pyrogram
 from pyrogram import raw, utils
-from pyrogram.errors import PeerIdInvalid
+from pyrogram.errors import (
+    ChannelInvalid,
+    ChannelMonoforumUnsupported,
+    ChannelPrivate,
+    MsgIdInvalid,
+    PeerIdInvalid,
+    UserBannedInChannel,
+)
+
+# What `users.getUsers` and `channels.getChannels` answer when the sighting itself can no
+#  longer be used: the message is gone, or its chat is out of this account's reach. Any
+#  other error has nothing to do with the sighting, so it is raised as usual, including
+#  `FROM_MESSAGE_BOT_DISABLED`, which a bot never gets since nothing is recorded for it.
+#  https://core.telegram.org/method/users.getUsers
+#  https://core.telegram.org/method/channels.getChannels
+_STALE_SIGHTING_ERRORS: Final[tuple[type[Exception], ...]] = (
+    ChannelInvalid,
+    ChannelMonoforumUnsupported,
+    ChannelPrivate,
+    MsgIdInvalid,
+    PeerIdInvalid,
+    UserBannedInChannel,
+)
+
+
+async def _resolve_min_peer(
+    client: pyrogram.Client, peer_id: int, peer_type: str
+) -> raw.base.InputPeer | None:
+    """Resolve a `min` user or channel through the messages it was last seen in.
+
+    The sightings are the ones `Client.min_peer_cache` recorded while parsing messages. The
+    newest is tried first. Its message is sent to the server with the peer, so a stale one
+    surfaces here as an error (`MSG_ID_INVALID` and the like). A sighting that is stale, whose
+    chat is not in the storage, or whose answer does not contain the peer, is forgotten and the
+    next newest is tried. `None` means no sighting worked.
+    """
+    raw_peer_id = utils.get_raw_peer_id(peer_id)
+
+    for sighting in await client.min_peer_cache.get(peer_id):
+        chat_id, message_id = sighting.chat_id, sighting.message_id
+
+        # TDLib records a sighting only when its channel is known, so one whose chat is not
+        #  stored is as unusable as a stale one:
+        #  https://github.com/tdlib/td/blob/42e6a5259551178d1dab54a22ad96d14bd906e20/td/telegram/UserManager.cpp#L7795-L7800
+        try:
+            chat_peer = await client.storage.get_peer_by_id(chat_id)
+        except KeyError:
+            await client.min_peer_cache.discard(peer_id, chat_id, message_id)
+            continue
+
+        try:
+            if peer_type == "user":
+                users = await client.invoke(
+                    raw.functions.users.GetUsers(
+                        id=[
+                            raw.types.InputUserFromMessage(
+                                peer=chat_peer, msg_id=message_id, user_id=raw_peer_id
+                            )
+                        ]
+                    )
+                )
+                await client.fetch_peers(users)
+
+                answered = any(
+                    isinstance(user, raw.types.User) and user.id == raw_peer_id for user in users
+                )
+            else:
+                chats = await client.invoke(
+                    raw.functions.channels.GetChannels(
+                        id=[
+                            raw.types.InputChannelFromMessage(
+                                peer=chat_peer, msg_id=message_id, channel_id=raw_peer_id
+                            )
+                        ]
+                    )
+                )
+
+                answered = any(
+                    isinstance(chat, (raw.types.Channel, raw.types.ChannelForbidden))
+                    and chat.id == raw_peer_id
+                    for chat in chats.chats
+                )
+        except _STALE_SIGHTING_ERRORS:
+            answered = False
+
+        # A success without the peer in it is no better than an error: an empty vector, or
+        #  `userEmpty` for a deleted account, gives nothing to address.
+        if not answered:
+            await client.min_peer_cache.discard(peer_id, chat_id, message_id)
+            continue
+
+        # Asking through the sighting is what TDLib does for channels too
+        #  (`ChatManager::register_message_channels`): when the answer is a full object,
+        #  its real `access_hash` is now stored and outlives the message.
+        #  https://github.com/tdlib/td/blob/42e6a5259551178d1dab54a22ad96d14bd906e20/td/telegram/ChatManager.cpp#L4376-L4390
+        try:
+            return await client.storage.get_peer_by_id(peer_id)
+        except KeyError:
+            pass
+
+        # The answer was `min` again, so nothing was stored. The server still answered with the
+        #  peer through this sighting, which makes it the peer to hand out.
+        if peer_type == "user":
+            return raw.types.InputPeerUserFromMessage(
+                peer=chat_peer, msg_id=message_id, user_id=raw_peer_id
+            )
+
+        return raw.types.InputPeerChannelFromMessage(
+            peer=chat_peer, msg_id=message_id, channel_id=raw_peer_id
+        )
+
+    return None
 
 
 class ResolvePeer:
@@ -45,6 +157,10 @@ class ResolvePeer:
         Returns:
             :obj:`~pyrogram.raw.base.InputPeer` | ``None``: On success, the resolved peer id is returned in
             form of an InputPeer object, otherwise, in case *peer_id* is None, None is returned.
+            A user or channel only ever seen inside groups and channels (a "min" peer) is resolved
+            through the last message it was seen in, and may come back as
+            :obj:`~pyrogram.raw.types.InputPeerUserFromMessage` or
+            :obj:`~pyrogram.raw.types.InputPeerChannelFromMessage`.
 
         Raises:
             KeyError: In case the peer doesn't exist in the internal database.
@@ -66,6 +182,14 @@ class ResolvePeer:
                 return await self.storage.get_peer_by_id(peer_id)
             except KeyError:
                 peer_type = utils.get_peer_type(peer_id)
+
+                # Tried before the `access_hash=0` requests below. A bot records no sightings, so
+                #  it always falls through to them: https://core.telegram.org/api/peers
+                if peer_type in ("user", "channel"):
+                    peer = await _resolve_min_peer(self, peer_id, peer_type)
+
+                    if peer is not None:
+                        return peer
 
                 if peer_type == "user":
                     await self.fetch_peers(

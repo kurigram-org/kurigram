@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, enums
+from pyrogram import raw, enums, utils
 
 
 class GetWebAppUrl:
@@ -60,7 +60,7 @@ class GetWebAppUrl:
 
         r = await self.invoke(
             raw.functions.messages.RequestSimpleWebView(
-                bot=await self.resolve_peer(bot_user_id),
+                bot=utils.get_input_user_or_channel(await self.resolve_peer(bot_user_id)),
                 platform=platform.value,
                 from_side_menu=True if url is None else None,
                 url=url,

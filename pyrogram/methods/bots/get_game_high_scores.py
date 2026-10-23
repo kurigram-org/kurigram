@@ -21,6 +21,7 @@ from __future__ import annotations as _annotations
 import pyrogram
 from pyrogram import raw
 from pyrogram import types
+from pyrogram import utils
 
 
 class GetGameHighScores:
@@ -60,7 +61,7 @@ class GetGameHighScores:
             raw.functions.messages.GetGameHighScores(
                 peer=await self.resolve_peer(chat_id),
                 id=message_id,
-                user_id=await self.resolve_peer(user_id),
+                user_id=utils.get_input_user_or_channel(await self.resolve_peer(user_id)),
             )
         )
 

@@ -20,19 +20,22 @@
 """`restart()` keeps what the caches hold.
 
 It stops and starts the client, and `start()` rebuilds every primitive that binds to a
-loop. The message and topic caches own one of those locks, so rebuilding the `Cache` object
-instead of the lock alone would throw the cached messages away on every restart.
+loop. The message, topic and `min` peer caches own one of those locks, so rebuilding the cache
+object instead of the lock alone would throw what it holds away on every restart.
 """
 
 from __future__ import annotations as _annotations
 
 from typing import TYPE_CHECKING, Final
 
+from pyrogram.utils.cache import Sighting
+
 if TYPE_CHECKING:
     from pyrogram import Client
 
 _MESSAGE_KEY: Final[tuple[int, int]] = (-1001, 42)
 _TOPIC_KEY: Final[tuple[int, int]] = (-1001, 7)
+_MIN_PEER: Final[int] = 777001
 
 
 async def test_restart_keeps_the_message_and_topic_caches(offline_client: Client) -> None:
@@ -53,6 +56,22 @@ async def test_restart_keeps_the_message_and_topic_caches(offline_client: Client
             offline_client.message_cache._lock,
             offline_client.topic_cache._lock,
         ) != locks_before_restart
+
+    finally:
+        await offline_client.stop()
+
+
+async def test_restart_keeps_the_min_peer_sightings(offline_client: Client) -> None:
+    await offline_client.start()
+
+    await offline_client.min_peer_cache.add([_MIN_PEER], *_MESSAGE_KEY)
+    lock_before_restart = offline_client.min_peer_cache._lock
+
+    await offline_client.restart()
+
+    try:
+        assert await offline_client.min_peer_cache.get(_MIN_PEER) == [Sighting(*_MESSAGE_KEY)]
+        assert offline_client.min_peer_cache._lock is not lock_before_restart
 
     finally:
         await offline_client.stop()

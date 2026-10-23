@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 
 class GetChatAudiosCount:
@@ -47,7 +47,9 @@ class GetChatAudiosCount:
         peer_id = await self.resolve_peer(chat_id)
 
         r = await self.invoke(
-            raw.functions.users.GetSavedMusic(id=peer_id, offset=0, limit=1, hash=0)
+            raw.functions.users.GetSavedMusic(
+                id=utils.get_input_user_or_channel(peer_id), offset=0, limit=1, hash=0
+            )
         )
 
         return r.count

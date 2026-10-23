@@ -167,6 +167,7 @@ def test_the_sweep_finds_the_primitives_it_is_about() -> None:
         "Client.sessions_lock",
         "Client.updates_watchdog_event",
         "Dispatcher.updates_queue",
+        "MinPeerCache._lock",
     }
 
 

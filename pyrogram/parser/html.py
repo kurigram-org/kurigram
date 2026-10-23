@@ -27,6 +27,7 @@ import pyrogram
 from pyrogram import raw, types
 from pyrogram.enums import MessageEntityType
 from pyrogram.errors import PeerIdInvalid
+from pyrogram.utils.peers import get_input_user_or_channel
 
 from . import utils
 
@@ -176,7 +177,9 @@ class HTML:
             if isinstance(entity, raw.types.InputMessageEntityMentionName):
                 try:
                     if self.client is not None:
-                        entity.user_id = await self.client.resolve_peer(entity.user_id)
+                        entity.user_id = get_input_user_or_channel(
+                            await self.client.resolve_peer(entity.user_id)
+                        )
                 except PeerIdInvalid:
                     continue
 
