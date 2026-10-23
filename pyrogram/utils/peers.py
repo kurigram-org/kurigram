@@ -55,7 +55,7 @@ PEERS_WITH_A_CHANNEL_ID: Final = (
 
 
 def get_raw_peer_id(
-    peer: int | raw.base.Peer | raw.base.InputPeer | raw.base.RequestedPeer,
+    peer: int | raw.base.Peer | raw.base.InputPeer | raw.base.RequestedPeer | None,
 ) -> int | None:
     """Get the raw peer id from a Peer object or high-lvl id"""
 
