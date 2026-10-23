@@ -44,3 +44,6 @@ class ChatType(AutoName):
 
     DIRECT = auto()
     "Chat is a direct with a channel"
+
+    COMMUNITY = auto()
+    "Chat is a :obj:`~pyrogram.types.Community`"
