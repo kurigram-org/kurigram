@@ -30,7 +30,7 @@ class BotVerification(Object):
     """Information about bot verification.
 
     Parameters:
-        bot (:obj:`~pyrogram.types.User`):
+        bot (:obj:`~pyrogram.types.User`, *optional*):
             Bot that is verified this user.
 
         custom_emoji_id (``str``):
@@ -41,8 +41,12 @@ class BotVerification(Object):
     """
 
     def __init__(
-        self, *, bot: int, custom_emoji_id: str, description: types.FormattedText | None = None
-    ):
+        self,
+        *,
+        bot: types.User | None = None,
+        custom_emoji_id: str,
+        description: types.FormattedText | None = None,
+    ) -> None:
         self.bot = bot
         self.custom_emoji_id = custom_emoji_id
         self.description = description
@@ -50,7 +54,7 @@ class BotVerification(Object):
     @staticmethod
     async def _parse(
         client: pyrogram.Client,
-        verification: raw.types.BotVerification,
+        verification: raw.types.BotVerification | None,
         users: dict[int, raw.base.User],
     ) -> BotVerification | None:
         if not verification:
