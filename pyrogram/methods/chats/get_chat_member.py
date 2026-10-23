@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 from pyrogram.errors import UserNotParticipant
 
 
@@ -68,9 +68,11 @@ class GetChatMember:
                     if member.user.id == user.user_id:
                         return member
             raise UserNotParticipant
-        elif isinstance(chat, raw.types.InputPeerChannel):
+        elif isinstance(chat, utils.PEERS_WITH_A_CHANNEL_ID):
             r = await self.invoke(
-                raw.functions.channels.GetParticipant(channel=chat, participant=user)
+                raw.functions.channels.GetParticipant(
+                    channel=utils.get_input_user_or_channel(chat), participant=user
+                )
             )
 
             users = {i.id: i for i in r.users}

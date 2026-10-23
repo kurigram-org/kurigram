@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 
 class GetChatMembersCount:
@@ -51,8 +51,10 @@ class GetChatMembersCount:
             r = await self.invoke(raw.functions.messages.GetChats(id=[peer.chat_id]))
 
             return r.chats[0].participants_count
-        elif isinstance(peer, raw.types.InputPeerChannel):
-            r = await self.invoke(raw.functions.channels.GetFullChannel(channel=peer))
+        elif isinstance(peer, utils.PEERS_WITH_A_CHANNEL_ID):
+            r = await self.invoke(
+                raw.functions.channels.GetFullChannel(channel=utils.get_input_user_or_channel(peer))
+            )
 
             return r.full_chat.participants_count
         else:

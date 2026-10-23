@@ -21,7 +21,7 @@ from __future__ import annotations as _annotations
 from typing import TYPE_CHECKING
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
@@ -56,8 +56,10 @@ class GetCallMembers:
         """
         peer = await self.resolve_peer(chat_id)
 
-        if isinstance(peer, raw.types.InputPeerChannel):
-            r = await self.invoke(raw.functions.channels.GetFullChannel(channel=peer))
+        if isinstance(peer, utils.PEERS_WITH_A_CHANNEL_ID):
+            r = await self.invoke(
+                raw.functions.channels.GetFullChannel(channel=utils.get_input_user_or_channel(peer))
+            )
         elif isinstance(peer, raw.types.InputPeerChat):
             r = await self.invoke(raw.functions.messages.GetFullChat(chat_id=peer.chat_id))
         else:

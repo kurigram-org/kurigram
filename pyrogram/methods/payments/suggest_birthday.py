@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 
 class SuggestBirthday:
@@ -48,7 +48,8 @@ class SuggestBirthday:
         """
         await self.invoke(
             raw.functions.users.SuggestBirthday(
-                id=await self.resolve_peer(chat_id), birthday=birthday.write()
+                id=utils.get_input_user_or_channel(await self.resolve_peer(chat_id)),
+                birthday=birthday.write(),
             )
         )
 

@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import enums, raw, types
+from pyrogram import enums, raw, types, utils
 
 from ..object import Object
 
@@ -353,12 +353,14 @@ class InlineKeyboardButton(Object):
                 url=self.login_url.url,
                 request_write_access=self.login_url.request_write_access,
                 fwd_text=self.login_url.forward_text,
-                bot=await client.resolve_peer(self.login_url.bot_username or "self"),
+                bot=utils.get_input_user_or_channel(
+                    await client.resolve_peer(self.login_url.bot_username or "self")
+                ),
             )
 
         if self.user_id is not None:
             button_type = raw.types.InputInlineButtonTypeUserProfile(
-                user_id=await client.resolve_peer(self.user_id),
+                user_id=utils.get_input_user_or_channel(await client.resolve_peer(self.user_id)),
             )
 
         if self.web_app is not None:

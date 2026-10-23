@@ -21,6 +21,7 @@ from __future__ import annotations as _annotations
 import pyrogram
 from pyrogram import raw
 from pyrogram import types
+from pyrogram import utils
 
 
 class GetCommonChats:
@@ -50,10 +51,10 @@ class GetCommonChats:
 
         peer = await self.resolve_peer(user_id)
 
-        if isinstance(peer, raw.types.InputPeerUser):
+        if isinstance(peer, utils.PEERS_WITH_A_USER_ID):
             r = await self.invoke(
                 raw.functions.messages.GetCommonChats(
-                    user_id=peer,
+                    user_id=utils.get_input_user_or_channel(peer),
                     max_id=0,
                     limit=100,
                 )

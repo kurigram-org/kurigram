@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, enums
+from pyrogram import raw, enums, utils
 
 
 class GetWebAppLinkUrl:
@@ -70,7 +70,8 @@ class GetWebAppLinkUrl:
             raw.functions.messages.RequestAppWebView(
                 peer=await self.resolve_peer(chat_id),
                 app=raw.types.InputBotAppShortName(
-                    bot_id=await self.resolve_peer(bot_user_id), short_name=web_app_short_name
+                    bot_id=utils.get_input_user_or_channel(await self.resolve_peer(bot_user_id)),
+                    short_name=web_app_short_name,
                 ),
                 platform=platform.value,
                 write_allowed=allow_write_access,

@@ -22,7 +22,7 @@ import logging
 from typing import TYPE_CHECKING
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 from pyrogram.errors import (
     ChannelInvalid,
     ChannelPrivate,
@@ -84,7 +84,7 @@ class RecoverGaps:
                 try:
                     diff = await self.invoke(
                         raw.functions.updates.GetChannelDifference(
-                            channel=await self.resolve_peer(id),
+                            channel=utils.get_input_user_or_channel(await self.resolve_peer(id)),
                             filter=raw.types.ChannelMessagesFilterEmpty(),
                             pts=request_pts,
                             limit=10000,
