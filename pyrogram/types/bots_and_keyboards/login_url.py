@@ -63,7 +63,7 @@ class LoginUrl(Object):
         request_write_access (``bool``, *optional*):
             Pass True to request the permission for your bot to send messages to the user.
 
-        button_id (``int``):
+        button_id (``int``, *optional*):
             Button identifier.
     """
 

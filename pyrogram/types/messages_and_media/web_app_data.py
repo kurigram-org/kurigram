@@ -30,7 +30,7 @@ class WebAppData(Object):
     """Contains data sent from a `Web App <https://core.telegram.org/bots/webapps>`_ to the bot.
 
     Parameters:
-        data (``str``, *optional*):
+        data (``str``):
             The data.
 
         button_text (``str``):
