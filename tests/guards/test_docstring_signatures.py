@@ -40,7 +40,7 @@ from re import Pattern
 from tests.guards.name_resolution import REPOSITORY_ROOT, hand_written_files
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Generator
 
 # An entry reads `    reply_markup (``InlineKeyboardMarkup``, *optional*):`: the name, then
 #  the type and the markers in brackets, then the colon that makes Sphinx render the line as
@@ -151,7 +151,7 @@ def signature_parameters(node: ast.FunctionDef | ast.AsyncFunctionDef) -> dict[s
     return omittable
 
 
-def documented_functions() -> Iterator[DocumentedFunction]:
+def documented_functions() -> Generator[DocumentedFunction]:
     """Every function of the package whose docstring carries a `Parameters:` block."""
     for path in hand_written_files():
         module = path.relative_to(REPOSITORY_ROOT).as_posix()

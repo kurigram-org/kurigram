@@ -31,7 +31,7 @@ import pathlib
 from typing import TYPE_CHECKING, Any, Final
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Sequence
+    from collections.abc import Generator, Sequence
 
 REPOSITORY_ROOT: Final[pathlib.Path] = pathlib.Path(__file__).resolve().parents[2]
 PACKAGE_ROOT: Final[pathlib.Path] = REPOSITORY_ROOT / "pyrogram"
@@ -79,20 +79,20 @@ def is_generated(path: pathlib.Path) -> bool:
     return path in GENERATED or any(tree in path.parents for tree in GENERATED)
 
 
-def hand_written_files() -> Iterator[pathlib.Path]:
+def hand_written_files() -> Generator[pathlib.Path]:
     """Every module of the package a person wrote and a person can repair."""
     for path in sorted(PACKAGE_ROOT.rglob("*.py")):
         if not is_generated(path):
             yield path
 
 
-def tooling_files() -> Iterator[pathlib.Path]:
+def tooling_files() -> Generator[pathlib.Path]:
     """Every module beside the package: the suite and the code generators."""
     for root in TOOLING_ROOTS:
         yield from sorted(root.rglob("*.py"))
 
 
-def configuration_files() -> Iterator[pathlib.Path]:
+def configuration_files() -> Generator[pathlib.Path]:
     """Every file beside the package that is not Python and whose comments open with `#`."""
     found: set[pathlib.Path] = {REPOSITORY_ROOT / "Makefile", REPOSITORY_ROOT / ".gitignore"}
 

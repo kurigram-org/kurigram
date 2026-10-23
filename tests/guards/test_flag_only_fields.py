@@ -43,7 +43,7 @@ from compiler.api.compiler import ARGS_RE, COMBINATOR_RE, SECTION_RE, camel
 from tests.guards.name_resolution import REPOSITORY_ROOT, hand_written_files, source_of
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Generator
     import pathlib
 
 _SCHEMA_ROOT: Final[pathlib.Path] = REPOSITORY_ROOT / "compiler" / "api" / "source"
@@ -188,7 +188,7 @@ def called_constructor(node: ast.Call, *, imported: dict[str, str]) -> str:
     return ""
 
 
-def or_none_sites(tree: ast.AST, *, path: str) -> Iterator[OrNoneSite]:
+def or_none_sites(tree: ast.AST, *, path: str) -> Generator[OrNoneSite]:
     imported = imported_constructors(tree)
 
     for node in ast.walk(tree):
@@ -222,7 +222,7 @@ def package_or_none_sites() -> list[OrNoneSite]:
     return found
 
 
-def raw_bound_under_another_name(tree: ast.AST) -> Iterator[str]:
+def raw_bound_under_another_name(tree: ast.AST) -> Generator[str]:
     """Import forms that would put a constructor call beyond both routes `or_none_sites` follows."""
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
