@@ -44,9 +44,11 @@ from pyrogram.crypto import aes
 from pyrogram.errors import (
     AuthBytesInvalid,
     AuthTokenExpired,
+    BadMsgNotification,
     BadRequest,
     CDNFileHashMismatch,
     ChannelPrivate,
+    IncompleteDownload,
     PersistentTimestampInvalid,
     PersistentTimestampOutdated,
     SessionPasswordNeeded,
@@ -87,6 +89,18 @@ def _plugin_handlers(target: Any) -> Sequence[tuple[Handler, int]] | None:
         return None
 
     return handlers
+
+
+def _not_a_file_part(query_name: str, answer: object) -> Exception:
+    # `Session.send()` hands a `bad_msg_notification` back as the answer instead of raising
+    #  it, so one can arrive here in place of the file part. Taken as a part, it carries no
+    #  `bytes`, and the first chunk answered that way ended the download as a 0 B file.
+    #  https://github.com/kurigram-org/kurigram/issues/62
+    if isinstance(answer, raw.types.BadMsgNotification):
+        return BadMsgNotification(answer.error_code)
+
+    msg = f"`{query_name}` was answered with `{type(answer).__name__}`, not a file part"
+    return TypeError(msg)
 
 
 class Client(Methods):
@@ -1279,10 +1293,18 @@ class Client(Methods):
             os.path.abspath(re.sub("\\\\", "/", os.path.join(directory, file_name))) + ".temp"
         )
         file = BytesIO() if in_memory else open(temp_file_path, "wb")
+        received = 0
 
         try:
             async for chunk in self.get_file(file_id, file_size, 0, 0, progress, progress_args):
                 file.write(chunk)
+                received += len(chunk)
+
+            # `file_size` is 0 when the size is unknown, as for a bare file id string. A
+            #  known one catches every way the chunk loop can end early, not only the
+            #  ones `get_file()` already raises on.
+            if received < file_size:
+                raise IncompleteDownload(received, file_size)
         except BaseException as e:
             if not in_memory:
                 file.close()
@@ -1407,6 +1429,9 @@ class Client(Methods):
                             sleep_threshold=30,
                         )
 
+                        if not isinstance(r, raw.types.upload.File):
+                            raise _not_a_file_part("upload.GetFile", r)
+
                 elif isinstance(r, raw.types.upload.FileCdnRedirect):
                     cdn_session = await self.get_session(dc_id, is_cdn=True, temporary=True)
 
@@ -1429,6 +1454,9 @@ class Client(Methods):
                                     break
                                 else:
                                     continue
+
+                            if not isinstance(r2, raw.types.upload.CdnFile):
+                                raise _not_a_file_part("upload.GetCdnFile", r2)
 
                             chunk = r2.bytes
 
@@ -1495,6 +1523,8 @@ class Client(Methods):
                         raise e
                     finally:
                         await cdn_session.stop()
+                else:
+                    raise _not_a_file_part("upload.GetFile", r)
             except Exception as e:
                 raise e
 

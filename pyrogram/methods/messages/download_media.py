@@ -255,11 +255,12 @@ class DownloadMedia:
             ``str`` | ``BytesIO`` | ``list[str]`` | ``list[BytesIO]`` | ``None``: On success, the absolute path of the
             downloaded file is returned. In case ``in_memory=True``, a binary file-like object with its attribute
             ".name" set is returned. If the message contains multiple media (purchased paid media), a list of paths or
-            binary file-like objects is returned. In case the download failed or was deliberately stopped with
+            binary file-like objects is returned. In case the download was deliberately stopped with
             :meth:`~pyrogram.Client.stop_transmission`, None is returned.
 
         Raises:
             ValueError: if the message doesn't contain any downloadable media
+            IncompleteDownload: if fewer bytes arrive than the media is known to have. No partial file is kept.
 
         Example:
             Download media to file

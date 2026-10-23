@@ -38,6 +38,7 @@ import pytest
 from pyrogram import Client, StopTransmission, filters, raw
 from pyrogram.client import _plugin_handlers
 from pyrogram.connection.proxy import HTTPProxy, SOCKS5Proxy
+from pyrogram.errors import BadMsgNotification, IncompleteDownload
 from pyrogram.file_id import FileId, FileType
 from pyrogram.handlers import MessageHandler
 
@@ -244,25 +245,38 @@ _CHUNK_SIZE: Final[int] = 1024 * 1024
 _PAYLOAD_SIZE: Final[int] = 3 * _CHUNK_SIZE + _CHUNK_SIZE // 2
 
 
+# What a media session can answer `upload.GetFile` with: `Session.send()` returns a
+#  `bad_msg_notification` as the answer rather than raising it.
+MediaAnswer = raw.types.upload.File | raw.types.BadMsgNotification
+
+
+def _file_part(data: bytes) -> raw.types.upload.File:
+    return raw.types.upload.File(
+        type=raw.types.storage.FileUnknown(),
+        mtime=0,
+        bytes=data,
+    )
+
+
 class MediaSession:
     """A media session serving one fixed payload in 1 MiB chunks."""
 
-    def __init__(self, payload: bytes) -> None:
+    def __init__(self, payload: bytes, answers: dict[int, MediaAnswer] | None = None) -> None:
         self.payload = payload
+
+        # Given in place of the chunk at that byte offset.
+        self.answers = answers or {}
 
     async def invoke(
         self,
         query: raw.functions.upload.GetFile,
         *,
         sleep_threshold: int = 0,
-    ) -> raw.types.upload.File:
-        chunk = self.payload[query.offset : query.offset + query.limit]
+    ) -> MediaAnswer:
+        if query.offset in self.answers:
+            return self.answers[query.offset]
 
-        return raw.types.upload.File(
-            type=raw.types.storage.FileUnknown(),
-            mtime=0,
-            bytes=chunk,
-        )
+        return _file_part(self.payload[query.offset : query.offset + query.limit])
 
 
 class Downloader:
@@ -271,8 +285,9 @@ class Downloader:
     handle_download = Client.handle_download
     get_file = Client.get_file
 
-    def __init__(self, payload: bytes) -> None:
+    def __init__(self, payload: bytes, answers: dict[int, MediaAnswer] | None = None) -> None:
         self.payload = payload
+        self.answers = answers
         self.get_file_semaphore = asyncio.Semaphore(1)
         self.executor: Executor | None = None
 
@@ -281,7 +296,7 @@ class Downloader:
         return asyncio.get_event_loop()
 
     async def get_session(self, dc_id: int, *, is_media: bool = False) -> MediaSession:
-        return MediaSession(self.payload)
+        return MediaSession(self.payload, self.answers)
 
 
 def _document_file_id() -> FileId:
@@ -343,3 +358,58 @@ async def test_stop_transmission_from_a_progress_callback_ends_a_download(
 
     # The `.temp` file is deleted with the abort, so nothing at all is left behind.
     assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize(
+    "bad_offset",
+    [
+        pytest.param(0, id="first-chunk"),
+        pytest.param(2 * _CHUNK_SIZE, id="later-chunk"),
+    ],
+)
+async def test_a_bad_msg_notification_fails_the_download_instead_of_saving_a_short_file(
+    tmp_path: Path,
+    *,
+    bad_offset: int,
+) -> None:
+    # A first chunk answered this way used to end the loop with nothing written: a 0 B file.
+    bad_msg = raw.types.BadMsgNotification(bad_msg_id=0, bad_msg_seqno=0, error_code=32)
+    packet = (_document_file_id(), str(tmp_path), "bad.bin", False, _PAYLOAD_SIZE, None, ())
+    downloader = Downloader(b"x" * _PAYLOAD_SIZE, {bad_offset: bad_msg})
+
+    with pytest.raises(BadMsgNotification, match=r"\[32\]"):
+        await downloader.handle_download(packet)
+
+    assert list(tmp_path.iterdir()) == []
+
+
+def _downloader_cut_short_at(offset: int) -> Downloader:
+    payload = b"x" * _PAYLOAD_SIZE
+
+    return Downloader(payload, {offset: _file_part(payload[offset : offset + _CHUNK_SIZE // 2])})
+
+
+async def test_a_download_shorter_than_its_known_size_fails(tmp_path: Path) -> None:
+    packet = (_document_file_id(), str(tmp_path), "short.bin", False, _PAYLOAD_SIZE, None, ())
+
+    with pytest.raises(IncompleteDownload, match=f"after {_CHUNK_SIZE + _CHUNK_SIZE // 2} of"):
+        await _downloader_cut_short_at(_CHUNK_SIZE).handle_download(packet)
+
+    assert list(tmp_path.iterdir()) == []
+
+
+async def test_an_in_memory_download_shorter_than_its_known_size_fails(tmp_path: Path) -> None:
+    packet = (_document_file_id(), str(tmp_path), "short.bin", True, _PAYLOAD_SIZE, None, ())
+
+    with pytest.raises(IncompleteDownload):
+        await _downloader_cut_short_at(0).handle_download(packet)
+
+
+async def test_a_download_of_unknown_size_is_not_checked_against_one(tmp_path: Path) -> None:
+    # A bare file id string carries no size, so `download_media()` passes 0.
+    packet = (_document_file_id(), str(tmp_path), "unknown.bin", False, 0, None, ())
+
+    file_path = await Downloader(b"x" * _PAYLOAD_SIZE).handle_download(packet)
+
+    assert file_path is not None
+    assert Path(file_path).stat().st_size == _PAYLOAD_SIZE
