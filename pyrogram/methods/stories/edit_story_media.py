@@ -103,6 +103,17 @@ class EditStoryMedia:
                 You can pass anything you need to be available in the progress callback scope; for example, a Message
                 object or a Client instance in order to edit the message with the updated progress status.
 
+        Other Parameters:
+            current (``int``):
+                The amount of bytes transmitted so far.
+
+            total (``int``):
+                The total size of the file.
+
+            *args (``tuple``, *optional*):
+                Extra custom arguments as defined in the ``progress_args`` parameter.
+                You can either keep ``*args`` or add every single extra argument in your function signature.
+
         Returns:
             :obj:`~pyrogram.types.Story` | ``None``: On success, the edited story is returned, otherwise,
             in case the upload is deliberately stopped with :meth:`~pyrogram.Client.stop_transmission`,
