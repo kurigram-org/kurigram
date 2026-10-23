@@ -61,10 +61,7 @@ class AcceptedGiftTypes(Object):
         self.premium_subscription = premium_subscription
 
     @staticmethod
-    def _parse(disallowed_gifts: raw.types.DisallowedGiftsSettings) -> AcceptedGiftTypes | None:
-        if not disallowed_gifts:
-            return None
-
+    def _parse(disallowed_gifts: raw.types.DisallowedGiftsSettings) -> AcceptedGiftTypes:
         return AcceptedGiftTypes(
             limited_gifts=not disallowed_gifts.disallow_limited_stargifts,
             unlimited_gifts=not disallowed_gifts.disallow_unlimited_stargifts,

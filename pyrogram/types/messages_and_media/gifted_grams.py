@@ -78,8 +78,8 @@ class GiftedGrams(Object):
         )
 
         return GiftedGrams(
-            gifter=await types.User._parse(client, gifter),
-            receiver=await types.User._parse(client, receiver),
+            gifter=await types.User._parse(client, gifter) if gifter is not None else None,
+            receiver=await types.User._parse(client, receiver) if receiver is not None else None,
             gram_amount=action.crypto_amount,
             transaction_id=action.transaction_id,
             sticker=random.choice(

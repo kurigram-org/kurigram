@@ -62,20 +62,16 @@ class SwitchInlineQueryChosenChat(Object):
 
     @staticmethod
     def _parse(
-        button_type: raw.types.InlineButtonTypeSwitchInline,
-    ) -> SwitchInlineQueryChosenChat | None:
-        if not isinstance(button_type, raw.types.InlineButtonTypeSwitchInline):
-            return None
-
-        if not button_type.peer_types:
-            return None
-
+        query: str,
+        *,
+        peer_types: list[raw.base.InlineQueryPeerType],
+    ) -> SwitchInlineQueryChosenChat:
         allow_user_chats = None
         allow_bot_chats = None
         allow_group_chats = None
         allow_channel_chats = None
 
-        for peer_type in button_type.peer_types:
+        for peer_type in peer_types:
             if isinstance(
                 peer_type,
                 (raw.types.InlineQueryPeerTypeBotPM, raw.types.InlineQueryPeerTypeSameBotPM),
@@ -95,7 +91,7 @@ class SwitchInlineQueryChosenChat(Object):
                 allow_user_chats = True
 
         return SwitchInlineQueryChosenChat(
-            query=button_type.query,
+            query=query,
             allow_user_chats=allow_user_chats,
             allow_bot_chats=allow_bot_chats,
             allow_group_chats=allow_group_chats,

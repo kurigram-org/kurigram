@@ -101,7 +101,7 @@ class GetDirectMessagesTopics:
                     users=users,
                     chats=chats,
                 )
-                topics.append(utils.require_parsed(parsed_topic))
+                topics.append(parsed_topic)
 
             if not topics:
                 return

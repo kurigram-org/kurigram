@@ -69,9 +69,13 @@ class ShippingQuery(Object, Update):
         except (UnicodeDecodeError, AttributeError):
             payload = shipping_query.payload
 
+        raw_from_user = users.get(shipping_query.user_id)
+
         return ShippingQuery(
             id=str(shipping_query.query_id),
-            from_user=await types.User._parse(client, users[shipping_query.user_id]),
+            from_user=await types.User._parse(client, raw_from_user)
+            if raw_from_user is not None
+            else None,
             invoice_payload=payload,
             shipping_address=types.ShippingAddress._parse(shipping_query.shipping_address),
             client=client,

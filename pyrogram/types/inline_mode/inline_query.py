@@ -99,13 +99,19 @@ class InlineQuery(Object, Update):
         elif isinstance(peer_type, raw.types.InlineQueryPeerTypeBroadcast):
             chat_type = enums.ChatType.CHANNEL
 
+        raw_from_user = users.get(inline_query.user_id)
+
         return InlineQuery(
             id=str(inline_query.query_id),
-            from_user=await types.User._parse(client, users[inline_query.user_id]),
+            from_user=await types.User._parse(client, raw_from_user)
+            if raw_from_user is not None
+            else None,
             query=inline_query.query,
             offset=inline_query.offset,
             chat_type=chat_type,
-            location=types.Location._parse(inline_query.geo),
+            location=types.Location._parse(inline_query.geo)
+            if isinstance(inline_query.geo, raw.types.GeoPoint)
+            else None,
             client=client,
         )
 

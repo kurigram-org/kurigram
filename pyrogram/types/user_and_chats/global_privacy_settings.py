@@ -86,11 +86,8 @@ class GlobalPrivacySettings(Object):
 
     @staticmethod
     def _parse(
-        settings: raw.types.GlobalPrivacySettings | None = None,
-    ) -> GlobalPrivacySettings | None:
-        if not settings:
-            return
-
+        settings: raw.types.GlobalPrivacySettings,
+    ) -> GlobalPrivacySettings:
         return GlobalPrivacySettings(
             archive_and_mute_new_chats=getattr(
                 settings, "archive_and_mute_new_noncontact_peers", None
@@ -103,9 +100,9 @@ class GlobalPrivacySettings(Object):
             ),
             incoming_paid_message_star_count=getattr(settings, "noncontact_peers_paid_stars", None),
             show_gift_button=getattr(settings, "display_gifts_button", None),
-            accepted_gift_types=types.AcceptedGiftTypes._parse(
-                getattr(settings, "disallowed_gifts", None)
-            ),
+            accepted_gift_types=types.AcceptedGiftTypes._parse(settings.disallowed_gifts)
+            if settings.disallowed_gifts is not None
+            else None,
         )
 
     def write(self) -> raw.types.GlobalPrivacySettings:
