@@ -158,6 +158,7 @@ class SQLiteStorage(Storage):
         session_string: str | None = None,
         in_memory: bool = False,
         use_wal: bool = False,
+        do_vacuum: bool = True,
     ):
         self.name = name
         self._conn: sqlite3.Connection | None = None
@@ -165,6 +166,7 @@ class SQLiteStorage(Storage):
         self.session_string = session_string
         self.in_memory = in_memory
         self.use_wal = use_wal
+        self.do_vacuum = do_vacuum
 
         if self.in_memory:
             self.database = ":memory:"
@@ -323,8 +325,9 @@ class SQLiteStorage(Storage):
         else:
             await self.create()
 
-        with self.conn:
-            self.conn.execute("VACUUM")
+        if self.do_vacuum:
+            with self.conn:
+                self.conn.execute("VACUUM")
 
     async def save(self):
         await self.date(int(time.time()))
