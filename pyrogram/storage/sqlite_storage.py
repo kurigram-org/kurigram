@@ -56,7 +56,7 @@ CREATE TABLE peers
 (
     id             INTEGER PRIMARY KEY,
     access_hash    INTEGER,
-    type           INTEGER NOT NULL,
+    type           TEXT NOT NULL,
     phone_number   TEXT,
     last_update_on INTEGER NOT NULL DEFAULT (CAST(STRFTIME('%s', 'now') AS INTEGER))
 );
