@@ -218,11 +218,23 @@ class Client(Methods):
             Only available for users, bots will ignore this parameter.
             Defaults to False (normal session).
 
-        sleep_threshold (``int``, *optional*):
+        retries (``int``, *optional*):
+            Set the maximum number of retries for TCP requests. Useful for when the connection is lost for few minutes.
+            Defaults to 10 attempts.
+
+        timeout (``float``, *optional*):
+            Set the timeout for TCP requests. Useful for when using a proxy or when the connection is slow.
+            Defaults to 15 seconds.
+
+        sleep_threshold (``float``, *optional*):
             Set a sleep threshold for flood wait exceptions happening globally in this client instance, below which any
             request that raises a flood wait will be automatically invoked again after sleeping for the required amount
             of time. Flood wait exceptions requiring higher waiting times will be raised.
             Defaults to 10 seconds.
+
+        retry_delay (``float``, *optional*):
+            Set the delay between retries for TCP requests.
+            Defaults to 1 second.
 
         hide_password (``bool``, *optional*):
             Pass True to hide the password when typing it during the login.
@@ -344,7 +356,10 @@ class Client(Methods):
         no_updates: bool | None = None,
         skip_updates: bool = True,
         takeout: bool | None = None,
-        sleep_threshold: int = Session.SLEEP_THRESHOLD,
+        retries: int = Session.MAX_RETRIES,
+        timeout: float = Session.WAIT_TIMEOUT,
+        sleep_threshold: float = Session.SLEEP_THRESHOLD,
+        retry_delay: float = Session.RETRY_DELAY,
         hide_password: bool = False,
         max_concurrent_transmissions: int = MAX_CONCURRENT_TRANSMISSIONS,
         max_message_cache_size: int = MAX_MESSAGE_CACHE_SIZE,
@@ -388,7 +403,10 @@ class Client(Methods):
         self.no_updates = no_updates
         self.skip_updates = skip_updates
         self.takeout = takeout
+        self.retries = retries
+        self.timeout = timeout
         self.sleep_threshold = sleep_threshold
+        self.retry_delay = retry_delay
         self.hide_password = hide_password
         self.max_concurrent_transmissions = max_concurrent_transmissions
         self.max_message_cache_size = max_message_cache_size
