@@ -51,10 +51,12 @@ class ChatBoostUpdated(Object, Update):
         users: dict[int, raw.types.User],
         chats: dict[int, raw.types.Channel],
     ) -> ChatBoostUpdated:
+        raw_chat = chats.get(utils.get_raw_peer_id(update.peer))
+
         return ChatBoostUpdated(
-            chat=await types.Chat._parse_channel_chat(
-                client, chats.get(utils.get_raw_peer_id(update.peer))
-            ),
+            chat=await types.Chat._parse_channel_chat(client, raw_chat)
+            if raw_chat is not None
+            else None,
             boost=await types.ChatBoost._parse(client, update.boost, users),
             client=client,
         )

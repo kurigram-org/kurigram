@@ -125,6 +125,16 @@ class PaymentForm(Object):
     @staticmethod
     async def _parse(client, form: raw.base.payments.PaymentForm) -> PaymentForm:
         users = {i.id: i for i in getattr(form, "users", [])}
+        raw_seller_bot = users.get(getattr(form, "bot_id", None))
+        raw_payment_provider = users.get(getattr(form, "provider_id", None))
+        seller_bot = (
+            await types.User._parse(client, raw_seller_bot) if raw_seller_bot is not None else None
+        )
+        payment_provider = (
+            await types.User._parse(client, raw_payment_provider)
+            if raw_payment_provider is not None
+            else None
+        )
 
         if isinstance(form, raw.types.payments.PaymentForm):
             return PaymentForm(
@@ -134,9 +144,9 @@ class PaymentForm(Object):
                 description=form.description,
                 photo=types.Photo._parse(client, form.photo),
                 seller_bot_user_id=form.bot_id,
-                seller_bot=await types.User._parse(client, users.get(form.bot_id)),
+                seller_bot=seller_bot,
                 payment_provider_user_id=form.provider_id,
-                payment_provider=await types.User._parse(client, users.get(form.provider_id)),
+                payment_provider=payment_provider,
                 invoice=types.Invoice._parse(client, form.invoice),
                 url=form.url,
                 can_save_credentials=form.can_save_credentials,
@@ -175,7 +185,7 @@ class PaymentForm(Object):
                 description=form.description,
                 photo=types.Photo._parse(client, form.photo),
                 seller_bot_user_id=form.bot_id,
-                seller_bot=await types.User._parse(client, users.get(form.bot_id)),
+                seller_bot=seller_bot,
                 invoice=types.Invoice._parse(client, form.invoice),
                 raw=form,
             )

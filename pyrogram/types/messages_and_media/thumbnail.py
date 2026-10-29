@@ -64,18 +64,19 @@ class Thumbnail(Object):
         self.file_size = file_size
 
     @staticmethod
-    def _parse(client, media: raw.types.Photo | raw.types.Document) -> list[Thumbnail] | None:
+    def _parse(
+        client: pyrogram.Client,
+        media: raw.types.Photo | raw.types.Document,
+    ) -> list[Thumbnail]:
         if isinstance(media, raw.types.Photo):
             raw_thumbs = [i for i in media.sizes if isinstance(i, raw.types.PhotoSize)]
             raw_thumbs.sort(key=lambda p: p.w * p.h)
             raw_thumbs = raw_thumbs[:-1]
 
             file_type = FileType.PHOTO
-        elif isinstance(media, raw.types.Document):
+        else:
             raw_thumbs = media.thumbs or []
             file_type = FileType.THUMBNAIL
-        else:
-            return
 
         parsed_thumbs = []
 
@@ -107,4 +108,4 @@ class Thumbnail(Object):
                 )
             )
 
-        return parsed_thumbs or None
+        return parsed_thumbs

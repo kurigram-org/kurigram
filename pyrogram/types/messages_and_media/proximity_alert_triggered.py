@@ -56,9 +56,17 @@ class ProximityAlertTriggered(Object):
     ) -> ProximityAlertTriggered:
         from_id = utils.get_raw_peer_id(action.from_id)
         to_id = utils.get_raw_peer_id(action.to_id)
+        raw_traveler: raw.base.User | raw.base.Chat | None = users.get(from_id) or chats.get(
+            from_id
+        )
+        raw_watcher: raw.base.User | raw.base.Chat | None = users.get(to_id) or chats.get(to_id)
 
         return ProximityAlertTriggered(
-            traveler=await types.Chat._parse_chat(client, users.get(from_id) or chats.get(from_id)),
-            watcher=await types.Chat._parse_chat(client, users.get(to_id) or chats.get(to_id)),
+            traveler=await types.Chat._parse_chat(client, raw_traveler)
+            if raw_traveler is not None
+            else None,
+            watcher=await types.Chat._parse_chat(client, raw_watcher)
+            if raw_watcher is not None
+            else None,
             distance=action.distance,
         )

@@ -75,8 +75,10 @@ class TonWalletTransfer(Object):
         sender_id: int,
         users: dict[int, raw.base.User],
     ) -> TonWalletTransfer:
+        raw_sender = users.get(sender_id)
+
         return TonWalletTransfer(
-            sender=await types.User._parse(client, users.get(sender_id)),
+            sender=await types.User._parse(client, raw_sender) if raw_sender is not None else None,
             transaction_id=action.transaction_id,
             peer_address=action.peer_address,
             amount=action.amount,

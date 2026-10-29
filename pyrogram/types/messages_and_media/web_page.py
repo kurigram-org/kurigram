@@ -186,13 +186,7 @@ class WebPage(Object):
         self.raw = raw
 
     @staticmethod
-    def _parse(client, media: raw.types.MessageMediaWebPage) -> WebPage | None:
-        if not media:
-            return None
-
-        if isinstance(media.webpage, raw.types.WebPageNotModified):
-            return None
-
+    def _parse(client: pyrogram.Client, media: raw.types.MessageMediaWebPage) -> WebPage:
         audio = None
         document = None
         photo = None
