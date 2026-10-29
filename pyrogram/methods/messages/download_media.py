@@ -19,6 +19,7 @@
 from __future__ import annotations as _annotations
 
 import asyncio
+import ntpath
 import os
 from datetime import datetime
 from pathlib import Path
@@ -29,8 +30,8 @@ from pyrogram import types, utils
 from pyrogram.file_id import PHOTO_TYPES, FileId, FileType
 
 if TYPE_CHECKING:
-    from io import BytesIO
     from collections.abc import Callable
+    from io import BytesIO
 
     from pyrogram._typing import PathType
 
@@ -395,7 +396,9 @@ class DownloadMedia:
         file_id_obj = FileId.decode(file_id_str)
 
         file_type = file_id_obj.file_type
-        media_file_name = getattr(media, "file_name", "")
+        media_file_name = ntpath.basename(getattr(media, "file_name", ""))
+        if media_file_name in (".", ".."):
+            media_file_name = ""
         file_size = getattr(media, "file_size", 0)
         mime_type = getattr(media, "mime_type", "")
         date = getattr(media, "date", None)
