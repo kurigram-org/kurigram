@@ -1177,7 +1177,7 @@ class Message(Object, Update):
         elif isinstance(action, raw.types.MessageActionChannelCreate):
             service_type = enums.MessageServiceType.CHANNEL_CHAT_CREATED
 
-            if chat.type == enums.ChatType.SUPERGROUP:
+            if chat and chat.type == enums.ChatType.SUPERGROUP:
                 supergroup_chat_created = True
                 service_type = enums.MessageServiceType.SUPERGROUP_CHAT_CREATED
             else:
@@ -1424,7 +1424,7 @@ class Message(Object, Update):
             service_type = enums.MessageServiceType.PAID_MESSAGES_REFUNDED
             paid_messages_refunded = types.PaidMessagesRefunded._parse(action)
         elif isinstance(action, raw.types.MessageActionPaidMessagesPrice):
-            if chat.type == enums.ChatType.DIRECT:
+            if chat and chat.type == enums.ChatType.DIRECT:
                 service_type = enums.MessageServiceType.DIRECT_MESSAGE_PRICE_CHANGED
                 direct_message_price_changed = types.DirectMessagePriceChanged._parse(action)
             else:
@@ -1555,7 +1555,7 @@ class Message(Object, Update):
                 raw_reply_to_message=raw_reply_to_message,
             )
 
-        if parsed_message.chat.is_forum and not parsed_message.topic:
+        if parsed_message.chat and parsed_message.chat.is_forum and not parsed_message.topic:
             parsed_topic = await client.topic_cache.get(
                 (parsed_message.chat.id, parsed_message.message_thread_id)
             )
@@ -1600,7 +1600,10 @@ class Message(Object, Update):
                 client, parsed_message.reply_to_message, action
             )
 
-        await client.message_cache.set((parsed_message.chat.id, parsed_message.id), parsed_message)
+        if parsed_message.chat:
+            await client.message_cache.set(
+                (parsed_message.chat.id, parsed_message.id), parsed_message
+            )
 
         return parsed_message
 
@@ -1975,12 +1978,12 @@ class Message(Object, Update):
                 client, topics.get(parsed_message.message_thread_id), users=users, chats=chats
             )
 
-            if parsed_message.topic:
+            if parsed_message.topic and parsed_message.chat:
                 await client.topic_cache.set(
                     (parsed_message.chat.id, parsed_message.topic.id), parsed_message.topic
                 )
 
-        if parsed_message.chat.is_forum and not parsed_message.topic:
+        if parsed_message.chat and parsed_message.chat.is_forum and not parsed_message.topic:
             parsed_topic = await client.topic_cache.get(
                 (parsed_message.chat.id, parsed_message.message_thread_id)
             )
@@ -2006,7 +2009,7 @@ class Message(Object, Update):
                 except (ChannelPrivate, ChannelForumMissing):
                     pass
 
-        if chat.type == enums.ChatType.DIRECT and message.saved_peer_id:
+        if chat and chat.type == enums.ChatType.DIRECT and message.saved_peer_id:
             parsed_message.direct_messages_topic_id = message.saved_peer_id.user_id
 
             parsed_topic = await client.topic_cache.get(
@@ -2034,7 +2037,7 @@ class Message(Object, Update):
                 except (ChannelPrivate, ChatAdminRequired):
                     pass
 
-        if not parsed_message.poll:  # Do not cache poll messages
+        if parsed_message.chat and not parsed_message.poll:  # Do not cache poll messages
             await client.message_cache.set(
                 (parsed_message.chat.id, parsed_message.id), parsed_message
             )
@@ -2333,7 +2336,7 @@ class Message(Object, Update):
                 replies=replies,
             )
 
-        if parsed_message.chat.is_forum and not parsed_message.topic:
+        if parsed_message.chat and parsed_message.chat.is_forum and not parsed_message.topic:
             parsed_topic = await client.topic_cache.get(
                 (parsed_message.chat.id, parsed_message.message_thread_id)
             )
@@ -2359,7 +2362,7 @@ class Message(Object, Update):
                 except (ChannelPrivate, ChannelForumMissing):
                     pass
 
-        if not parsed_message.poll:  # Do not cache poll messages
+        if parsed_message.chat and not parsed_message.poll:  # Do not cache poll messages
             await client.message_cache.set(
                 (parsed_message.chat.id, parsed_message.id), parsed_message
             )
@@ -2403,13 +2406,18 @@ class Message(Object, Update):
                         message.reply_to.reply_to_msg_id,
                     )
                     reply_to_params = {"chat_id": key[0], "message_ids": key[1]}
-                else:
+                elif parsed_message.chat is not None:
                     key = (parsed_message.chat.id, parsed_message.reply_to_message_id)
                     reply_to_params = {"chat_id": key[0], "message_ids": message.id, "reply": True}
+                else:
+                    # The chat peer was not in `users`/`chats`, so there is no chat id to look
+                    #  the reply up by; keep `reply_to_message_id` and leave the message unset.
+                    key = reply_to_params = None
 
-                parsed_message.reply_to_message = await client.message_cache.get(key)
+                if key is not None:
+                    parsed_message.reply_to_message = await client.message_cache.get(key)
 
-                if client.fetch_replies and not parsed_message.reply_to_message:
+                if client.fetch_replies and reply_to_params and not parsed_message.reply_to_message:
                     with contextlib.suppress(ChannelPrivate, ChannelInvalid, MessageIdsEmpty):
                         # `reply_to_params` holds a valid `(chat_id, message_ids)` or
                         #  `(chat_id, reply=True)` shape per branch above; a dict unpack
