@@ -23,7 +23,6 @@ from typing import TYPE_CHECKING
 
 import pyrogram
 from pyrogram import raw
-from pyrogram.session import Session
 
 if TYPE_CHECKING:
     from pyrogram.raw.core import ReturnType, TLObject
@@ -35,10 +34,10 @@ class Invoke:
     async def invoke(
         self: pyrogram.Client,
         query: TLObject[ReturnType],
-        retries: int = Session.MAX_RETRIES,
-        timeout: float = Session.WAIT_TIMEOUT,
+        retries: int | None = None,
+        timeout: float | None = None,
         sleep_threshold: float | None = None,
-        retry_delay: float = Session.RETRY_DELAY,
+        retry_delay: float | None = None,
         recaptcha_token: str | None = None,
         business_connection_id: str | None = None,
     ) -> ReturnType:
@@ -107,12 +106,18 @@ class Invoke:
 
         r = await session.invoke(
             query=query,
-            retries=retries,
-            timeout=timeout,
+            retries=(
+                retries if retries is not None else self.retries
+            ),
+            timeout=(
+                timeout if timeout is not None else self.timeout
+            ),
             sleep_threshold=(
                 sleep_threshold if sleep_threshold is not None else self.sleep_threshold
             ),
-            retry_delay=retry_delay,
+            retry_delay=(
+                retry_delay if retry_delay is not None else self.retry_delay
+            ),
         )
 
         await self.fetch_peers(getattr(r, "users", []))
