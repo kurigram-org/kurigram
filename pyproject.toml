@@ -272,3 +272,11 @@ exclude = [
 invalid-argument-type = "ignore"
 invalid-assignment = "ignore"
 unresolved-attribute = "ignore"
+
+# A file already clean of a rule ignored above enforces it, so a fix that only a type
+#  checker sees keeps a gate: `test_peers.py` fails here if `get_raw_peer_id` stops accepting `None`.
+[[tool.ty.overrides]]
+include = ["tests/unit/utils/test_peers.py"]
+
+[tool.ty.overrides.rules]
+invalid-argument-type = "error"
