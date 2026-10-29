@@ -83,13 +83,13 @@ class BanChatMember:
         chat_peer = await self.resolve_peer(chat_id)
         user_peer = await self.resolve_peer(user_id)
 
-        if isinstance(chat_peer, (raw.types.InputPeerSelf, raw.types.InputPeerUser)):
+        if isinstance(chat_peer, (raw.types.InputPeerSelf, *utils.PEERS_WITH_A_USER_ID)):
             raise ValueError("Can't ban members in private chats")
 
-        if isinstance(chat_peer, raw.types.InputPeerChannel):
+        if isinstance(chat_peer, utils.PEERS_WITH_A_CHANNEL_ID):
             r = await self.invoke(
                 raw.functions.channels.EditBanned(
-                    channel=chat_peer,
+                    channel=utils.get_input_user_or_channel(chat_peer),
                     participant=user_peer,
                     banned_rights=raw.types.ChatBannedRights(
                         until_date=utils.datetime_to_timestamp(until_date),
@@ -108,16 +108,18 @@ class BanChatMember:
             if revoke_messages:
                 await self.invoke(
                     raw.functions.channels.DeleteParticipantHistory(
-                        channel=chat_peer, participant=user_peer
+                        channel=utils.get_input_user_or_channel(chat_peer), participant=user_peer
                     )
                 )
         else:
-            if not isinstance(user_peer, raw.types.InputPeerUser):
+            if not isinstance(user_peer, utils.PEERS_WITH_A_USER_ID):
                 raise ValueError("Can't ban chats in basic groups")
 
             r = await self.invoke(
                 raw.functions.messages.DeleteChatUser(
-                    chat_id=abs(chat_id), user_id=user_peer, revoke_history=revoke_messages
+                    chat_id=abs(chat_id),
+                    user_id=utils.get_input_user_or_channel(user_peer),
+                    revoke_history=revoke_messages,
                 )
             )
 

@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import enums, raw, types
+from pyrogram import enums, raw, types, utils
 from pyrogram.errors import ChannelInvalid, ChannelPrivate
 
 from ..object import Object
@@ -237,7 +237,9 @@ class MediaArea(Object):
         if self.type == enums.MediaAreaType.POST:
             return raw.types.InputMediaAreaChannelPost(
                 coordinates=coordinates,
-                channel=await client.resolve_peer(self.sender_chat.id),
+                channel=utils.get_input_user_or_channel(
+                    await client.resolve_peer(self.sender_chat.id)
+                ),
                 msg_id=self.message_id,
             )
         elif self.type == enums.MediaAreaType.LOCATION:

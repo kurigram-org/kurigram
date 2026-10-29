@@ -116,8 +116,12 @@ class SetChatPhoto:
                     photo=photo,
                 )
             )
-        elif isinstance(peer, raw.types.InputPeerChannel):
-            r = await self.invoke(raw.functions.channels.EditPhoto(channel=peer, photo=photo))
+        elif isinstance(peer, utils.PEERS_WITH_A_CHANNEL_ID):
+            r = await self.invoke(
+                raw.functions.channels.EditPhoto(
+                    channel=utils.get_input_user_or_channel(peer), photo=photo
+                )
+            )
         else:
             raise ValueError(f'The chat_id "{chat_id}" belongs to a user')
 

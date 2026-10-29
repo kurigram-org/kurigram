@@ -73,7 +73,7 @@ class GiftPremiumWithStars:
         entities = entities or []
 
         invoice = raw.types.InputInvoicePremiumGiftStars(
-            user_id=await self.resolve_peer(user_id),
+            user_id=utils.get_input_user_or_channel(await self.resolve_peer(user_id)),
             months=month_count,
             message=raw.types.TextWithEntities(
                 text=text,
