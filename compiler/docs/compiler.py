@@ -25,7 +25,10 @@ import os
 import re
 import shutil
 from dataclasses import dataclass
-from typing import Literal
+from typing import TYPE_CHECKING, Final, Literal
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 HOME = "compiler/docs"
 DESTINATION = "docs/source/telegram"
@@ -38,6 +41,27 @@ BASE_PATH = "pyrogram/raw/base"
 FUNCTIONS_BASE = "functions"
 TYPES_BASE = "types"
 BASE_BASE = "base"
+
+# Public `Client` methods deliberately absent from every `categories` block in
+#  `pyrogram_api()`, each with the reason it has no page.
+UNLISTED_CLIENT_METHODS: Final[Mapping[str, str]] = {
+    "authorize": "internal: the interactive login `start()` runs",
+    "authorize_qr": "internal: the QR login `start()` runs",
+    "fetch_peers": "internal: caches the peers of responses and updates",
+    "get_message_split_ranges": "internal: cached split ranges for the `*_count` methods",
+    "guess_extension": "internal: file extension helper of `download_media()`",
+    "guess_mime_type": "internal: MIME helper of the upload methods",
+    "handle_download": "internal: worker behind `download_media()`",
+    "handle_updates": "internal: the session hands every update to it",
+    "load_plugins": "internal: `start()` loads the plugins",
+    "load_session": "internal: `connect()` loads the session",
+    "updates_watchdog": "internal: `initialize()` task recovering missed updates",
+    "send_code": "alias of `send_phone_number_code`",
+    "resend_code": "alias of `resend_phone_number_code`",
+    "get_received_gifts": "alias of `get_chat_gifts`",
+    "get_received_gifts_count": "alias of `get_chat_gifts_count`",
+    "send_web_page": "deprecated: use `send_message`",
+}
 
 
 def snek(s: str):
@@ -744,6 +768,61 @@ def pyrogram_api():
                     f2.write(f".. autofunction:: pyrogram.{func}()")
 
         f.write(template.format(**fmt_keys))
+
+    # Decorators
+
+    categories = {
+        "decorators": """
+        Decorators
+            on_message
+            on_edited_message
+            on_business_message
+            on_edited_business_message
+            on_deleted_messages
+            on_deleted_business_messages
+            on_guest_message
+            on_message_reaction_count
+            on_message_reaction
+            on_business_connection
+            on_story
+            on_callback_query
+            on_chat_boost
+            on_chat_join_request
+            on_chat_member_updated
+            on_chosen_inline_result
+            on_inline_query
+            on_poll
+            on_pre_checkout_query
+            on_purchased_paid_media
+            on_shipping_query
+            on_user_status
+            on_start
+            on_stop
+            on_connect
+            on_disconnect
+            on_error
+            on_managed_bot
+            on_stopped_message_generation
+            on_raw_update
+        """,
+    }
+
+    with open(HOME + "/template/decorators.rst", encoding="utf-8") as template_file:
+        template = template_file.read()
+
+    with open(PYROGRAM_API_DEST + "/decorators.rst", "w", encoding="utf-8") as page:
+        _, *decorators = get_title_list(categories["decorators"])
+
+        page.write(
+            template.format(
+                decorators_hlist="\n    ".join(
+                    f"- :meth:`~Client.{decorator}`" for decorator in decorators
+                ),
+                decorators_details="\n".join(
+                    f".. autodecorator:: pyrogram.Client.{decorator}()" for decorator in decorators
+                ),
+            )
+        )
 
     # Types
 
