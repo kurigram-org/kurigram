@@ -241,7 +241,7 @@ class Story(Object, Update):
                 users.update({peer_id: client.me.raw})
             else:
                 r = await client.invoke(
-                    raw.functions.users.GetUsers(id=[raw.types.InputPeerSelf()])
+                    raw.functions.users.GetUsers(id=[raw.types.InputUserSelf()])
                 )
                 peer_id = r[0].id
                 users.update({r[0].id: r[0]})
@@ -250,14 +250,18 @@ class Story(Object, Update):
 
             if peer_id not in users:
                 r = await client.invoke(
-                    raw.functions.users.GetUsers(id=[raw.types.InputPeerSelf(), peer])
+                    raw.functions.users.GetUsers(
+                        id=[raw.types.InputUserSelf(), utils.get_input_user_or_channel(peer)]
+                    )
                 )
                 users.update({i.id: i for i in r})
         elif isinstance(peer, utils.PEERS_WITH_A_CHANNEL_ID):
             peer_id = peer.channel_id
 
             if peer_id not in chats:
-                r = await client.invoke(raw.functions.channels.GetChannels(id=[peer]))
+                r = await client.invoke(
+                    raw.functions.channels.GetChannels(id=[utils.get_input_user_or_channel(peer)])
+                )
                 chats.update({peer_id: r.chats[0]})
         else:
             raise ValueError(f"Invalid peer type: {type(peer)}")

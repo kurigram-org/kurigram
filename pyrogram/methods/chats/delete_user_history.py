@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 
 class DeleteUserHistory:
@@ -45,7 +45,7 @@ class DeleteUserHistory:
 
         r = await self.invoke(
             raw.functions.channels.DeleteParticipantHistory(
-                channel=await self.resolve_peer(chat_id),
+                channel=utils.get_input_user_or_channel(await self.resolve_peer(chat_id)),
                 participant=await self.resolve_peer(user_id),
             )
         )

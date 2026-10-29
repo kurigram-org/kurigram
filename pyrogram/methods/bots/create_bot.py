@@ -56,7 +56,9 @@ class CreateBot:
             raw.functions.bots.CreateBot(
                 name=name,
                 username=username,
-                manager_id=await self.resolve_peer(manager_bot_user_id),
+                manager_id=utils.get_input_user_or_channel(
+                    await self.resolve_peer(manager_bot_user_id)
+                ),
                 via_deeplink=via_link,
             )
         )

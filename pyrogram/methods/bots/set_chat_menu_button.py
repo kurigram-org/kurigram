@@ -21,6 +21,7 @@ from __future__ import annotations as _annotations
 import pyrogram
 from pyrogram import raw
 from pyrogram import types
+from pyrogram import utils
 
 
 class SetChatMenuButton:
@@ -45,7 +46,7 @@ class SetChatMenuButton:
 
         await self.invoke(
             raw.functions.bots.SetBotMenuButton(
-                user_id=await self.resolve_peer(chat_id or "me"),
+                user_id=utils.get_input_user_or_channel(await self.resolve_peer(chat_id or "me")),
                 button=(
                     (await menu_button.write(self))
                     if menu_button

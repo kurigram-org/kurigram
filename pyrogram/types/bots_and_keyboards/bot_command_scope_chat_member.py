@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 from .bot_command_scope import BotCommandScope
 
@@ -45,5 +45,5 @@ class BotCommandScopeChatMember(BotCommandScope):
     async def write(self, client: pyrogram.Client) -> raw.base.BotCommandScope:
         return raw.types.BotCommandScopePeerUser(
             peer=await client.resolve_peer(self.chat_id),
-            user_id=await client.resolve_peer(self.user_id),
+            user_id=utils.get_input_user_or_channel(await client.resolve_peer(self.user_id)),
         )

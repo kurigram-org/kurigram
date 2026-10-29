@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 
 class SetEmojiStatus:
@@ -67,10 +67,10 @@ class SetEmojiStatus:
         else:
             peer = await self.resolve_peer(chat_id)
 
-        if isinstance(peer, raw.types.InputPeerChannel):
+        if isinstance(peer, utils.PEERS_WITH_A_CHANNEL_ID):
             await self.invoke(
                 raw.functions.channels.UpdateEmojiStatus(
-                    channel=peer,
+                    channel=utils.get_input_user_or_channel(peer),
                     emoji_status=(
                         emoji_status.write() if emoji_status else raw.types.EmojiStatusEmpty()
                     ),
