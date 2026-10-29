@@ -60,6 +60,9 @@ class InlineQueryResultAnimation(InlineQueryResult):
         title (``str``, *optional*):
             Title for the result.
 
+        description (``str``, *optional*):
+            Short description of the result.
+
         caption (``str``, *optional*):
             Caption of the animation to be sent, 0-1024 characters.
 
@@ -67,13 +70,13 @@ class InlineQueryResultAnimation(InlineQueryResult):
             By default, texts are parsed using both Markdown and HTML styles.
             You can combine both syntaxes together.
 
-        caption_entities (List of :obj:`~pyrogram.types.MessageEntity`):
+        caption_entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
             List of special entities that appear in the caption, which can be specified instead of *parse_mode*.
 
         reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
             An InlineKeyboardMarkup object.
 
-        input_message_content (:obj:`~pyrogram.types.InputMessageContent`):
+        input_message_content (:obj:`~pyrogram.types.InputMessageContent`, *optional*):
             Content of the message to be sent instead of the photo.
     """
 
