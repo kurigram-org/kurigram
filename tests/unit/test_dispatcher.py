@@ -402,6 +402,88 @@ async def test_every_route_delivers_once_started(
     assert sorted(received) == delivered
 
 
+_CHANNEL_ID: Final[int] = 1000000000
+
+
+def _channel_message(message_id: int, /) -> raw.types.UpdateNewChannelMessage:
+    return raw.types.UpdateNewChannelMessage(
+        message=raw.types.Message(
+            id=message_id,
+            peer_id=raw.types.PeerChannel(channel_id=_CHANNEL_ID),
+            date=1,
+            message="",
+            entities=[],
+            restriction_reason=[],
+        ),
+        pts=message_id + 1,
+        pts_count=1,
+    )
+
+
+async def _fail_channel_difference(query: raw.core.TLObject, /) -> raw.core.TLObject:
+    if isinstance(query, raw.functions.updates.GetChannelDifference):
+        # What `Session.invoke()` raises once it has retried a 500 such as
+        #  `PERSISTENT_TIMESTAMP_OUTDATED` `MAX_RETRIES` times.
+        raise TimeoutError('Failed to invoke "updates.GetChannelDifference" after 10 retries')
+
+    return _DIFFERENCE
+
+
+async def _resolve_offline(peer_id: int | str, /) -> raw.types.InputPeerChannel:
+    return raw.types.InputPeerChannel(channel_id=_CHANNEL_ID, access_hash=1)
+
+
+async def test_a_failed_channel_difference_still_delivers_the_whole_batch(
+    client: Client,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    received: list[int] = []
+
+    async def record(
+        client: Client,
+        update: raw.base.Update,
+        users: dict[int, raw.base.User],
+        chats: dict[int, raw.base.Chat],
+        /,
+    ) -> None:
+        received.append(update.message.id)
+
+    # A min user in the batch is what makes `handle_updates` ask for the difference.
+    updates = raw.types.Updates(
+        updates=[_channel_message(1), _channel_message(2)],
+        users=[raw.types.User(id=1, min=True)],
+        chats=[
+            raw.types.Channel(
+                id=_CHANNEL_ID,
+                title="",
+                photo=raw.types.ChatPhotoEmpty(),
+                date=1,
+                megagroup=True,
+                access_hash=1,
+                usernames=[],
+                restriction_reason=[],
+            )
+        ],
+        date=1,
+        seq=1,
+    )
+
+    monkeypatch.setattr(client, "invoke", _fail_channel_difference)
+    monkeypatch.setattr(client, "resolve_peer", _resolve_offline)
+    client.add_handler(RawUpdateHandler(record))
+    await client.storage.open()
+
+    try:
+        await client.dispatcher.start()
+        await client.handle_updates(updates)
+        await client.dispatcher.stop()
+
+    finally:
+        await client.storage.close()
+
+    assert sorted(received) == [1, 2]
+
+
 @pytest.fixture
 def frequent_thread_switches() -> Iterator[None]:
     """Switch threads inside the copy-and-rebind rather than around it.
