@@ -29,7 +29,7 @@ import inspect
 import re
 import sys
 import typing
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Generator
 from re import Pattern
 from typing import Final
 
@@ -60,7 +60,7 @@ _TAKES_NO_PARSED_UPDATE: Final[frozenset[str]] = frozenset(
 )
 
 
-def handler_classes() -> Iterator[type[handlers.Handler]]:
+def handler_classes() -> Generator[type[handlers.Handler]]:
     """Every handler the package exports, the base class included."""
     for name in sorted(vars(handlers)):
         one = getattr(handlers, name)

@@ -30,7 +30,7 @@ from pyrogram.methods.utilities import idle as idle_module
 from pyrogram.utils import loops
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator, Coroutine, Generator
+    from collections.abc import AsyncGenerator, AsyncIterator, Coroutine, Generator
 
 # The loop driven on behalf of a caller that is inside none. It outlives the call it was
 #  built for, because `app.start()` from a plain script has to leave behind a client that
@@ -41,7 +41,7 @@ _sync_caller_loop: asyncio.AbstractEventLoop | None = None
 class _BridgedAsyncGenerator:
     """Iterate an async generator on the loop it belongs to, for a caller inside another one."""
 
-    def __init__(self, agen: AsyncIterator[Any], *, loop: asyncio.AbstractEventLoop) -> None:
+    def __init__(self, agen: AsyncGenerator[Any, None], *, loop: asyncio.AbstractEventLoop) -> None:
         self._agen = agen
         self._loop = loop
 
