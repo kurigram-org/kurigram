@@ -554,7 +554,7 @@ class Chat(Object):
         community (:obj:`~pyrogram.types.Community`, *optional*):
             The :obj:`~pyrogram.types.Community` to which the chat belongs.
 
-        raw (:obj:`~pyrogram.raw.types.UserFull` | :obj:`~pyrogram.raw.types.ChatFull` | :obj:`~pyrogram.raw.types.ChannelFull`, *optional*):
+        raw (:obj:`~pyrogram.raw.base.User` | :obj:`~pyrogram.raw.base.Chat` | :obj:`~pyrogram.raw.types.UserFull` | :obj:`~pyrogram.raw.types.ChatFull` | :obj:`~pyrogram.raw.types.ChannelFull` | :obj:`~pyrogram.raw.types.CommunityFull`, *optional*):
             The raw chat or user object, as received from the Telegram API.
 
         full_name (``str``, *optional*, *property*):
@@ -709,7 +709,13 @@ class Chat(Object):
         guard_bot: types.User | None = None,
         community_id: int | None = None,
         community: types.Community | None = None,
-        raw: raw.types.UserFull | raw.types.ChatFull | raw.types.ChannelFull | None = None,
+        raw: raw.base.User
+        | raw.base.Chat
+        | raw.types.UserFull
+        | raw.types.ChatFull
+        | raw.types.ChannelFull
+        | raw.types.CommunityFull
+        | None = None,
     ):
         super().__init__(client)
 
@@ -887,7 +893,7 @@ class Chat(Object):
     @staticmethod
     async def _parse_user_chat(
         client,
-        user: raw.types.User,
+        user: raw.base.User | None,
     ) -> Chat | None:
         if user is None or isinstance(user, raw.types.UserEmpty):
             return None
@@ -949,7 +955,10 @@ class Chat(Object):
         )
 
     @staticmethod
-    async def _parse_chat_chat(client, chat: raw.types.Chat) -> Chat | None:
+    async def _parse_chat_chat(
+        client: pyrogram.Client,
+        chat: raw.types.Chat | raw.types.ChatEmpty | raw.types.ChatForbidden | None,
+    ) -> Chat | None:
         if chat is None or isinstance(chat, raw.types.ChatEmpty):
             return None
 
@@ -986,11 +995,49 @@ class Chat(Object):
         )
 
     @staticmethod
+    async def _parse_community_chat(
+        client: pyrogram.Client,
+        community: raw.types.Community | raw.types.CommunityForbidden,
+    ) -> Chat:
+        parsed_community = utils.require_parsed(await types.Community._parse(client, community))
+
+        if isinstance(community, raw.types.CommunityForbidden):
+            return Chat(
+                id=parsed_community.id,
+                type=enums.ChatType.COMMUNITY,
+                title=community.title,
+                is_banned=True,
+                community_id=parsed_community.id,
+                community=parsed_community,
+                raw=community,
+                client=client,
+            )
+
+        return Chat(
+            id=parsed_community.id,
+            type=enums.ChatType.COMMUNITY,
+            is_min=community.min,
+            is_creator=community.creator,
+            is_admin=True if community.admin_rights else None,
+            title=community.title,
+            photo=parsed_community.photo,
+            dc_id=getattr(community.photo, "dc_id", None),
+            community_id=parsed_community.id,
+            community=parsed_community,
+            raw=community,
+            client=client,
+        )
+
+    @staticmethod
     async def _parse_channel_chat(
         client,
-        channel: raw.types.Channel,
+        channel: raw.base.Chat | None,
     ) -> Chat | None:
-        if channel is None:
+        # TL has no `peerCommunity`: a community is a `peerChannel`, so its lookup lands here.
+        if isinstance(channel, (raw.types.Community, raw.types.CommunityForbidden)):
+            return await Chat._parse_community_chat(client, channel)
+
+        if not isinstance(channel, (raw.types.Channel, raw.types.ChannelForbidden)):
             return None
 
         peer_id = utils.get_channel_id(channel.id)
@@ -1436,6 +1483,23 @@ class Chat(Object):
         return parsed_chat
 
     @staticmethod
+    async def _parse_full_community(
+        client: pyrogram.Client,
+        community: raw.types.CommunityFull,
+        chats: dict[int, raw.base.Chat],
+    ) -> Chat:
+        parsed_chat = utils.require_parsed(
+            await Chat._parse_channel_chat(client, chats[community.id])
+        )
+        parsed_chat.raw = community
+
+        parsed_chat.description = community.about or None
+        parsed_chat.admins_count = community.admins_count
+        parsed_chat.kicked_count = community.kicked_count
+
+        return parsed_chat
+
+    @staticmethod
     async def _parse_full(
         client: pyrogram.Client,
         chat_full: raw.types.UserFull | raw.types.ChatFull | raw.types.ChannelFull,
@@ -1453,14 +1517,20 @@ class Chat(Object):
             chat_full.full_chat, raw.types.ChannelFull
         ):
             return await Chat._parse_full_channel(client, chat_full.full_chat, users, chats)
+        elif isinstance(chat_full, raw.types.messages.ChatFull) and isinstance(
+            chat_full.full_chat,
+            raw.types.CommunityFull,
+        ):
+            return await Chat._parse_full_community(client, chat_full.full_chat, chats)
 
     @staticmethod
     async def _parse_chat(
-        client, chat: raw.types.Chat | raw.types.User | raw.types.Channel
+        client: pyrogram.Client,
+        chat: raw.base.Chat | raw.base.User,
     ) -> Chat | None:
         if isinstance(chat, (raw.types.Chat, raw.types.ChatForbidden)):
             return await Chat._parse_chat_chat(client, chat)
-        elif isinstance(chat, raw.types.User):
+        elif isinstance(chat, (raw.types.User, raw.types.UserEmpty)):
             return await Chat._parse_user_chat(client, chat)
         else:
             return await Chat._parse_channel_chat(client, chat)

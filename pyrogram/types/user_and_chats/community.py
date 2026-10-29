@@ -85,9 +85,7 @@ class Community(Object):
         self.raw = raw
 
     @staticmethod
-    async def _parse(
-        client: pyrogram.Client, community: raw.types.Community | raw.types.CommunityForbidden
-    ) -> Community | None:
+    async def _parse(client: pyrogram.Client, community: raw.base.Chat | None) -> Community | None:
         if isinstance(community, raw.types.CommunityForbidden):
             return Community(
                 id=utils.get_channel_id(community.id),
