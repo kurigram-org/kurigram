@@ -203,12 +203,9 @@ class Poll(Object, Update):
                         [
                             await types.Chat._parse_chat(
                                 client,
-                                users.get(
-                                    utils.get_raw_peer_id(voter_peer)
-                                    or chats.get(utils.get_raw_peer_id(voter_peer))
-                                ),
+                                users.get(voter_id) or chats.get(voter_id),
                             )
-                            for voter_peer in result.recent_voters
+                            for voter_id in map(utils.get_raw_peer_id, result.recent_voters)
                         ]
                     )
                     if result and result.recent_voters
