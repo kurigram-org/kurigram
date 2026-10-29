@@ -739,7 +739,7 @@ class Session:
             except (OSError, InternalServerError, ServiceUnavailable) as e:
                 # `TCP.send` raises a bare `TimeoutError`, an `OSError` whose `str()` is
                 #  empty, so without the `repr` fallback the line would end at "due to: ".
-                #  `pyrogram/connection/transport/tcp/tcp.py:505`.
+                #  `pyrogram/connection/transport/tcp/tcp.py`.
                 log.warning(
                     '[%s] Retrying "%s" (attempt %s) due to: %s',
                     self.client.name,
