@@ -71,9 +71,13 @@ class UpgradedGiftOriginalDetails(Object):
         recipient_id = utils.get_raw_peer_id(attr.recipient_id)
 
         return UpgradedGiftOriginalDetails(
-            sender=await types.User._parse(client, users.get(sender_id) or chats.get(sender_id)),
-            receiver=await types.User._parse(
-                client, users.get(recipient_id) or chats.get(recipient_id)
+            sender=await types.Chat._parse_chat(
+                client,
+                users.get(sender_id) or chats.get(sender_id),
+            ),
+            receiver=await types.Chat._parse_chat(
+                client,
+                users.get(recipient_id) or chats.get(recipient_id),
             ),
             text=await types.FormattedText._parse(client, attr.message),
             date=utils.timestamp_to_datetime(attr.date),
