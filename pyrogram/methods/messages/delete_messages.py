@@ -21,7 +21,7 @@ from __future__ import annotations as _annotations
 from typing import TYPE_CHECKING
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -94,9 +94,11 @@ class DeleteMessages:
             r = await self.invoke(
                 raw.functions.messages.DeleteScheduledMessages(peer=peer, id=message_ids)
             )
-        elif isinstance(peer, raw.types.InputPeerChannel):
+        elif isinstance(peer, utils.PEERS_WITH_A_CHANNEL_ID):
             r = await self.invoke(
-                raw.functions.channels.DeleteMessages(channel=peer, id=message_ids)
+                raw.functions.channels.DeleteMessages(
+                    channel=utils.get_input_user_or_channel(peer), id=message_ids
+                )
             )
         else:
             r = await self.invoke(

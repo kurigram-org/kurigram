@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import errors, raw
+from pyrogram import errors, raw, utils
 
 
 class ToggleForumTopics:
@@ -61,7 +61,9 @@ class ToggleForumTopics:
         try:
             r = await self.invoke(
                 raw.functions.channels.ToggleForum(
-                    channel=await self.resolve_peer(chat_id), enabled=is_forum, tabs=has_forum_tabs
+                    channel=utils.get_input_user_or_channel(await self.resolve_peer(chat_id)),
+                    enabled=is_forum,
+                    tabs=has_forum_tabs,
                 )
             )
 

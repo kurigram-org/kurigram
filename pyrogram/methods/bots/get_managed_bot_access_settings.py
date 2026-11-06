@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 
 class GetManagedBotAccessSettings:
@@ -40,7 +40,7 @@ class GetManagedBotAccessSettings:
         """
         r = await self.invoke(
             raw.functions.bots.GetAccessSettings(
-                bot=await self.resolve_peer(user_id),
+                bot=utils.get_input_user_or_channel(await self.resolve_peer(user_id)),
             )
         )
 

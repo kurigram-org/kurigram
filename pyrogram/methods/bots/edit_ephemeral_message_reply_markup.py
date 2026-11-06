@@ -65,7 +65,9 @@ class EditEphemeralMessageReplyMarkup:
         r = await self.invoke(
             raw.functions.ephemeral.EditMessage(
                 peer=await self.resolve_peer(chat_id),
-                receiver_id=await self.resolve_peer(receiver_user_id),
+                receiver_id=utils.get_input_user_or_channel(
+                    await self.resolve_peer(receiver_user_id)
+                ),
                 id=ephemeral_message_id,
                 reply_markup=await reply_markup.write(self) if reply_markup else None,
             )

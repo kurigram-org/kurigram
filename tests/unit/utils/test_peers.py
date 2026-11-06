@@ -28,6 +28,7 @@ from pyrogram.utils.peers import (
     PEERS_WITH_A_CHANNEL_ID,
     PEERS_WITH_A_CHAT_ID,
     PEERS_WITH_A_USER_ID,
+    get_input_user_or_channel,
     get_peer_id,
     get_raw_peer_id,
 )
@@ -155,3 +156,84 @@ def test_peer_tuples_match_the_schema(
     }
 
     assert {peer.__name__ for peer in peers} == expected_constructors
+
+
+_SEEN_IN: Final = raw.types.InputPeerChannel(channel_id=5, access_hash=55)
+
+
+@pytest.mark.parametrize(
+    ("peer", "expected"),
+    [
+        pytest.param(
+            raw.types.InputPeerUser(user_id=1, access_hash=11),
+            raw.types.InputUser(user_id=1, access_hash=11),
+            id="input-peer-user",
+        ),
+        pytest.param(
+            raw.types.InputPeerUserFromMessage(peer=_SEEN_IN, msg_id=7, user_id=1),
+            raw.types.InputUserFromMessage(peer=_SEEN_IN, msg_id=7, user_id=1),
+            id="input-peer-user-from-message",
+        ),
+        pytest.param(raw.types.InputPeerSelf(), raw.types.InputUserSelf(), id="input-peer-self"),
+        pytest.param(
+            raw.types.InputPeerChannel(channel_id=2, access_hash=22),
+            raw.types.InputChannel(channel_id=2, access_hash=22),
+            id="input-peer-channel",
+        ),
+        pytest.param(
+            raw.types.InputPeerChannelFromMessage(peer=_SEEN_IN, msg_id=7, channel_id=2),
+            raw.types.InputChannelFromMessage(peer=_SEEN_IN, msg_id=7, channel_id=2),
+            id="input-peer-channel-from-message",
+        ),
+    ],
+)
+def test_get_input_user_or_channel_converts_a_user_or_channel_peer(
+    peer: raw.base.InputPeer,
+    *,
+    expected: raw.base.InputUser | raw.base.InputChannel,
+) -> None:
+    # Compared as bytes: `TLObject.__eq__` looks at the fields only, so an `InputPeerUser`
+    #  equals the `InputUser` with the same ones. The bytes start with the constructor id,
+    #  which is what the server tells the two apart by.
+    assert get_input_user_or_channel(peer).write() == expected.write()
+
+
+@pytest.mark.parametrize(
+    "peer",
+    [
+        pytest.param(raw.types.InputUser(user_id=1, access_hash=11), id="input-user"),
+        pytest.param(
+            raw.types.InputUserFromMessage(peer=_SEEN_IN, msg_id=7, user_id=1),
+            id="input-user-from-message",
+        ),
+        pytest.param(raw.types.InputUserSelf(), id="input-user-self"),
+        pytest.param(raw.types.InputUserEmpty(), id="input-user-empty"),
+        pytest.param(raw.types.InputChannel(channel_id=2, access_hash=22), id="input-channel"),
+        pytest.param(
+            raw.types.InputChannelFromMessage(peer=_SEEN_IN, msg_id=7, channel_id=2),
+            id="input-channel-from-message",
+        ),
+        pytest.param(raw.types.InputChannelEmpty(), id="input-channel-empty"),
+    ],
+)
+def test_get_input_user_or_channel_returns_an_input_form_as_is(
+    peer: raw.base.InputUser | raw.base.InputChannel,
+) -> None:
+    # A variable that may hold either form, like a pagination offset starting at
+    #  `InputUserEmpty`, can go through without a check of its own.
+    assert get_input_user_or_channel(peer) is peer
+
+
+@pytest.mark.parametrize(
+    "peer",
+    [
+        pytest.param(raw.types.InputPeerChat(chat_id=3), id="input-peer-chat"),
+        pytest.param(_EMPTY_INPUT_PEER, id="input-peer-empty"),
+    ],
+)
+def test_get_input_user_or_channel_leaves_a_peer_without_either_form_to_the_server(
+    peer: raw.base.InputPeer,
+) -> None:
+    # A basic group has neither form and an empty peer could be either. Passing them on keeps
+    #  the server's own error, as before the conversion existed.
+    assert get_input_user_or_channel(peer) is peer

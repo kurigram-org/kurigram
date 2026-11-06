@@ -74,7 +74,7 @@ class GetUserPersonalChatMessages:
 
         history = await self.invoke(
             raw.functions.messages.GetPersonalChannelHistory(
-                user_id=await self.resolve_peer(user_id),
+                user_id=utils.get_input_user_or_channel(await self.resolve_peer(user_id)),
                 limit=limit,
                 max_id=max_id,
                 min_id=min_id,

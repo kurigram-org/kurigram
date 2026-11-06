@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import errors, raw, types
+from pyrogram import errors, raw, types, utils
 
 
 class JoinChat:
@@ -53,7 +53,9 @@ class JoinChat:
         if match:
             rpc = raw.functions.messages.ImportChatInvite(hash=match.group(1))
         else:
-            rpc = raw.functions.channels.JoinChannel(channel=await self.resolve_peer(chat_id))
+            rpc = raw.functions.channels.JoinChannel(
+                channel=utils.get_input_user_or_channel(await self.resolve_peer(chat_id))
+            )
 
         try:
             r = await self.invoke(rpc)

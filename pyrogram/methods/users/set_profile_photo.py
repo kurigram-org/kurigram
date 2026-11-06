@@ -22,7 +22,7 @@ import logging
 from typing import TYPE_CHECKING, BinaryIO
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 if TYPE_CHECKING:
     from pyrogram._typing import PathType
@@ -151,7 +151,7 @@ class SetBotProfilePhoto:
                 await self.invoke(
                     raw.functions.photos.UpdateProfilePhoto(
                         id=await photo.write(self) if photo else raw.types.InputPhotoEmpty(),
-                        bot=await self.resolve_peer(bot_user_id),
+                        bot=utils.get_input_user_or_channel(await self.resolve_peer(bot_user_id)),
                     )
                 )
             )
@@ -159,7 +159,7 @@ class SetBotProfilePhoto:
             return bool(
                 await self.invoke(
                     raw.functions.photos.UploadProfilePhoto(
-                        bot=await self.resolve_peer(bot_user_id),
+                        bot=utils.get_input_user_or_channel(await self.resolve_peer(bot_user_id)),
                         file=await photo.write(self)
                         if isinstance(photo, types.InputChatPhotoStatic)
                         else None,

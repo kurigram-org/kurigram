@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 
 class SetPersonalChannel:
@@ -52,7 +52,13 @@ class SetPersonalChannel:
         else:
             peer = await self.resolve_peer(chat_id)
 
-            if not isinstance(peer, raw.types.InputPeerChannel):
+            if not isinstance(peer, utils.PEERS_WITH_A_CHANNEL_ID):
                 return False
 
-        return bool(await self.invoke(raw.functions.account.UpdatePersonalChannel(channel=peer)))
+        return bool(
+            await self.invoke(
+                raw.functions.account.UpdatePersonalChannel(
+                    channel=utils.get_input_user_or_channel(peer)
+                )
+            )
+        )

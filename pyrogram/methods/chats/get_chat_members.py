@@ -22,7 +22,7 @@ import logging
 from typing import TYPE_CHECKING
 
 import pyrogram
-from pyrogram import enums, raw, types
+from pyrogram import enums, raw, types, utils
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
@@ -48,7 +48,7 @@ async def get_chunk(
 
     r = await client.invoke(
         raw.functions.channels.GetParticipants(
-            channel=await client.resolve_peer(chat_id),
+            channel=utils.get_input_user_or_channel(await client.resolve_peer(chat_id)),
             filter=filter,
             offset=offset,
             limit=limit,

@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 
 class SetChatAccentColor:
@@ -60,10 +60,10 @@ class SetChatAccentColor:
                     ),
                 )
             )
-        elif isinstance(peer, raw.types.InputPeerChannel):
+        elif isinstance(peer, utils.PEERS_WITH_A_CHANNEL_ID):
             r = await self.invoke(
                 raw.functions.channels.UpdateColor(
-                    channel=peer,
+                    channel=utils.get_input_user_or_channel(peer),
                     for_profile=False,
                     color=accent_color_id,
                     background_emoji_id=background_custom_emoji_id,

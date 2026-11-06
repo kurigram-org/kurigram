@@ -91,7 +91,7 @@ class SetGameScore:
             r = await session.invoke(
                 raw.functions.messages.SetInlineGameScore(
                     id=unpacked,
-                    user_id=await self.resolve_peer(user_id),
+                    user_id=utils.get_input_user_or_channel(await self.resolve_peer(user_id)),
                     score=score,
                     edit_message=not disable_edit_message,
                     force=force,
@@ -105,7 +105,7 @@ class SetGameScore:
                 raw.functions.messages.SetGameScore(
                     peer=await self.resolve_peer(chat_id),
                     id=message_id,
-                    user_id=await self.resolve_peer(user_id),
+                    user_id=utils.get_input_user_or_channel(await self.resolve_peer(user_id)),
                     score=score,
                     edit_message=not disable_edit_message,
                     force=force,

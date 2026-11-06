@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 
 class SetContactNote:
@@ -52,7 +52,7 @@ class SetContactNote:
 
         r = await self.invoke(
             raw.functions.contacts.UpdateContactNote(
-                id=await self.resolve_peer(user_id),
+                id=utils.get_input_user_or_channel(await self.resolve_peer(user_id)),
                 note=await note.write(self)
                 if note is not None
                 else raw.types.TextWithEntities(text="", entities=[]),

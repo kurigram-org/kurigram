@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import errors, raw, types
+from pyrogram import errors, raw, types, utils
 
 
 class PromoteChatMember:
@@ -66,7 +66,9 @@ class PromoteChatMember:
         try:
             raw_chat_member = (
                 await self.invoke(
-                    raw.functions.channels.GetParticipant(channel=chat_id, participant=user_id)
+                    raw.functions.channels.GetParticipant(
+                        channel=utils.get_input_user_or_channel(chat_id), participant=user_id
+                    )
                 )
             ).participant
         except errors.RPCError:
@@ -78,8 +80,8 @@ class PromoteChatMember:
 
         await self.invoke(
             raw.functions.channels.EditAdmin(
-                channel=chat_id,
-                user_id=user_id,
+                channel=utils.get_input_user_or_channel(chat_id),
+                user_id=utils.get_input_user_or_channel(user_id),
                 admin_rights=raw.types.ChatAdminRights(
                     anonymous=privileges.is_anonymous,
                     change_info=privileges.can_change_info,

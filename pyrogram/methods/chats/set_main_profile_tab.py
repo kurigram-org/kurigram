@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import enums, raw
+from pyrogram import enums, raw, utils
 
 
 class SetMainProfileTab:
@@ -60,7 +60,9 @@ class SetMainProfileTab:
             )
         else:
             r = await self.invoke(
-                raw.functions.channels.SetMainProfileTab(channel=peer, tab=main_profile_tab.value())
+                raw.functions.channels.SetMainProfileTab(
+                    channel=utils.get_input_user_or_channel(peer), tab=main_profile_tab.value()
+                )
             )
 
         return r

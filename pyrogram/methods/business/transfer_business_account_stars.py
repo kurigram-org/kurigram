@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 
 class TransferBusinessAccountStars:
@@ -51,11 +51,11 @@ class TransferBusinessAccountStars:
             bot_id = self.me.id
         else:
             bot_id = (
-                await self.invoke(raw.functions.users.GetUsers(id=[raw.types.InputPeerSelf()]))
+                await self.invoke(raw.functions.users.GetUsers(id=[raw.types.InputUserSelf()]))
             )[0].id
 
         invoice = raw.types.InputInvoiceBusinessBotTransferStars(
-            bot=await self.resolve_peer(bot_id), stars=star_count
+            bot=utils.get_input_user_or_channel(await self.resolve_peer(bot_id)), stars=star_count
         )
 
         payment_form = await self.invoke(

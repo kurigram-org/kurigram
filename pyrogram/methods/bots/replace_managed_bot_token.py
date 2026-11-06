@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 
 class ReplaceManagedBotToken:
@@ -39,7 +39,9 @@ class ReplaceManagedBotToken:
             ``str``: On success, new bot token is returned.
         """
         r = await self.invoke(
-            raw.functions.bots.ExportBotToken(bot=await self.resolve_peer(user_id), revoke=True)
+            raw.functions.bots.ExportBotToken(
+                bot=utils.get_input_user_or_channel(await self.resolve_peer(user_id)), revoke=True
+            )
         )
 
         return r.token

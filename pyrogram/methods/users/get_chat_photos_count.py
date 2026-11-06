@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 
 class GetChatPhotosCount:
@@ -46,7 +46,7 @@ class GetChatPhotosCount:
 
         peer_id = await self.resolve_peer(chat_id)
 
-        if isinstance(peer_id, raw.types.InputPeerChannel):
+        if isinstance(peer_id, utils.PEERS_WITH_A_CHANNEL_ID):
             r = await self.invoke(
                 raw.functions.messages.GetSearchCounters(
                     peer=peer_id,
@@ -57,7 +57,9 @@ class GetChatPhotosCount:
             return r[0].count
         else:
             r = await self.invoke(
-                raw.functions.photos.GetUserPhotos(user_id=peer_id, offset=0, max_id=0, limit=1)
+                raw.functions.photos.GetUserPhotos(
+                    user_id=utils.get_input_user_or_channel(peer_id), offset=0, max_id=0, limit=1
+                )
             )
 
             if isinstance(r, raw.types.photos.Photos):

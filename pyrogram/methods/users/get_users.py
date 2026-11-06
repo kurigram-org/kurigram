@@ -22,7 +22,7 @@ import asyncio
 from typing import TYPE_CHECKING, overload
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -72,9 +72,11 @@ class GetUsers:
 
         is_iterable = not isinstance(user_ids, (int, str))
         user_ids = list(user_ids) if is_iterable else [user_ids]
-        user_ids = await asyncio.gather(*[self.resolve_peer(i) for i in user_ids])
+        peers = await asyncio.gather(*[self.resolve_peer(i) for i in user_ids])
 
-        r = await self.invoke(raw.functions.users.GetUsers(id=user_ids))
+        r = await self.invoke(
+            raw.functions.users.GetUsers(id=[utils.get_input_user_or_channel(i) for i in peers])
+        )
 
         users = types.List()
 

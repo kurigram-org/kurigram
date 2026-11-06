@@ -16,7 +16,12 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import annotations as _annotations
+
+import pytest
+
 import pyrogram
+from pyrogram import raw
 from pyrogram.parser.html import HTML
 
 
@@ -246,3 +251,41 @@ def test_html_unparse_no_entities():
     entities = []
 
     assert HTML.unparse(text=text, entities=entities) == expected
+
+
+class FakeClient:
+    """Resolves every id to one fixed peer."""
+
+    def __init__(self, peer: raw.base.InputPeer) -> None:
+        self.peer = peer
+
+    async def resolve_peer(self, peer_id: int) -> raw.base.InputPeer:
+        return self.peer
+
+
+_SEEN_IN = raw.types.InputPeerChannel(channel_id=5, access_hash=55)
+
+
+@pytest.mark.parametrize(
+    ("peer", "expected"),
+    [
+        (
+            raw.types.InputPeerUser(user_id=42, access_hash=7),
+            raw.types.InputUser(user_id=42, access_hash=7),
+        ),
+        # A `min` user, which `resolve_peer` addresses through a message it was seen in.
+        (
+            raw.types.InputPeerUserFromMessage(peer=_SEEN_IN, msg_id=3, user_id=42),
+            raw.types.InputUserFromMessage(peer=_SEEN_IN, msg_id=3, user_id=42),
+        ),
+    ],
+)
+async def test_html_parse_text_mention_gets_an_input_user(
+    peer: raw.base.InputPeer, expected: raw.base.InputUser
+) -> None:
+    parsed = await HTML(FakeClient(peer)).parse('<a href="tg://user?id=42">Dan</a>')
+
+    (entity,) = parsed["entities"]
+    # `InputMessageEntityMentionName.user_id` is an `InputUser`. Compared as bytes, since
+    #  `TLObject.__eq__` looks at the fields only and would let the `InputPeer` pass.
+    assert entity.user_id.write() == expected.write()

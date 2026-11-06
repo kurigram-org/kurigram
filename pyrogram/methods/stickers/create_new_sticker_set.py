@@ -20,7 +20,7 @@ from __future__ import annotations as _annotations
 
 
 import pyrogram
-from pyrogram import raw, types, enums
+from pyrogram import raw, types, enums, utils
 
 
 class CreateNewStickerSet:
@@ -84,7 +84,7 @@ class CreateNewStickerSet:
         """
         r = await self.invoke(
             raw.functions.stickers.CreateStickerSet(
-                user_id=await self.resolve_peer(user_id),
+                user_id=utils.get_input_user_or_channel(await self.resolve_peer(user_id)),
                 title=title,
                 short_name=name,
                 stickers=[

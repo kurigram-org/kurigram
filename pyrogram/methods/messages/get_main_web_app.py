@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, enums
+from pyrogram import raw, enums, utils
 
 
 class GetMainWebApp:
@@ -61,7 +61,7 @@ class GetMainWebApp:
         r = await self.invoke(
             raw.functions.messages.RequestMainWebView(
                 peer=await self.resolve_peer(chat_id),
-                bot=await self.resolve_peer(bot_user_id),
+                bot=utils.get_input_user_or_channel(await self.resolve_peer(bot_user_id)),
                 platform=platform.value,
                 start_param=start_parameter,
             )

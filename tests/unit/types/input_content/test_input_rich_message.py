@@ -94,6 +94,50 @@ async def test_a_blocks_message_collects_its_mentioned_users() -> None:
     )
 
 
+class _FixedPeerResolver:
+    """Answers `resolve_peer` with one fixed peer."""
+
+    def __init__(self, peer: raw.base.InputPeer) -> None:
+        self.peer = peer
+
+    async def resolve_peer(self, peer_id: int) -> raw.base.InputPeer:
+        return self.peer
+
+
+_SEEN_IN: Final = raw.types.InputPeerChannel(channel_id=5, access_hash=55)
+
+
+@pytest.mark.parametrize(
+    ("peer", "expected"),
+    [
+        (
+            raw.types.InputPeerUser(user_id=12345, access_hash=777),
+            raw.types.InputUser(user_id=12345, access_hash=777),
+        ),
+        # A `min` user has no `access_hash` to read: `resolve_peer` addresses it through a
+        #  message it was seen in, and reading `.access_hash` off that crashed.
+        (
+            raw.types.InputPeerUserFromMessage(peer=_SEEN_IN, msg_id=3, user_id=12345),
+            raw.types.InputUserFromMessage(peer=_SEEN_IN, msg_id=3, user_id=12345),
+        ),
+    ],
+)
+async def test_a_mentioned_user_is_sent_as_an_input_user(
+    peer: raw.base.InputPeer, expected: raw.base.InputUser
+) -> None:
+    mention = types.RichTextTextMention(text="Dan", user=types.User(id=12345, first_name="Dan"))
+    message = types.InputRichMessage(blocks=[types.InputRichBlockParagraph(text=mention)])
+
+    result = await message.write(client=_FixedPeerResolver(peer))
+
+    assert isinstance(result, raw.types.InputRichMessage)
+    assert result.users is not None
+    (user,) = result.users
+    # Compared as bytes: `TLObject.__eq__` looks at the fields only, so the `InputPeer` itself
+    #  would pass for the `InputUser` the field needs.
+    assert user.write() == expected.write()
+
+
 async def test_a_blocks_message_carries_its_collected_photos() -> None:
     message = types.InputRichMessage(
         blocks=[

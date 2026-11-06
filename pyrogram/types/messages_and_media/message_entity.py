@@ -23,6 +23,7 @@ import re
 import pyrogram
 from pyrogram import raw, enums
 from pyrogram import types
+from pyrogram import utils
 from ..object import Object
 
 
@@ -151,7 +152,9 @@ class MessageEntity(Object):
             args.pop(arg)
 
         if self.user:
-            args["user_id"] = await self._client.resolve_peer(self.user.id)
+            args["user_id"] = utils.get_input_user_or_channel(
+                await self._client.resolve_peer(self.user.id)
+            )
 
         if not self.url:
             args.pop("url")

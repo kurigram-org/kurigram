@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 from pyrogram.errors import Timeout503
 
 
@@ -74,7 +74,7 @@ class GetInlineBotResults:
         try:
             return await self.invoke(
                 raw.functions.messages.GetInlineBotResults(
-                    bot=await self.resolve_peer(bot),
+                    bot=utils.get_input_user_or_channel(await self.resolve_peer(bot)),
                     peer=raw.types.InputPeerSelf(),
                     query=query,
                     offset=offset,

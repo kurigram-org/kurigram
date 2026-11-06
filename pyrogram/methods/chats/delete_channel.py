@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 
 
 class DeleteChannel:
@@ -41,7 +41,9 @@ class DeleteChannel:
                 await app.delete_channel(channel_id)
         """
         await self.invoke(
-            raw.functions.channels.DeleteChannel(channel=await self.resolve_peer(chat_id))
+            raw.functions.channels.DeleteChannel(
+                channel=utils.get_input_user_or_channel(await self.resolve_peer(chat_id))
+            )
         )
 
         return True
