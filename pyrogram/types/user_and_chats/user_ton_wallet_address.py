@@ -34,7 +34,7 @@ class UserTonWalletAddress(Object):
             Address of the user's wallet in the TON blockchain.
 
         public_key (``bytes``):
-            Additional description about the verification.
+            Public key of the user.
 
         user (:obj:`~pyrogram.types.User`, *optional*):
             The user to whom the wallet belongs.
