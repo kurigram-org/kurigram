@@ -727,7 +727,7 @@ def _own_cuts(
         candidates.extend(
             position
             for quote in expandable
-            if quote.offset < start < quote.offset + quote.length
+            if quote.offset <= start < quote.offset + quote.length
             for position in range(start, start + breaks)
         )
 
@@ -752,11 +752,15 @@ def _cut(
 ) -> list[types.MessageEntity]:
     """The entities with every cut at `positions` made, the cut newline in no piece.
 
-    An entity nested in a cut one is cut at the same newline, so the pieces still nest.
+    An entity nested in a cut link is cut at the same newline, since it cannot cross the
+    `](url)` that closes each label.
     """
     cuts: dict[int, set[int]] = {index: own[index] & positions for index in own}
 
     for outer, outer_cuts in own.items():
+        if spec_for_type(entities[outer].type) not in _LINK_FORMS:
+            continue
+
         outer_start: int = entities[outer].offset
         outer_end: int = outer_start + entities[outer].length
 
@@ -833,8 +837,8 @@ def _writable(entities: list[types.MessageEntity], *, text: str) -> list[types.M
       line there and be read as the end of the quote, so it loses every break it opens
       with, and a spoiler of nothing else is dropped.
 
-    At most two writes and one read; a message that needs a cut also pays a pass over
-    every pair of its entities.
+    At most two writes and one read; each link in the message also pays a pass over
+    every other entity when a cut is needed.
     """
     quotes = [entity for entity in entities if spec_for_type(entity.type) is BLOCKQUOTE]
     fences = [entity for entity in entities if spec_for_type(entity.type) is PRE]
