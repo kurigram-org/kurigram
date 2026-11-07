@@ -42,7 +42,7 @@ class DeleteStories:
                 Unique identifier (int) or username (str) of the target chat.
                 For your personal cloud (Saved Messages) you can simply use "me" or "self".
 
-            story_ids (``int`` | Iterable of ``int``, *optional*):
+            story_ids (``int`` | Iterable of ``int``):
                 Unique identifier (int) or list of unique identifiers (list of int) for the target stories.
 
         Returns:

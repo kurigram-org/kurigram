@@ -26,7 +26,7 @@ from pyrogram import raw
 from pyrogram import utils
 
 if TYPE_CHECKING:
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
 log = logging.getLogger(__name__)
 
@@ -38,8 +38,8 @@ class DeleteChatHistory:
         max_id: int = 0,
         revoke: bool | None = None,
         just_clear=None,
-        min_date: datetime | None = None,
-        max_date: datetime | None = None,
+        min_date: datetime | timedelta | None = None,
+        max_date: datetime | timedelta | None = None,
     ) -> int:
         """Delete the history of a chat.
 
@@ -60,13 +60,15 @@ class DeleteChatHistory:
                 If True, clear history for the current user, without actually removing chat.
                 For private and simple group chats only.
 
-            min_date (:py:obj:`~datetime.datetime`, *optional*):
+            min_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Delete all messages newer than this time.
                 For private and simple group chats only.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
-            max_date (:py:obj:`~datetime.datetime`, *optional*):
+            max_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Delete all messages older than this time.
                 For private and simple group chats only.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
         Returns:
             ``int``: Amount of affected messages

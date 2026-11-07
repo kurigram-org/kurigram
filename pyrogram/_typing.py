@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Type aliases used by Pyrogram's own signatures. Not part of the public API."""
+"""Type aliases used by Kurigram's own signatures. Not part of the public API."""
 
 import os
 

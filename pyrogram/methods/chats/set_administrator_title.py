@@ -44,7 +44,7 @@ class SetAdministratorTitle:
                 Unique identifier (int) or username (str) of the target user.
                 For a contact that exists in your Telegram address book you can use his phone number (str).
 
-            title (``str``, *optional*):
+            title (``str``):
                 A custom title that will be shown to all members instead of "Owner" or "Admin".
                 Pass None or "" (empty string) to remove the custom title.
 

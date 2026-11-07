@@ -24,7 +24,7 @@ import pyrogram
 from pyrogram import raw, utils
 
 if TYPE_CHECKING:
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
 
 class DeleteDirectMessagesChatTopicHistory:
@@ -33,8 +33,8 @@ class DeleteDirectMessagesChatTopicHistory:
         chat_id: int | str,
         topic_id: int | None = None,
         max_id: int = 0,
-        min_date: datetime | None = None,
-        max_date: datetime | None = None,
+        min_date: datetime | timedelta | None = None,
+        max_date: datetime | timedelta | None = None,
     ) -> int:
         """Delete messages in the topic in a channel direct messages chat administered by the current user.
 
@@ -44,17 +44,19 @@ class DeleteDirectMessagesChatTopicHistory:
             chat_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the target chat.
 
-            topic_id (``int``):
+            topic_id (``int``, *optional*):
                 Identifier of the topic which messages will be fetched.
 
             max_id (``int``, *optional*):
                 Maximum ID of message to delete.
 
-            min_date (:py:obj:`~datetime.datetime`, *optional*):
+            min_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Delete all messages newer than this time.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
-            max_date (:py:obj:`~datetime.datetime`, *optional*):
+            max_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Delete all messages older than this time.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
         Returns:
             ``int``: Amount of affected messages

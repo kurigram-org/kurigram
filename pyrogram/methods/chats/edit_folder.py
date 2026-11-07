@@ -69,12 +69,9 @@ class EditFolder:
                 The chosen icon for the chat folder.
                 Pass None to leave the folder icon as default.
 
-            color (:obj:`~pyrogram.enums.FolderColor`, *optional*)
+            color (:obj:`~pyrogram.enums.FolderColor`, *optional*):
                 Pass :obj:`~pyrogram.enums.FolderColor` to set folder color.
                 Can't be changed if folder tags are disabled or the current user doesn't have Telegram Premium subscription.
-
-            is_shareable (``bool``, *optional*):
-                True, if at least one link has been created for the folder.
 
             pinned_chats (List of :obj:`~pyrogram.types.Chat`, *optional*):
                 The pinned chats in the folder.

@@ -16,25 +16,35 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-"""`Client.load_plugins()` reads a plugin package without tripping over what else lives in it.
+"""What `Client` does without a network: plugin loading, the download path and proxy assignment.
 
+`load_plugins()` reads a plugin package without tripping over what else lives in it.
 A plugin module is ordinary user code, so anything at all can sit beside the decorated
 functions: a database handle, a client object, a lazily built proxy.
+
+`handle_download` and `get_file` run their real chunk loop against a stubbed media
+session, so what a progress callback raises provably ends the transfer.
 """
 
 from __future__ import annotations as _annotations
 
+import asyncio
 import logging
+from pathlib import Path
 from typing import TYPE_CHECKING, Final, Protocol
 
 import pytest
 
-from pyrogram import Client, filters
+from pyrogram import Client, StopTransmission, filters, raw
 from pyrogram.client import _plugin_handlers
+from pyrogram.connection.proxy import HTTPProxy, SOCKS5Proxy
+from pyrogram.file_id import FileId, FileType
 from pyrogram.handlers import MessageHandler
 
 if TYPE_CHECKING:
-    from pathlib import Path
+    from concurrent.futures import Executor
+
+    from pyrogram.connection.proxy import Proxy, ProxyDict
 
 _PLUGIN_SOURCE: Final[str] = """
 from pyrogram import Client
@@ -88,7 +98,7 @@ def write_plugin(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PluginWrite
     def _write(package: str, *, source: str) -> str:
         root: Path = tmp_path / package
         root.mkdir()
-        (root / "handlers.py").write_text(source)
+        (root / "handlers.py").write_text(source, encoding="utf-8")
 
         return package
 
@@ -162,3 +172,174 @@ def test_load_plugins_reports_the_pair_it_refuses(
 
     assert client.dispatcher.groups == {}
     assert "greet" in caplog.text
+
+
+def _proxy_client(*, proxy: str | ProxyDict | Proxy | None = None) -> Client:
+    return Client(
+        name="proxy_probe",
+        in_memory=True,
+        proxy=proxy,
+    )
+
+
+@pytest.mark.parametrize(
+    ("proxy", "expected"),
+    [
+        pytest.param(
+            "socks5://username:changeme@11.22.33.44:1234",
+            SOCKS5Proxy(
+                hostname="11.22.33.44",
+                port=1234,
+                username="username",
+                password="changeme",
+            ),
+            id="url",
+        ),
+        pytest.param(
+            {"scheme": "socks5", "hostname": "11.22.33.44", "port": 1234},
+            SOCKS5Proxy(
+                hostname="11.22.33.44",
+                port=1234,
+            ),
+            id="dict",
+        ),
+        pytest.param(
+            HTTPProxy(
+                hostname="11.22.33.44",
+                port=8080,
+            ),
+            HTTPProxy(
+                hostname="11.22.33.44",
+                port=8080,
+            ),
+            id="dataclass",
+        ),
+        pytest.param(None, None, id="none"),
+    ],
+)
+def test_a_proxy_assigned_after_construction_is_normalized_like_the_constructor_argument(
+    proxy: str | ProxyDict | Proxy | None,
+    *,
+    expected: Proxy | None,
+) -> None:
+    assigned = _proxy_client()
+    assigned.proxy = proxy
+
+    constructed = _proxy_client(proxy=proxy)
+
+    assert assigned.proxy == expected
+    assert constructed.proxy == expected
+
+
+def test_an_invalid_proxy_is_refused_at_the_assignment() -> None:
+    client = _proxy_client()
+
+    with pytest.raises(ValueError, match="unknown proxy scheme"):
+        client.proxy = {"scheme": "quic", "hostname": "11.22.33.44", "port": 443}
+
+
+_CHUNK_SIZE: Final[int] = 1024 * 1024
+
+# Three full chunks and a half, so the loop only ends early if something ends it.
+_PAYLOAD_SIZE: Final[int] = 3 * _CHUNK_SIZE + _CHUNK_SIZE // 2
+
+
+class MediaSession:
+    """A media session serving one fixed payload in 1 MiB chunks."""
+
+    def __init__(self, payload: bytes) -> None:
+        self.payload = payload
+
+    async def invoke(
+        self,
+        query: raw.functions.upload.GetFile,
+        *,
+        sleep_threshold: int = 0,
+    ) -> raw.types.upload.File:
+        chunk = self.payload[query.offset : query.offset + query.limit]
+
+        return raw.types.upload.File(
+            type=raw.types.storage.FileUnknown(),
+            mtime=0,
+            bytes=chunk,
+        )
+
+
+class Downloader:
+    """A client cut down to the download path: the real loop over a stubbed network."""
+
+    handle_download = Client.handle_download
+    get_file = Client.get_file
+
+    def __init__(self, payload: bytes) -> None:
+        self.payload = payload
+        self.get_file_semaphore = asyncio.Semaphore(1)
+        self.executor: Executor | None = None
+
+    @property
+    def loop(self) -> asyncio.AbstractEventLoop:
+        return asyncio.get_event_loop()
+
+    async def get_session(self, dc_id: int, *, is_media: bool = False) -> MediaSession:
+        return MediaSession(self.payload)
+
+
+def _document_file_id() -> FileId:
+    return FileId(
+        file_type=FileType.DOCUMENT,
+        dc_id=2,
+        media_id=1,
+        access_hash=1,
+        file_reference=b"ref",
+    )
+
+
+async def test_a_download_reports_progress_in_bytes_and_lands_on_disk(tmp_path: Path) -> None:
+    payload: bytes = b"x" * _PAYLOAD_SIZE
+    reported: list[int] = []
+
+    async def progress(current: int, total: int) -> None:
+        reported.append(current)
+
+    packet = (_document_file_id(), str(tmp_path), "whole.bin", False, _PAYLOAD_SIZE, progress, ())
+
+    file_path = await Downloader(payload).handle_download(packet)
+
+    assert file_path is not None
+    assert Path(file_path).read_bytes() == payload
+    assert reported == [_CHUNK_SIZE, 2 * _CHUNK_SIZE, 3 * _CHUNK_SIZE, _PAYLOAD_SIZE]
+
+
+@pytest.mark.parametrize(
+    "asynchronous",
+    [
+        pytest.param(True, id="async-callback"),
+        pytest.param(False, id="sync-callback-via-executor"),
+    ],
+)
+async def test_stop_transmission_from_a_progress_callback_ends_a_download(
+    tmp_path: Path,
+    *,
+    asynchronous: bool,
+) -> None:
+    calls: list[int] = []
+
+    def cancel_on_second_chunk(current: int, total: int) -> None:
+        calls.append(current)
+
+        if len(calls) == 2:
+            raise StopTransmission
+
+    async def asynchronous_cancel(current: int, total: int) -> None:
+        cancel_on_second_chunk(current, total)
+
+    progress = asynchronous_cancel if asynchronous else cancel_on_second_chunk
+    packet = (_document_file_id(), str(tmp_path), "stopped.bin", False, _PAYLOAD_SIZE, progress, ())
+
+    result = await Downloader(b"x" * _PAYLOAD_SIZE).handle_download(packet)
+
+    assert result is None
+    assert calls == [_CHUNK_SIZE, 2 * _CHUNK_SIZE]
+
+    # The `.temp` file is deleted with the abort, so nothing at all is left behind.
+    assert list(tmp_path.iterdir()) == []

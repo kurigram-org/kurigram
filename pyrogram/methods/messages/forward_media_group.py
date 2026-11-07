@@ -24,7 +24,7 @@ import pyrogram
 from pyrogram import raw, types, utils
 
 if TYPE_CHECKING:
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
 
 class ForwardMediaGroup:
@@ -35,7 +35,7 @@ class ForwardMediaGroup:
         message_id: int,
         message_thread_id: int | None = None,
         disable_notification: bool | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         hide_sender_name: bool | None = None,
         hide_captions: bool | None = None,
         protect_content: bool | None = None,
@@ -69,8 +69,9 @@ class ForwardMediaGroup:
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             hide_sender_name (``bool``, *optional*):
                 If True, the original author of the message will not be shown.

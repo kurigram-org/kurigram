@@ -90,7 +90,7 @@ def _plugin_handlers(target: Any) -> Sequence[tuple[Handler, int]] | None:
 
 
 class Client(Methods):
-    """Pyrogram Client, the main means for interacting with Telegram.
+    """Kurigram Client, the main means for interacting with Telegram.
 
     Parameters:
         name (``str``):
@@ -106,7 +106,7 @@ class Client(Methods):
 
         app_version (``str``, *optional*):
             Application version.
-            Defaults to "Pyrogram x.y.z".
+            Defaults to "Kurigram x.y.z".
 
         device_model (``str``, *optional*):
             Device model.
@@ -150,6 +150,7 @@ class Client(Methods):
             never adds the TLS record layer. A secret longer than 16 bytes - dd-prefixed or
             ee-prefixed - asks for random padding, and the transport that sends it is picked
             from the secret, so *proxy* is the only argument either scheme needs.
+            Assigning ``client.proxy`` later accepts the same forms; the next connection uses it.
 
         test_mode (``bool``, *optional*):
             Enable or disable login to the test servers.
@@ -189,7 +190,7 @@ class Client(Methods):
 
         workdir (``str`` | ``os.PathLike``, *optional*):
             Define a custom working directory.
-            The working directory is the location in the filesystem where Pyrogram will store the session files.
+            The working directory is the location in the filesystem where Kurigram will store the session files.
             Defaults to the parent directory of the main script.
 
         plugins (``dict``, *optional*):
@@ -278,7 +279,7 @@ class Client(Methods):
             A dict is converted on connect; an already built JSONValue is sent as it is.
     """
 
-    APP_VERSION = f"Pyrogram {__version__}"
+    APP_VERSION = f"Kurigram {__version__}"
     DEVICE_MODEL = f"{platform.python_implementation()} {platform.python_version()}"
     SYSTEM_VERSION = f"{platform.system()} {platform.release()}"
 
@@ -372,7 +373,7 @@ class Client(Methods):
         self.lang_code = lang_code.lower()
         self.system_lang_code = system_lang_code.lower()
         self.ipv6 = ipv6
-        self.proxy = normalize_proxy(proxy)
+        self.proxy = proxy
         self.test_mode = test_mode
         self.bot_token = bot_token
         self.session_string = session_string
@@ -466,7 +467,8 @@ class Client(Methods):
         #  through `run_coroutine_threadsafe`, which takes the loop as an argument.
         self._loop: asyncio.AbstractEventLoop | None = None
 
-        self.__config: raw.types.Config = None
+        self._app_config: raw.types.help.AppConfig | None = None
+        self.__config: raw.types.Config | None = None
 
     def __enter__(self):
         return self.start()
@@ -529,9 +531,9 @@ class Client(Methods):
         if self.bot_token:
             return await self.sign_in_bot(self.bot_token)
 
-        print(f"Welcome to Pyrogram (version {__version__})")
+        print(f"Welcome to Kurigram (version {__version__})")
         print(
-            f"Pyrogram is free software and comes with ABSOLUTELY NO WARRANTY. Licensed\n"
+            f"Kurigram is free software and comes with ABSOLUTELY NO WARRANTY. Licensed\n"
             f"under the terms of the {__license__}.\n"
         )
 
@@ -608,7 +610,7 @@ class Client(Methods):
                             # TODO: raw.functions.auth.CheckPaidAuth
                             raise Unauthorized(
                                 f"You need to pay {email_sent_code.sent_code.amount}{email_sent_code.sent_code.currency} or purchase premium to continue authorization "
-                                "process, which is currently not supported by Pyrogram."
+                                "process, which is currently not supported by Kurigram."
                             )
                 except BadRequest as e:
                     print(e.MESSAGE)
@@ -720,8 +722,8 @@ class Client(Methods):
             try:
                 print(
                     "\x1b[2J\n"
-                    f"Welcome to Pyrogram (version {__version__})\n"
-                    "Pyrogram is free software and comes with ABSOLUTELY NO WARRANTY. Licensed\n"
+                    f"Welcome to Kurigram (version {__version__})\n"
+                    "Kurigram is free software and comes with ABSOLUTELY NO WARRANTY. Licensed\n"
                     f"under the terms of the {__license__}.\n"
                     "Scan the QR code below to login\n"
                     "Settings -> Privacy and Security -> Active Sessions -> Scan QR Code.",
@@ -951,10 +953,16 @@ class Client(Methods):
                                     force=False,
                                 )
                             )
+                        # The difference only fills in the min peers, so the update is
+                        #  dispatched with what is known when it fails. `Session.invoke()`
+                        #  retries a 500 such as `PERSISTENT_TIMESTAMP_OUTDATED` and then
+                        #  raises `TimeoutError` instead, which would otherwise escape and
+                        #  drop this update together with the rest of the batch.
                         except (
                             ChannelPrivate,
                             PersistentTimestampOutdated,
                             PersistentTimestampInvalid,
+                            TimeoutError,
                         ):
                             pass
                         else:
@@ -962,7 +970,11 @@ class Client(Methods):
                                 users.update({u.id: u for u in diff.users})
                                 chats.update({c.id: c for c in diff.chats})
 
-                self.dispatcher.updates_queue.put_nowait((update, users, chats))
+                self.dispatcher.enqueue(
+                    update,
+                    users=users,
+                    chats=chats,
+                )
 
             await self.storage.set_update_state(
                 UpdateState(0, None, None, updates.date, updates.seq)
@@ -982,20 +994,28 @@ class Client(Methods):
             chats = {c.id: c for c in diff.chats}
 
             for message in diff.new_messages:
-                self.dispatcher.updates_queue.put_nowait(
-                    (
-                        raw.types.UpdateNewMessage(
-                            message=message, pts=updates.pts, pts_count=updates.pts_count
-                        ),
-                        users,
-                        chats,
-                    )
+                self.dispatcher.enqueue(
+                    raw.types.UpdateNewMessage(
+                        message=message,
+                        pts=updates.pts,
+                        pts_count=updates.pts_count,
+                    ),
+                    users=users,
+                    chats=chats,
                 )
 
             for update in diff.other_updates:
-                self.dispatcher.updates_queue.put_nowait((update, users, chats))
+                self.dispatcher.enqueue(
+                    update,
+                    users=users,
+                    chats=chats,
+                )
         elif isinstance(updates, raw.types.UpdateShort):
-            self.dispatcher.updates_queue.put_nowait((updates.update, {}, {}))
+            self.dispatcher.enqueue(
+                updates.update,
+                users={},
+                chats={},
+            )
         elif isinstance(updates, raw.types.UpdatesTooLong):
             log.info(updates)
 
@@ -1695,6 +1715,14 @@ class Client(Methods):
             log.info("Changed session DC%s address to %s:%s", dc_id, server_address, port)
         else:
             log.info("Session DC%s address is already %s:%s", dc_id, server_address, port)
+
+    @property
+    def proxy(self) -> Proxy | None:
+        return self._proxy
+
+    @proxy.setter
+    def proxy(self, proxy: str | ProxyDict | Proxy | None) -> None:
+        self._proxy = normalize_proxy(proxy)
 
     @property
     def server_time(self) -> float:

@@ -41,7 +41,7 @@ _UPLOADED_FILE: Final[raw.types.InputFile] = raw.types.InputFile(
 )
 
 # The reporter's case: a `.webp` the server re-reads as a sticker unless `force_file` says
-#  otherwise. https://github.com/KurimuzonAkuma/kurigram/issues/180
+#  otherwise. https://github.com/kurigram-org/kurigram/issues/180
 _FILE_NAME: Final[str] = "sticker.webp"
 _CONTENT: Final[bytes] = b"RIFF0000WEBPVP8 "
 

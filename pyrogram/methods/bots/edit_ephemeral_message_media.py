@@ -52,10 +52,6 @@ class EditEphemeralMessageMedia:
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
                 An InlineKeyboardMarkup object.
 
-            file_name (``str``, *optional*):
-                File name of the media to be sent. Not applicable to photos.
-                Defaults to file's path basename.
-
         Returns:
             :obj:`~pyrogram.types.Message` | ``None``: On success, the edited message is returned,
             otherwise, in case the server answered with no message, None is returned.

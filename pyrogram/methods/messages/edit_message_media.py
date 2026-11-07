@@ -24,7 +24,7 @@ import pyrogram
 from pyrogram import raw, types, utils
 
 if TYPE_CHECKING:
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
 
 class EditMessageMedia:
@@ -34,7 +34,7 @@ class EditMessageMedia:
         message_id: int,
         media: types.InputMedia,
         show_caption_above_media: bool | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         business_connection_id: str | None = None,
         reply_markup: types.InlineKeyboardMarkup | None = None,
     ) -> types.Message:
@@ -64,18 +64,15 @@ class EditMessageMedia:
             show_caption_above_media (``bool``, *optional*):
                 Pass True, if the caption must be shown above the message media.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             business_connection_id (``str``, *optional*):
                 Unique identifier of the business connection on behalf of which the message will be sent.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
                 An InlineKeyboardMarkup object.
-
-            file_name (``str``, *optional*):
-                File name of the media to be sent. Not applicable to photos.
-                Defaults to file's path basename.
 
         Returns:
             :obj:`~pyrogram.types.Message`: On success, the edited message is returned.

@@ -40,7 +40,7 @@ from typing import Final, TYPE_CHECKING
 
 import pyrogram
 
-from tests.guards.name_resolution import PACKAGE_ROOT, REPOSITORY_ROOT
+from tests.guards.name_resolution import PACKAGE_ROOT, REPOSITORY_ROOT, source_of
 
 if TYPE_CHECKING:
     import pathlib
@@ -88,7 +88,7 @@ def declared_mixins() -> list[str]:
     found: list[str] = []
 
     for path in sorted(_MIXIN_ROOT.rglob("*.py")):
-        tree = ast.parse(path.read_text(), filename=path.name)
+        tree = ast.parse(source_of(path), filename=path.name)
         module = module_name(path)
 
         found.extend(f"{module}.{name}" for name in mixin_names(tree))

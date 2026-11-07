@@ -27,7 +27,7 @@ from pyrogram.errors import FilePartMissing
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
     from pyrogram._typing import PathType
 
@@ -53,7 +53,7 @@ class SendLivePhoto:
         effect_id: int | None = None,
         show_caption_above_media: bool | None = None,
         reply_parameters: types.ReplyParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         protect_content: bool | None = None,
         business_connection_id: str | None = None,
@@ -103,7 +103,7 @@ class SendLivePhoto:
                 By default, texts are parsed using both Markdown and HTML styles.
                 You can combine both syntaxes together.
 
-            caption_entities (List of :obj:`~pyrogram.types.MessageEntity`):
+            caption_entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
                 List of special entities that appear in the caption, which can be specified instead of *parse_mode*.
 
             has_spoiler (``bool``, *optional*):
@@ -140,18 +140,15 @@ class SendLivePhoto:
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.
 
             protect_content (``bool``, *optional*):
                 Protects the contents of the sent message from forwarding and saving.
-
-            no_sound (``bool``, *optional*):
-                Pass True, if the uploaded video is a video message with no sound.
-                Doesn't work for external links.
 
             business_connection_id (``str``, *optional*):
                 Unique identifier of the business connection on behalf of which the message will be sent.

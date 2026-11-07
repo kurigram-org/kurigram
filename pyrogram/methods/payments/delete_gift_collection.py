@@ -19,13 +19,13 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw
 
 
 class DeleteGiftCollection:
     async def delete_gift_collection(
         self: pyrogram.Client, owner_id: int | str, collection_id: int
-    ) -> types.GiftCollection:
+    ) -> bool:
         """Deletes a gift collection.
 
         .. include:: /_includes/usable-by/users.rst

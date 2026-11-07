@@ -19,6 +19,7 @@
 from __future__ import annotations as _annotations
 
 from typing import TYPE_CHECKING
+from datetime import datetime
 
 import pyrogram
 from pyrogram import enums, raw, types, utils
@@ -41,111 +42,175 @@ class ChatEvent(Object):
         date (:py:obj:`~datetime.datetime`):
             Date of the event.
 
-        action (:obj:`~pyrogram.enums.ChatEventAction`):
+        member (:obj:`~pyrogram.types.Chat`):
+            User or chat who performed the action.
+
+        action (:obj:`~pyrogram.enums.ChatEventActionType`):
             Event action.
+            This field will contain the enumeration type of the chat event action.
+            You can use ``action = getattr(event, event.action.value)`` to access the chat event.
 
-        user (:obj:`~pyrogram.types.User`):
-            User that triggered the event.
+        message_edited (:obj:`~pyrogram.types.ChatEventActionMessageEdited`, *optional*):
+            A message was edited.
 
-        old_description, new_description (``str``, *optional*):
-            Previous and new chat description.
-            For :obj:`~pyrogram.enums.ChatEventAction.DESCRIPTION_CHANGED` action only.
+        message_deleted (:obj:`~pyrogram.types.ChatEventActionMessageDeleted`, *optional*):
+            A message was deleted.
 
-        old_history_ttl, new_history_ttl (``int``, *optional*):
-            Previous and new chat history TTL.
-            For :obj:`~pyrogram.enums.ChatEventAction.HISTORY_TTL_CHANGED` action only.
+        message_pinned (:obj:`~pyrogram.types.ChatEventActionMessagePinned`, *optional*):
+            A message was pinned.
 
-        old_linked_chat, new_linked_chat (:obj:`~pyrogram.types.Chat`, *optional*):
-            Previous and new linked chat.
-            For :obj:`~pyrogram.enums.ChatEventAction.LINKED_CHAT_CHANGED` action only.
+        message_unpinned (:obj:`~pyrogram.types.ChatEventActionMessageUnpinned`, *optional*):
+            A message was unpinned.
 
-        old_photo, new_photo (:obj:`~pyrogram.types.Photo`, *optional*):
-            Previous and new chat photo.
-            For :obj:`~pyrogram.enums.ChatEventAction.PHOTO_CHANGED` action only.
+        poll_stopped (:obj:`~pyrogram.types.ChatEventActionPollStopped`, *optional*):
+            A poll in a message was stopped.
 
-        old_title, new_title (``str``, *optional*):
-            Previous and new chat title.
-            For :obj:`~pyrogram.enums.ChatEventAction.TITLE_CHANGED` action only.
+        member_joined (:obj:`~pyrogram.types.ChatEventActionMemberJoined`, *optional*):
+            A new member joined the chat.
 
-        old_username, new_username (``str``, *optional*):
-            Previous and new chat username.
-            For :obj:`~pyrogram.enums.ChatEventAction.USERNAME_CHANGED` action only.
+        member_joined_by_invite_link (:obj:`~pyrogram.types.ChatEventActionMemberJoinedByInviteLink`, *optional*):
+            A new member joined the chat via an invite link.
 
-        old_chat_permissions, new_chat_permissions (:obj:`~pyrogram.types.ChatPermissions`, *optional*):
-            Previous and new default chat permissions.
-            For :obj:`~pyrogram.enums.ChatEventAction.CHAT_PERMISSIONS_CHANGED` action only.
+        member_joined_by_request (:obj:`~pyrogram.types.ChatEventActionMemberJoinedByRequest`, *optional*):
+            A new member was accepted to the chat by an administrator.
 
-        deleted_message (:obj:`~pyrogram.types.Message`, *optional*):
-            Deleted message.
-            For :obj:`~pyrogram.enums.ChatEventAction.MESSAGE_DELETED` action only.
+        member_invited (:obj:`~pyrogram.types.ChatEventActionMemberInvited`, *optional*):
+            A new chat member was invited.
 
-        old_message, new_message (:obj:`~pyrogram.types.Message`, *optional*):
-            Previous and new message before it has been edited.
-            For :obj:`~pyrogram.enums.ChatEventAction.MESSAGE_EDITED` action only.
+        member_left (:obj:`~pyrogram.types.ChatEventActionMemberLeft`, *optional*):
+            A member left the chat.
 
-        invited_member (:obj:`~pyrogram.types.ChatMember`, *optional*):
-            New invited chat member.
-            For :obj:`~pyrogram.enums.ChatEventAction.MEMBER_INVITED` action only.
+        member_promoted (:obj:`~pyrogram.types.ChatEventActionMemberPromoted`, *optional*):
+            A chat member has gained/lost administrator status, or the list of their administrator privileges has changed.
 
-        old_administrator_privileges, new_administrator_privileges (:obj:`~pyrogram.types.ChatMember`, *optional*):
-            Previous and new administrator privileges.
-            For :obj:`~pyrogram.enums.ChatEventAction.ADMINISTRATOR_PRIVILEGES_CHANGED` action only.
+        member_restricted (:obj:`~pyrogram.types.ChatEventActionMemberRestricted`, *optional*):
+            A chat member was restricted/unrestricted or banned/unbanned, or the list of their restrictions has changed.
 
-        old_member_permissions, new_member_permissions (:obj:`~pyrogram.types.ChatMember`, *optional*):
-            Previous and new member permissions.
-            For :obj:`~pyrogram.enums.ChatEventAction.MEMBER_PERMISSIONS_CHANGED` action only.
+        member_tag_changed (:obj:`~pyrogram.types.ChatEventActionMemberTagChanged`, *optional*):
+            A chat member tag has been changed.
 
-        stopped_poll (:obj:`~pyrogram.types.Message`, *optional*):
-            Message containing the stopped poll.
-            For :obj:`~pyrogram.enums.ChatEventAction.POLL_STOPPED` action only.
+        member_subscription_extended (:obj:`~pyrogram.types.ChatEventActionMemberSubscriptionExtended`, *optional*):
+            A chat member extended their subscription to the chat.
 
-        invites_enabled (``bool``, *optional*):
-            If chat invites were enabled (True) or disabled (False).
-            For :obj:`~pyrogram.enums.ChatEventAction.INVITES_ENABLED` action only.
+        available_reactions_changed (:obj:`~pyrogram.types.ChatEventActionAvailableReactionsChanged`, *optional*):
+            The chat available reactions were changed.
 
-        history_hidden (``bool``, *optional*):
-            If chat history has been hidden (True) or unhidden (False).
-            For :obj:`~pyrogram.enums.ChatEventAction.HISTORY_HIDDEN` action only.
+        background_changed (:obj:`~pyrogram.types.ChatEventActionBackgroundChanged`, *optional*):
+            The chat background was changed.
 
-        signatures_enabled (``bool``, *optional*):
-            If message signatures were enabled (True) or disabled (False).
-            For :obj:`~pyrogram.enums.ChatEventAction.SIGNATURES_ENABLED` action only.
+        description_changed (:obj:`~pyrogram.types.ChatEventActionDescriptionChanged`, *optional*):
+            The chat description was changed.
 
-        old_slow_mode, new_slow_mode (``int``, *optional*):
-            Previous and new slow mode value in seconds.
-            For :obj:`~pyrogram.enums.ChatEventAction.SLOW_MODE_CHANGED` action only.
+        emoji_status_changed (:obj:`~pyrogram.types.ChatEventActionEmojiStatusChanged`, *optional*):
+            The chat emoji status was changed.
 
-        pinned_message (:obj:`~pyrogram.types.Message`, *optional*):
-            Pinned message.
-            For :obj:`~pyrogram.enums.ChatEventAction.MESSAGE_PINNED` action only.
+        linked_chat_changed (:obj:`~pyrogram.types.ChatEventActionLinkedChatChanged`, *optional*):
+            The linked chat of a supergroup was changed.
 
-        unpinned_message (:obj:`~pyrogram.types.Message`, *optional*):
-            Unpinned message.
-            For :obj:`~pyrogram.enums.ChatEventAction.MESSAGE_UNPINNED` action only.
+        location_changed (:obj:`~pyrogram.types.ChatEventActionLocationChanged`, *optional*):
+            The supergroup location was changed.
 
-        old_invite_link, new_invite_link (:obj:`~pyrogram.types.ChatInviteLink`, *optional*):
-            Previous and new edited invite link.
-            For :obj:`~pyrogram.enums.ChatEventAction.INVITE_LINK_EDITED` action only.
+        message_auto_delete_time_changed (:obj:`~pyrogram.types.ChatEventActionMessageAutoDeleteTimeChanged`, *optional*):
+            The message auto-delete timer was changed.
 
-        revoked_invite_link (:obj:`~pyrogram.types.ChatInviteLink`, *optional*):
-            Revoked invite link.
-            For :obj:`~pyrogram.enums.ChatEventAction.INVITE_LINK_REVOKED` action only.
+        permissions_changed (:obj:`~pyrogram.types.ChatEventActionPermissionsChanged`, *optional*):
+            The chat permissions were changed.
 
-        deleted_invite_link (:obj:`~pyrogram.types.ChatInviteLink`, *optional*):
-            Deleted invite link.
-            For :obj:`~pyrogram.enums.ChatEventAction.INVITE_LINK_DELETED` action only.
+        photo_changed (:obj:`~pyrogram.types.ChatEventActionPhotoChanged`, *optional*):
+            The chat photo was changed.
 
-        created_forum_topic (:obj:`~pyrogram.types.ForumTopic`, *optional*):
-            New forum topic.
-            For :obj:`~pyrogram.enums.ChatEventAction.CREATED_FORUM_TOPIC` action only.
+        slow_mode_delay_changed (:obj:`~pyrogram.types.ChatEventActionSlowModeDelayChanged`, *optional*):
+            The slow_mode_delay setting of a supergroup was changed.
 
-        old_forum_topic, new_forum_topic (:obj:`~pyrogram.types.ForumTopic`, *optional*):
-            Edited forum topic.
-            For :obj:`~pyrogram.enums.ChatEventAction.EDITED_FORUM_TOPIC` action only.
+        sticker_set_changed (:obj:`~pyrogram.types.ChatEventActionStickerSetChanged`, *optional*):
+            The supergroup sticker set was changed.
 
-        deleted_forum_topic (:obj:`~pyrogram.types.ForumTopic`, *optional*):
-            Deleted forum topic.
-            For :obj:`~pyrogram.enums.ChatEventAction.DELETED_FORUM_TOPIC` action only.
+        custom_emoji_sticker_set_changed (:obj:`~pyrogram.types.ChatEventActionCustomEmojiStickerSetChanged`, *optional*):
+            The supergroup sticker set with allowed custom emoji was changed.
+
+        title_changed (:obj:`~pyrogram.types.ChatEventActionTitleChanged`, *optional*):
+            The chat title was changed.
+
+        username_changed (:obj:`~pyrogram.types.ChatEventActionUsernameChanged`, *optional*):
+            The chat editable username was changed.
+
+        active_usernames_changed (:obj:`~pyrogram.types.ChatEventActionActiveUsernamesChanged`, *optional*):
+            The chat active usernames were changed.
+
+        accent_color_changed (:obj:`~pyrogram.types.ChatEventActionAccentColorChanged`, *optional*):
+            The chat accent color or background custom emoji were changed.
+
+        profile_accent_color_changed (:obj:`~pyrogram.types.ChatEventActionProfileAccentColorChanged`, *optional*):
+            The chat's profile accent color or profile background custom emoji were changed.
+
+        has_protected_content_toggled (:obj:`~pyrogram.types.ChatEventActionHasProtectedContentToggled`, *optional*):
+            The has_protected_content setting of a chat was toggled.
+
+        invites_toggled (:obj:`~pyrogram.types.ChatEventActionInvitesToggled`, *optional*):
+            The can_invite_users permission of a supergroup chat was toggled.
+
+        is_all_history_available_toggled (:obj:`~pyrogram.types.ChatEventActionIsAllHistoryAvailableToggled`, *optional*):
+            The is_all_history_available setting of a supergroup was toggled.
+
+        has_aggressive_anti_spam_enabled_toggled (:obj:`~pyrogram.types.ChatEventActionHasAggressiveAntiSpamEnabledToggled`, *optional*):
+            The has_aggressive_anti_spam_enabled setting of a supergroup was toggled.
+
+        sign_messages_toggled (:obj:`~pyrogram.types.ChatEventActionSignMessagesToggled`, *optional*):
+            The sign_messages setting of a channel was toggled.
+
+        show_message_sender_toggled (:obj:`~pyrogram.types.ChatEventActionShowMessageSenderToggled`, *optional*):
+            The show_message_sender setting of a channel was toggled.
+
+        automatic_translation_toggled (:obj:`~pyrogram.types.ChatEventActionAutomaticTranslationToggled`, *optional*):
+            The has_automatic_translation setting of a channel was toggled.
+
+        invite_link_edited (:obj:`~pyrogram.types.ChatEventActionInviteLinkEdited`, *optional*):
+            A chat invite link was edited.
+
+        invite_link_revoked (:obj:`~pyrogram.types.ChatEventActionInviteLinkRevoked`, *optional*):
+            A chat invite link was revoked.
+
+        invite_link_deleted (:obj:`~pyrogram.types.ChatEventActionInviteLinkDeleted`, *optional*):
+            A chat invite link was deleted.
+
+        video_chat_created (:obj:`~pyrogram.types.ChatEventActionVideoChatCreated`, *optional*):
+            A video chat was created.
+
+        video_chat_ended (:obj:`~pyrogram.types.ChatEventActionVideoChatEnded`, *optional*):
+            A video chat was ended.
+
+        video_chat_mute_new_participants_toggled (:obj:`~pyrogram.types.ChatEventActionVideoChatMuteNewParticipantsToggled`, *optional*):
+            The mute_new_participants setting of a video chat was toggled.
+
+        video_chat_participant_is_muted_toggled (:obj:`~pyrogram.types.ChatEventActionVideoChatParticipantIsMutedToggled`, *optional*):
+            A video chat participant was muted or unmuted.
+
+        video_chat_participant_volume_level_changed (:obj:`~pyrogram.types.ChatEventActionVideoChatParticipantVolumeLevelChanged`, *optional*):
+            A video chat participant volume level was changed.
+
+        is_forum_toggled (:obj:`~pyrogram.types.ChatEventActionIsForumToggled`, *optional*):
+            The is_forum setting of a supergroup was toggled.
+
+        forum_topic_created (:obj:`~pyrogram.types.ChatEventActionForumTopicCreated`, *optional*):
+            A new forum topic was created.
+
+        forum_topic_edited (:obj:`~pyrogram.types.ChatEventActionForumTopicEdited`, *optional*):
+            A forum topic was edited.
+
+        forum_topic_toggle_is_closed (:obj:`~pyrogram.types.ChatEventActionForumTopicToggleIsClosed`, *optional*):
+            A forum topic was closed or reopened.
+
+        forum_topic_toggle_is_hidden (:obj:`~pyrogram.types.ChatEventActionForumTopicToggleIsHidden`, *optional*):
+            The General forum topic was hidden or unhidden.
+
+        forum_topic_deleted (:obj:`~pyrogram.types.ChatEventActionForumTopicDeleted`, *optional*):
+            A forum topic was deleted.
+
+        forum_topic_pinned (:obj:`~pyrogram.types.ChatEventActionForumTopicPinned`, *optional*):
+            A pinned forum topic was changed.
+
+        raw (:obj:`~pyrogram.raw.base.ChannelAdminLogEvent`, *optional*):
+            A raw object.
     """
 
     def __init__(
@@ -153,366 +218,646 @@ class ChatEvent(Object):
         *,
         id: int,
         date: datetime,
-        user: types.User,
-        action: str,
-        old_description: str | None = None,
-        new_description: str | None = None,
-        old_history_ttl: int | None = None,
-        new_history_ttl: int | None = None,
-        old_linked_chat: types.Chat | None = None,
-        new_linked_chat: types.Chat | None = None,
-        old_photo: types.Photo | None = None,
-        new_photo: types.Photo | None = None,
-        old_title: str | None = None,
-        new_title: str | None = None,
-        old_username: str | None = None,
-        new_username: str | None = None,
-        old_chat_permissions: types.ChatPermissions | None = None,
-        new_chat_permissions: types.ChatPermissions | None = None,
-        deleted_message: types.Message | None = None,
-        old_message: types.Message | None = None,
-        new_message: types.Message | None = None,
-        invited_member: types.ChatMember | None = None,
-        old_administrator_privileges: types.ChatMember | None = None,
-        new_administrator_privileges: types.ChatMember | None = None,
-        old_member_permissions: types.ChatMember | None = None,
-        new_member_permissions: types.ChatMember | None = None,
-        stopped_poll: types.Message | None = None,
-        invites_enabled: types.ChatMember | None = None,
-        history_hidden: bool | None = None,
-        signatures_enabled: bool | None = None,
-        old_slow_mode: int | None = None,
-        new_slow_mode: int | None = None,
-        pinned_message: types.Message | None = None,
-        unpinned_message: types.Message | None = None,
-        old_invite_link: types.ChatInviteLink | None = None,
-        new_invite_link: types.ChatInviteLink | None = None,
-        revoked_invite_link: types.ChatInviteLink | None = None,
-        deleted_invite_link: types.ChatInviteLink | None = None,
-        created_forum_topic: types.ForumTopic | None = None,
-        old_forum_topic: types.ForumTopic | None = None,
-        new_forum_topic: types.ForumTopic | None = None,
-        deleted_forum_topic: types.ForumTopic | None = None,
+        member: types.Chat,
+        action: enums.ChatEventActionType,
+        message_edited: types.ChatEventActionMessageEdited | None = None,
+        message_deleted: types.ChatEventActionMessageDeleted | None = None,
+        message_pinned: types.ChatEventActionMessagePinned | None = None,
+        message_unpinned: types.ChatEventActionMessageUnpinned | None = None,
+        poll_stopped: types.ChatEventActionPollStopped | None = None,
+        member_joined: types.ChatEventActionMemberJoined | None = None,
+        member_joined_by_invite_link: types.ChatEventActionMemberJoinedByInviteLink | None = None,
+        member_joined_by_request: types.ChatEventActionMemberJoinedByRequest | None = None,
+        member_invited: types.ChatEventActionMemberInvited | None = None,
+        member_left: types.ChatEventActionMemberLeft | None = None,
+        member_promoted: types.ChatEventActionMemberPromoted | None = None,
+        member_restricted: types.ChatEventActionMemberRestricted | None = None,
+        member_tag_changed: types.ChatEventActionMemberTagChanged | None = None,
+        member_subscription_extended: types.ChatEventActionMemberSubscriptionExtended | None = None,
+        available_reactions_changed: types.ChatEventActionAvailableReactionsChanged | None = None,
+        background_changed: types.ChatEventActionBackgroundChanged | None = None,
+        description_changed: types.ChatEventActionDescriptionChanged | None = None,
+        emoji_status_changed: types.ChatEventActionEmojiStatusChanged | None = None,
+        linked_chat_changed: types.ChatEventActionLinkedChatChanged | None = None,
+        location_changed: types.ChatEventActionLocationChanged | None = None,
+        message_auto_delete_time_changed: types.ChatEventActionMessageAutoDeleteTimeChanged
+        | None = None,
+        permissions_changed: types.ChatEventActionPermissionsChanged | None = None,
+        photo_changed: types.ChatEventActionPhotoChanged | None = None,
+        slow_mode_delay_changed: types.ChatEventActionSlowModeDelayChanged | None = None,
+        sticker_set_changed: types.ChatEventActionStickerSetChanged | None = None,
+        custom_emoji_sticker_set_changed: types.ChatEventActionCustomEmojiStickerSetChanged
+        | None = None,
+        title_changed: types.ChatEventActionTitleChanged | None = None,
+        username_changed: types.ChatEventActionUsernameChanged | None = None,
+        active_usernames_changed: types.ChatEventActionActiveUsernamesChanged | None = None,
+        accent_color_changed: types.ChatEventActionAccentColorChanged | None = None,
+        profile_accent_color_changed: types.ChatEventActionProfileAccentColorChanged | None = None,
+        has_protected_content_toggled: types.ChatEventActionHasProtectedContentToggled
+        | None = None,
+        invites_toggled: types.ChatEventActionInvitesToggled | None = None,
+        is_all_history_available_toggled: types.ChatEventActionIsAllHistoryAvailableToggled
+        | None = None,
+        has_aggressive_anti_spam_enabled_toggled: types.ChatEventActionHasAggressiveAntiSpamEnabledToggled
+        | None = None,
+        sign_messages_toggled: types.ChatEventActionSignMessagesToggled | None = None,
+        show_message_sender_toggled: types.ChatEventActionShowMessageSenderToggled | None = None,
+        automatic_translation_toggled: types.ChatEventActionAutomaticTranslationToggled
+        | None = None,
+        invite_link_edited: types.ChatEventActionInviteLinkEdited | None = None,
+        invite_link_revoked: types.ChatEventActionInviteLinkRevoked | None = None,
+        invite_link_deleted: types.ChatEventActionInviteLinkDeleted | None = None,
+        video_chat_created: types.ChatEventActionVideoChatCreated | None = None,
+        video_chat_ended: types.ChatEventActionVideoChatEnded | None = None,
+        video_chat_mute_new_participants_toggled: types.ChatEventActionVideoChatMuteNewParticipantsToggled
+        | None = None,
+        video_chat_participant_is_muted_toggled: types.ChatEventActionVideoChatParticipantIsMutedToggled
+        | None = None,
+        video_chat_participant_volume_level_changed: types.ChatEventActionVideoChatParticipantVolumeLevelChanged
+        | None = None,
+        is_forum_toggled: types.ChatEventActionIsForumToggled | None = None,
+        forum_topic_created: types.ChatEventActionForumTopicCreated | None = None,
+        forum_topic_edited: types.ChatEventActionForumTopicEdited | None = None,
+        forum_topic_toggle_is_closed: types.ChatEventActionForumTopicToggleIsClosed | None = None,
+        forum_topic_toggle_is_hidden: types.ChatEventActionForumTopicToggleIsHidden | None = None,
+        forum_topic_deleted: types.ChatEventActionForumTopicDeleted | None = None,
+        forum_topic_pinned: types.ChatEventActionForumTopicPinned | None = None,
+        raw: raw.base.ChannelAdminLogEvent | None = None,
     ):
         super().__init__()
 
         self.id = id
         self.date = date
+        self.member = member
         self.action = action
-        self.user = user
-
-        self.old_description = old_description
-        self.new_description = new_description
-
-        self.old_history_ttl = old_history_ttl
-        self.new_history_ttl = new_history_ttl
-
-        self.old_linked_chat = old_linked_chat
-        self.new_linked_chat = new_linked_chat
-
-        self.old_photo = old_photo
-        self.new_photo = new_photo
-
-        self.old_title = old_title
-        self.new_title = new_title
-
-        self.old_username = old_username
-        self.new_username = new_username
-
-        self.old_chat_permissions = old_chat_permissions
-        self.new_chat_permissions = new_chat_permissions
-
-        self.deleted_message = deleted_message
-
-        self.old_message = old_message
-        self.new_message = new_message
-
-        self.invited_member = invited_member
-
-        self.old_administrator_privileges = old_administrator_privileges
-        self.new_administrator_privileges = new_administrator_privileges
-
-        self.old_member_permissions = old_member_permissions
-        self.new_member_permissions = new_member_permissions
-
-        self.stopped_poll = stopped_poll
-
-        self.invites_enabled = invites_enabled
-
-        self.history_hidden = history_hidden
-
-        self.signatures_enabled = signatures_enabled
-
-        self.old_slow_mode = old_slow_mode
-        self.new_slow_mode = new_slow_mode
-
-        self.pinned_message = pinned_message
-        self.unpinned_message = unpinned_message
-
-        self.old_invite_link = old_invite_link
-        self.new_invite_link = new_invite_link
-        self.revoked_invite_link = revoked_invite_link
-        self.deleted_invite_link = deleted_invite_link
-
-        self.created_forum_topic = created_forum_topic
-        self.old_forum_topic = old_forum_topic
-        self.new_forum_topic = new_forum_topic
-        self.deleted_forum_topic = deleted_forum_topic
+        self.message_edited = message_edited
+        self.message_deleted = message_deleted
+        self.message_pinned = message_pinned
+        self.message_unpinned = message_unpinned
+        self.poll_stopped = poll_stopped
+        self.member_joined = member_joined
+        self.member_joined_by_invite_link = member_joined_by_invite_link
+        self.member_joined_by_request = member_joined_by_request
+        self.member_invited = member_invited
+        self.member_left = member_left
+        self.member_promoted = member_promoted
+        self.member_restricted = member_restricted
+        self.member_tag_changed = member_tag_changed
+        self.member_subscription_extended = member_subscription_extended
+        self.available_reactions_changed = available_reactions_changed
+        self.background_changed = background_changed
+        self.description_changed = description_changed
+        self.emoji_status_changed = emoji_status_changed
+        self.linked_chat_changed = linked_chat_changed
+        self.location_changed = location_changed
+        self.message_auto_delete_time_changed = message_auto_delete_time_changed
+        self.permissions_changed = permissions_changed
+        self.photo_changed = photo_changed
+        self.slow_mode_delay_changed = slow_mode_delay_changed
+        self.sticker_set_changed = sticker_set_changed
+        self.custom_emoji_sticker_set_changed = custom_emoji_sticker_set_changed
+        self.title_changed = title_changed
+        self.username_changed = username_changed
+        self.active_usernames_changed = active_usernames_changed
+        self.accent_color_changed = accent_color_changed
+        self.profile_accent_color_changed = profile_accent_color_changed
+        self.has_protected_content_toggled = has_protected_content_toggled
+        self.invites_toggled = invites_toggled
+        self.is_all_history_available_toggled = is_all_history_available_toggled
+        self.has_aggressive_anti_spam_enabled_toggled = has_aggressive_anti_spam_enabled_toggled
+        self.sign_messages_toggled = sign_messages_toggled
+        self.show_message_sender_toggled = show_message_sender_toggled
+        self.automatic_translation_toggled = automatic_translation_toggled
+        self.invite_link_edited = invite_link_edited
+        self.invite_link_revoked = invite_link_revoked
+        self.invite_link_deleted = invite_link_deleted
+        self.video_chat_created = video_chat_created
+        self.video_chat_ended = video_chat_ended
+        self.video_chat_mute_new_participants_toggled = video_chat_mute_new_participants_toggled
+        self.video_chat_participant_is_muted_toggled = video_chat_participant_is_muted_toggled
+        self.video_chat_participant_volume_level_changed = (
+            video_chat_participant_volume_level_changed
+        )
+        self.is_forum_toggled = is_forum_toggled
+        self.forum_topic_created = forum_topic_created
+        self.forum_topic_edited = forum_topic_edited
+        self.forum_topic_toggle_is_closed = forum_topic_toggle_is_closed
+        self.forum_topic_toggle_is_hidden = forum_topic_toggle_is_hidden
+        self.forum_topic_deleted = forum_topic_deleted
+        self.forum_topic_pinned = forum_topic_pinned
 
     @staticmethod
     async def _parse(
         client: pyrogram.Client,
         event: raw.base.ChannelAdminLogEvent,
-        users: list[raw.base.User],
-        chats: list[raw.base.Chat],
+        users: dict[int, raw.base.User],
+        chats: dict[int, raw.base.Chat],
     ):
-        users = {i.id: i for i in users}
-        chats = {i.id: i for i in chats}
-
-        user = await types.User._parse(client, users[event.user_id])
         action = event.action
+        action_type = enums.ChatEventActionType.UNSUPPORTED
 
-        old_description: str | None = None
-        new_description: str | None = None
+        message_edited = None
+        message_deleted = None
+        message_pinned = None
+        message_unpinned = None
+        poll_stopped = None
+        member_joined = None
+        member_joined_by_invite_link = None
+        member_joined_by_request = None
+        member_invited = None
+        member_left = None
+        member_promoted = None
+        member_restricted = None
+        member_tag_changed = None
+        member_subscription_extended = None
+        available_reactions_changed = None
+        background_changed = None
+        description_changed = None
+        emoji_status_changed = None
+        linked_chat_changed = None
+        location_changed = None
+        message_auto_delete_time_changed = None
+        permissions_changed = None
+        photo_changed = None
+        slow_mode_delay_changed = None
+        sticker_set_changed = None
+        custom_emoji_sticker_set_changed = None
+        title_changed = None
+        username_changed = None
+        active_usernames_changed = None
+        accent_color_changed = None
+        profile_accent_color_changed = None
+        has_protected_content_toggled = None
+        invites_toggled = None
+        is_all_history_available_toggled = None
+        has_aggressive_anti_spam_enabled_toggled = None
+        sign_messages_toggled = None
+        show_message_sender_toggled = None
+        automatic_translation_toggled = None
+        invite_link_edited = None
+        invite_link_revoked = None
+        invite_link_deleted = None
+        video_chat_created = None
+        video_chat_ended = None
+        video_chat_mute_new_participants_toggled = None
+        video_chat_participant_is_muted_toggled = None
+        video_chat_participant_volume_level_changed = None
+        is_forum_toggled = None
+        forum_topic_created = None
+        forum_topic_edited = None
+        forum_topic_toggle_is_closed = None
+        forum_topic_toggle_is_hidden = None
+        forum_topic_deleted = None
+        forum_topic_pinned = None
 
-        old_history_ttl: int | None = None
-        new_history_ttl: int | None = None
+        if isinstance(action, raw.types.ChannelAdminLogEventActionEditMessage):
+            action_type = enums.ChatEventActionType.MESSAGE_EDITED
+            message_edited = types.ChatEventActionMessageEdited(
+                old_message=await types.Message._parse(client, action.prev_message, users, chats),
+                new_message=await types.Message._parse(client, action.new_message, users, chats),
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionDeleteMessage):
+            action_type = enums.ChatEventActionType.MESSAGE_DELETED
 
-        old_linked_chat: types.Chat | None = None
-        new_linked_chat: types.Chat | None = None
+            if client._app_config is not None:
+                app_config: dict = utils.jsonvalue_to_obj(client._app_config.config)
+            else:
+                app_config: dict = await client.get_app_config()
 
-        old_photo: types.Photo | None = None
-        new_photo: types.Photo | None = None
-
-        old_title: str | None = None
-        new_title: str | None = None
-
-        old_username: str | None = None
-        new_username: str | None = None
-
-        old_chat_permissions: types.ChatPermissions | None = None
-        new_chat_permissions: types.ChatPermissions | None = None
-
-        deleted_message: types.Message | None = None
-
-        old_message: types.Message | None = None
-        new_message: types.Message | None = None
-
-        invited_member: types.ChatMember | None = None
-
-        old_administrator_privileges: types.ChatMember | None = None
-        new_administrator_privileges: types.ChatMember | None = None
-
-        old_member_permissions: types.ChatMember | None = None
-        new_member_permissions: types.ChatMember | None = None
-
-        stopped_poll: types.Message | None = None
-
-        invites_enabled: bool | None = None
-
-        history_hidden: bool | None = None
-
-        signatures_enabled: bool | None = None
-
-        old_slow_mode: int | None = None
-        new_slow_mode: int | None = None
-
-        pinned_message: types.Message | None = None
-        unpinned_message: types.Message | None = None
-
-        old_invite_link: types.ChatInviteLink | None = None
-        new_invite_link: types.ChatInviteLink | None = None
-        revoked_invite_link: types.ChatInviteLink | None = None
-        deleted_invite_link: types.ChatInviteLink | None = None
-
-        created_forum_topic: types.ForumTopic | None = None
-        old_forum_topic: types.ForumTopic | None = None
-        new_forum_topic: types.ForumTopic | None = None
-        deleted_forum_topic: types.ForumTopic | None = None
-
-        if isinstance(action, raw.types.ChannelAdminLogEventActionChangeAbout):
-            old_description = action.prev_value
-            new_description = action.new_value
-            action = enums.ChatEventAction.DESCRIPTION_CHANGED
-
-        elif isinstance(action, raw.types.ChannelAdminLogEventActionChangeHistoryTTL):
-            old_history_ttl = action.prev_value
-            new_history_ttl = action.new_value
-            action = enums.ChatEventAction.HISTORY_TTL_CHANGED
-
+            message_deleted = types.ChatEventActionMessageDeleted(
+                message=await types.Message._parse(client, action.message, users, chats),
+                can_report_anti_spam_false_positive=event.user_id
+                == int(app_config["telegram_antispam_user_id"])
+                if app_config.get("telegram_antispam_user_id")
+                else False,
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionUpdatePinned):
+            if action.message.pinned:
+                action_type = enums.ChatEventActionType.MESSAGE_PINNED
+                message_pinned = types.ChatEventActionMessagePinned(
+                    message=await types.Message._parse(client, action.message, users, chats)
+                )
+            else:
+                action_type = enums.ChatEventActionType.MESSAGE_UNPINNED
+                message_unpinned = types.ChatEventActionMessageUnpinned(
+                    message=await types.Message._parse(client, action.message, users, chats)
+                )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionStopPoll):
+            action_type = enums.ChatEventActionType.POLL_STOPPED
+            poll_stopped = types.ChatEventActionPollStopped(
+                message=await types.Message._parse(client, action.message, users, chats)
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionParticipantJoin):
+            action_type = enums.ChatEventActionType.MEMBER_JOINED
+            member_joined = types.ChatEventActionMemberJoined()
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionParticipantJoinByInvite):
+            action_type = enums.ChatEventActionType.MEMBER_JOINED_BY_INVITE_LINK
+            member_joined_by_invite_link = types.ChatEventActionMemberJoinedByInviteLink(
+                invite_link=await types.ChatInviteLink._parse(client, action.invite, users),
+                via_chat_folder_invite_link=action.via_chatlist,
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionParticipantJoinByRequest):
+            action_type = enums.ChatEventActionType.MEMBER_JOINED_BY_REQUEST
+            member_joined_by_invite_link = types.ChatEventActionMemberJoinedByRequest(
+                approver_user=await types.User._parse(client, users.get(action.approved_by)),
+                invite_link=await types.ChatInviteLink._parse(client, action.invite, users),
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionParticipantInvite):
+            action_type = enums.ChatEventActionType.MEMBER_INVITED
+            member_invited = types.ChatEventActionMemberInvited(
+                member=await types.ChatMember._parse(client, event.action.participant, users, chats)
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionParticipantLeave):
+            action_type = enums.ChatEventActionType.MEMBER_LEFT
+            member_left = types.ChatEventActionMemberLeft()
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionParticipantToggleAdmin):
+            action_type = enums.ChatEventActionType.MEMBER_PROMOTED
+            member_promoted = types.ChatEventActionMemberPromoted(
+                old_member=await types.ChatMember._parse(
+                    client, action.prev_participant, users, chats
+                ),
+                new_member=await types.ChatMember._parse(
+                    client, action.new_participant, users, chats
+                ),
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionParticipantToggleBan):
+            action_type = enums.ChatEventActionType.MEMBER_RESTRICTED
+            member_restricted = types.ChatEventActionMemberRestricted(
+                old_member=await types.ChatMember._parse(
+                    client, action.prev_participant, users, chats
+                ),
+                new_member=await types.ChatMember._parse(
+                    client, action.new_participant, users, chats
+                ),
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionParticipantEditRank):
+            action_type = enums.ChatEventActionType.MEMBER_TAG_CHANGED
+            member_tag_changed = types.ChatEventActionMemberTagChanged(
+                user=await types.User._parse(client=client, user=users[action.user_id]),
+                old_tag=action.prev_rank,
+                new_tag=action.new_rank,
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionParticipantSubExtend):
+            action_type = enums.ChatEventActionType.MEMBER_SUBSCRIPTION_EXTENDED
+            member_subscription_extended = types.ChatEventActionMemberSubscriptionExtended(
+                old_member=await types.ChatMember._parse(
+                    client, action.prev_participant, users, chats
+                ),
+                new_member=await types.ChatMember._parse(
+                    client, action.new_participant, users, chats
+                ),
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionChangeAvailableReactions):
+            action_type = enums.ChatEventActionType.AVAILABLE_REACTIONS_CHANGED
+            available_reactions_changed = types.ChatEventActionAvailableReactionsChanged(
+                old_available_reactions=types.ChatReactions._parse(
+                    client=client, chat_reactions=action.prev_value
+                ),
+                new_available_reactions=types.ChatReactions._parse(
+                    client=client, chat_reactions=action.new_value
+                ),
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionChangeWallpaper):
+            action_type = enums.ChatEventActionType.BACKGROUND_CHANGED
+            available_reactions_changed = types.ChatEventActionBackgroundChanged(
+                old_background=types.ChatBackground._parse(
+                    client=client, background=action.prev_value
+                ),
+                new_background=types.ChatBackground._parse(
+                    client=client, background=action.new_value
+                ),
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionChangeAbout):
+            action_type = enums.ChatEventActionType.DESCRIPTION_CHANGED
+            description_changed = types.ChatEventActionDescriptionChanged(
+                old_description=action.prev_value, new_description=action.new_value
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionChangeEmojiStatus):
+            action_type = enums.ChatEventActionType.EMOJI_STATUS_CHANGED
+            emoji_status_changed = types.ChatEventActionEmojiStatusChanged(
+                old_emoji_status=types.EmojiStatus._parse(
+                    client=client, emoji_status=action.prev_value
+                ),
+                new_emoji_status=types.EmojiStatus._parse(
+                    client=client, emoji_status=action.new_value
+                ),
+            )
         elif isinstance(action, raw.types.ChannelAdminLogEventActionChangeLinkedChat):
-            old_linked_chat = await types.Chat._parse_chat(client, chats[action.prev_value])
-            new_linked_chat = await types.Chat._parse_chat(client, chats[action.new_value])
-            action = enums.ChatEventAction.LINKED_CHAT_CHANGED
-
-        elif isinstance(action, raw.types.ChannelAdminLogEventActionChangePhoto):
-            old_photo = types.Photo._parse(client, action.prev_photo)
-            new_photo = types.Photo._parse(client, action.new_photo)
-            action = enums.ChatEventAction.PHOTO_CHANGED
-
-        elif isinstance(action, raw.types.ChannelAdminLogEventActionChangeTitle):
-            old_title = action.prev_value
-            new_title = action.new_value
-            action = enums.ChatEventAction.TITLE_CHANGED
-
-        elif isinstance(action, raw.types.ChannelAdminLogEventActionChangeUsername):
-            old_username = action.prev_value
-            new_username = action.new_value
-            action = enums.ChatEventAction.USERNAME_CHANGED
+            action_type = enums.ChatEventActionType.LINKED_CHAT_CHANGED
+            linked_chat_changed = types.ChatEventActionLinkedChatChanged(
+                old_linked_chat=await types.Chat._parse_chat(
+                    client=client, chat=chats.get(action.prev_value)
+                ),
+                new_linked_chat=await types.Chat._parse_chat(
+                    client=client, chat=chats.get(action.new_value)
+                ),
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionChangeLocation):
+            action_type = enums.ChatEventActionType.LOCATION_CHANGED
+            location_changed = types.ChatEventActionLocationChanged(
+                old_location=types.Location._parse(geo_point=action.prev_value),
+                new_location=types.Location._parse(geo_point=action.new_value),
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionChangeHistoryTTL):
+            action_type = enums.ChatEventActionType.MESSAGE_AUTO_DELETE_TIME_CHANGED
+            message_auto_delete_time_changed = types.ChatEventActionMessageAutoDeleteTimeChanged(
+                old_message_auto_delete_time=action.prev_value,
+                new_message_auto_delete_time=action.new_value,
+            )
 
         elif isinstance(action, raw.types.ChannelAdminLogEventActionDefaultBannedRights):
-            old_chat_permissions = types.ChatPermissions._parse(action.prev_banned_rights)
-            new_chat_permissions = types.ChatPermissions._parse(action.new_banned_rights)
-            action = enums.ChatEventAction.CHAT_PERMISSIONS_CHANGED
-
-        elif isinstance(action, raw.types.ChannelAdminLogEventActionDeleteMessage):
-            deleted_message = await types.Message._parse(client, action.message, users, chats)
-            action = enums.ChatEventAction.MESSAGE_DELETED
-
-        elif isinstance(action, raw.types.ChannelAdminLogEventActionEditMessage):
-            old_message = await types.Message._parse(client, action.prev_message, users, chats)
-            new_message = await types.Message._parse(client, action.new_message, users, chats)
-            action = enums.ChatEventAction.MESSAGE_EDITED
-
-        elif isinstance(action, raw.types.ChannelAdminLogEventActionParticipantInvite):
-            invited_member = await types.ChatMember._parse(client, action.participant, users, chats)
-            action = enums.ChatEventAction.MEMBER_INVITED
-
-        elif isinstance(action, raw.types.ChannelAdminLogEventActionParticipantToggleAdmin):
-            old_administrator_privileges = await types.ChatMember._parse(
-                client, action.prev_participant, users, chats
+            action_type = enums.ChatEventActionType.PERMISSIONS_CHANGED
+            permissions_changed = types.ChatEventActionPermissionsChanged(
+                old_permissions=types.ChatPermissions._parse(
+                    denied_permissions=action.prev_banned_rights
+                ),
+                new_permissions=types.ChatPermissions._parse(
+                    denied_permissions=action.new_banned_rights
+                ),
             )
-            new_administrator_privileges = await types.ChatMember._parse(
-                client, action.new_participant, users, chats
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionChangePhoto):
+            action_type = enums.ChatEventActionType.PHOTO_CHANGED
+            photo_changed = types.ChatEventActionPhotoChanged(
+                old_photo=types.Photo._parse(client, action.prev_photo),
+                new_photo=types.Photo._parse(client, action.new_photo),
             )
-            action = enums.ChatEventAction.ADMINISTRATOR_PRIVILEGES_CHANGED
-
-        elif isinstance(action, raw.types.ChannelAdminLogEventActionParticipantToggleBan):
-            old_member_permissions = await types.ChatMember._parse(
-                client, action.prev_participant, users, chats
-            )
-            new_member_permissions = await types.ChatMember._parse(
-                client, action.new_participant, users, chats
-            )
-            action = enums.ChatEventAction.MEMBER_PERMISSIONS_CHANGED
-
-        elif isinstance(action, raw.types.ChannelAdminLogEventActionStopPoll):
-            stopped_poll = await types.Message._parse(client, action.message, users, chats)
-            action = enums.ChatEventAction.POLL_STOPPED
-
-        elif isinstance(action, raw.types.ChannelAdminLogEventActionParticipantJoin):
-            action = enums.ChatEventAction.MEMBER_JOINED
-
-        elif isinstance(action, raw.types.ChannelAdminLogEventActionParticipantLeave):
-            action = enums.ChatEventAction.MEMBER_LEFT
-
-        elif isinstance(action, raw.types.ChannelAdminLogEventActionToggleInvites):
-            invites_enabled = action.new_value
-            action = enums.ChatEventAction.INVITES_ENABLED
-
-        elif isinstance(action, raw.types.ChannelAdminLogEventActionTogglePreHistoryHidden):
-            history_hidden = action.new_value
-            action = enums.ChatEventAction.HISTORY_HIDDEN
-
-        elif isinstance(action, raw.types.ChannelAdminLogEventActionToggleSignatures):
-            signatures_enabled = action.new_value
-            action = enums.ChatEventAction.SIGNATURES_ENABLED
-
         elif isinstance(action, raw.types.ChannelAdminLogEventActionToggleSlowMode):
-            old_slow_mode = action.prev_value
-            new_slow_mode = action.new_value
-            action = enums.ChatEventAction.SLOW_MODE_CHANGED
-
-        elif isinstance(action, raw.types.ChannelAdminLogEventActionUpdatePinned):
-            message = action.message
-
-            if isinstance(message, raw.types.Message) and message.pinned:
-                pinned_message = await types.Message._parse(client, message, users, chats)
-                action = enums.ChatEventAction.MESSAGE_PINNED
-            elif isinstance(message, raw.types.Message) and not message.pinned:
-                unpinned_message = await types.Message._parse(client, message, users, chats)
-                action = enums.ChatEventAction.MESSAGE_UNPINNED
-            else:
-                action = enums.ChatEventAction.MESSAGE_PIN_CHANGED
-
+            action_type = enums.ChatEventActionType.SLOW_MODE_DELAY_CHANGED
+            slow_mode_delay_changed = types.ChatEventActionSlowModeDelayChanged(
+                old_slow_mode_delay=action.prev_value, new_slow_mode_delay=action.new_value
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionChangeStickerSet):
+            action_type = enums.ChatEventActionType.STICKER_SET_CHANGED
+            sticker_set_changed = types.ChatEventActionStickerSetChanged(
+                old_sticker_set_id=getattr(action.prev_stickerset, "id", None),
+                new_sticker_set_id=getattr(action.new_stickerset, "id", None),
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionChangeStickerSet):
+            action_type = enums.ChatEventActionType.STICKER_SET_CHANGED
+            custom_emoji_sticker_set_changed = types.ChatEventActionCustomEmojiStickerSetChanged(
+                old_sticker_set_id=getattr(action.prev_stickerset, "id", None),
+                new_sticker_set_id=getattr(action.new_stickerset, "id", None),
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionChangeTitle):
+            action_type = enums.ChatEventActionType.TITLE_CHANGED
+            title_changed = types.ChatEventActionTitleChanged(
+                old_title=action.prev_value, new_title=action.new_value
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionChangeUsername):
+            action_type = enums.ChatEventActionType.USERNAME_CHANGED
+            username_changed = types.ChatEventActionUsernameChanged(
+                old_username=action.prev_value, new_username=action.new_value
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionChangeUsernames):
+            action_type = enums.ChatEventActionType.ACTIVE_USERNAMES_CHANGED
+            username_changed = types.ChatEventActionActiveUsernamesChanged(
+                old_usernames=action.prev_value, new_usernames=action.new_value
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionChangePeerColor):
+            action_type = enums.ChatEventActionType.ACCENT_COLOR_CHANGED
+            accent_color_changed = types.ChatEventActionAccentColorChanged(
+                old_accent_color_id=getattr(action.prev_value, "color", None),
+                old_background_custom_emoji_id=str(action.prev_value.custom_emoji_id)
+                if getattr(action.prev_value, "custom_emoji_id", None)
+                else None,
+                new_accent_color_id=getattr(action.new_value, "color", None),
+                new_background_custom_emoji_id=str(action.new_value.custom_emoji_id)
+                if getattr(action.new_value, "custom_emoji_id", None)
+                else None,
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionChangeProfilePeerColor):
+            action_type = enums.ChatEventActionType.PROFILE_ACCENT_COLOR_CHANGED
+            profile_accent_color_changed = types.ChatEventActionProfileAccentColorChanged(
+                old_profile_accent_color_id=getattr(action.prev_value, "color", None),
+                old_profile_background_custom_emoji_id=str(action.prev_value.custom_emoji_id)
+                if getattr(action.prev_value, "custom_emoji_id", None)
+                else None,
+                new_profile_accent_color_id=getattr(action.new_value, "color", None),
+                new_profile_background_custom_emoji_id=str(action.new_value.custom_emoji_id)
+                if getattr(action.new_value, "custom_emoji_id", None)
+                else None,
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionToggleNoForwards):
+            action_type = enums.ChatEventActionType.HAS_PROTECTED_CONTENT_TOGGLED
+            has_protected_content_toggled = types.ChatEventActionHasProtectedContentToggled(
+                has_protected_content=action.new_value
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionToggleInvites):
+            action_type = enums.ChatEventActionType.INVITES_TOGGLED
+            invites_toggled = types.ChatEventActionInvitesToggled(can_invite_users=action.new_value)
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionTogglePreHistoryHidden):
+            action_type = enums.ChatEventActionType.IS_ALL_HISTORY_AVAILABLE_TOGGLED
+            is_all_history_available_toggled = types.ChatEventActionIsAllHistoryAvailableToggled(
+                is_all_history_available=action.new_value
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionToggleAntiSpam):
+            action_type = enums.ChatEventActionType.HAS_AGGRESSIVE_ANTI_SPAM_ENABLED_TOGGLED
+            has_aggressive_anti_spam_enabled_toggled = (
+                types.ChatEventActionHasAggressiveAntiSpamEnabledToggled(
+                    has_aggressive_anti_spam_enabled=action.new_value
+                )
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionToggleSignatures):
+            action_type = enums.ChatEventActionType.SIGN_MESSAGES_TOGGLED
+            has_aggressive_anti_spam_enabled_toggled = types.ChatEventActionSignMessagesToggled(
+                sign_messages=action.new_value
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionToggleSignatureProfiles):
+            action_type = enums.ChatEventActionType.SHOW_MESSAGE_SENDER_TOGGLED
+            show_message_sender_toggled = types.ChatEventActionShowMessageSenderToggled(
+                show_message_sender=action.new_value
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionToggleAutotranslation):
+            action_type = enums.ChatEventActionType.AUTOMATIC_TRANSLATION_TOGGLED
+            automatic_translation_toggled = types.ChatEventActionAutomaticTranslationToggled(
+                has_automatic_translation=action.new_value
+            )
         elif isinstance(action, raw.types.ChannelAdminLogEventActionExportedInviteEdit):
-            old_invite_link = await types.ChatInviteLink._parse(client, action.prev_invite, users)
-            new_invite_link = await types.ChatInviteLink._parse(client, action.new_invite, users)
-            action = enums.ChatEventAction.INVITE_LINK_EDITED
-
+            action_type = enums.ChatEventActionType.INVITE_LINK_EDITED
+            invite_link_edited = types.ChatEventActionInviteLinkEdited(
+                old_invite_link=types.ChatInviteLink._parse(
+                    client=client, invite=action.prev_invite, users=users
+                ),
+                new_invite_link=types.ChatInviteLink._parse(
+                    client=client, invite=action.new_invite, users=users
+                ),
+            )
         elif isinstance(action, raw.types.ChannelAdminLogEventActionExportedInviteRevoke):
-            revoked_invite_link = await types.ChatInviteLink._parse(client, action.invite, users)
-            action = enums.ChatEventAction.INVITE_LINK_REVOKED
-
+            action_type = enums.ChatEventActionType.INVITE_LINK_REVOKED
+            invite_link_revoked = types.ChatEventActionInviteLinkRevoked(
+                invite_link=types.ChatInviteLink._parse(
+                    client=client, invite=action.invite, users=users
+                ),
+            )
         elif isinstance(action, raw.types.ChannelAdminLogEventActionExportedInviteDelete):
-            deleted_invite_link = await types.ChatInviteLink._parse(client, action.invite, users)
-            action = enums.ChatEventAction.INVITE_LINK_DELETED
-
+            action_type = enums.ChatEventActionType.INVITE_LINK_DELETED
+            invite_link_deleted = types.ChatEventActionInviteLinkDeleted(
+                invite_link=types.ChatInviteLink._parse(
+                    client=client, invite=action.invite, users=users
+                ),
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionStartGroupCall):
+            action_type = enums.ChatEventActionType.VIDEO_CHAT_CREATED
+            video_chat_created = types.ChatEventActionVideoChatCreated(
+                group_call_id=getattr(action.call, "id", None),
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionDiscardGroupCall):
+            action_type = enums.ChatEventActionType.VIDEO_CHAT_ENDED
+            video_chat_ended = types.ChatEventActionVideoChatEnded(
+                group_call_id=getattr(action.call, "id", None),
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionToggleGroupCallSetting):
+            action_type = enums.ChatEventActionType.VIDEO_CHAT_MUTE_NEW_PARTICIPANTS_TOGGLED
+            video_chat_mute_new_participants_toggled = (
+                types.ChatEventActionVideoChatMuteNewParticipantsToggled(
+                    mute_new_participants=action.join_muted,
+                )
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionParticipantMute):
+            action_type = enums.ChatEventActionType.VIDEO_CHAT_PARTICIPANT_IS_MUTED_TOGGLED
+            participant_id = utils.get_raw_peer_id(action.participant.peer)
+            video_chat_participant_is_muted_toggled = (
+                types.ChatEventActionVideoChatParticipantIsMutedToggled(
+                    participant=await types.Chat._parse_chat(
+                        client=client, chat=users.get(participant_id) or chats.get(participant_id)
+                    ),
+                    is_muted=True,
+                )
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionParticipantUnmute):
+            action_type = enums.ChatEventActionType.VIDEO_CHAT_PARTICIPANT_IS_MUTED_TOGGLED
+            participant_id = utils.get_raw_peer_id(action.participant.peer)
+            video_chat_participant_is_muted_toggled = (
+                types.ChatEventActionVideoChatParticipantIsMutedToggled(
+                    participant=await types.Chat._parse_chat(
+                        client=client, chat=users.get(participant_id) or chats.get(participant_id)
+                    ),
+                    is_muted=False,
+                )
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionParticipantVolume):
+            action_type = enums.ChatEventActionType.VIDEO_CHAT_PARTICIPANT_VOLUME_LEVEL_CHANGED
+            participant_id = utils.get_raw_peer_id(action.participant.peer)
+            video_chat_participant_volume_level_changed = (
+                types.ChatEventActionVideoChatParticipantVolumeLevelChanged(
+                    participant=await types.Chat._parse_chat(
+                        client=client, chat=users.get(participant_id) or chats.get(participant_id)
+                    ),
+                    volume_level=action.participant.volume,
+                )
+            )
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionToggleForum):
+            action_type = enums.ChatEventActionType.IS_FORUM_TOGGLED
+            is_forum_toggled = types.ChatEventActionIsForumToggled(is_forum=action.new_value)
         elif isinstance(action, raw.types.ChannelAdminLogEventActionCreateTopic):
-            created_forum_topic = await types.ForumTopic._parse(
-                client, action.topic, users=users, chats=chats
+            action_type = enums.ChatEventActionType.FORUM_TOPIC_CREATED
+            forum_topic_created = types.ChatEventActionForumTopicCreated(
+                topic_info=await types.ForumTopic._parse(
+                    client, action.topic, users=users, chats=chats
+                )
             )
-            action = enums.ChatEventAction.CREATED_FORUM_TOPIC
-
         elif isinstance(action, raw.types.ChannelAdminLogEventActionEditTopic):
-            old_forum_topic = await types.ForumTopic._parse(
-                client, action.prev_topic, users=users, chats=chats
-            )
-            new_forum_topic = await types.ForumTopic._parse(
-                client, action.new_topic, users=users, chats=chats
-            )
-            action = enums.ChatEventAction.EDITED_FORUM_TOPIC
-
+            if action.prev_topic.closed != action.new_topic.closed:
+                action_type = enums.ChatEventActionType.FORUM_TOPIC_TOGGLE_IS_CLOSED
+                forum_topic_toggle_is_closed = types.ChatEventActionForumTopicToggleIsClosed(
+                    topic_info=await types.ForumTopic._parse(
+                        client, action.new_topic, users=users, chats=chats
+                    )
+                )
+            elif action.prev_topic.hidden != action.new_topic.hidden:
+                action_type = enums.ChatEventActionType.FORUM_TOPIC_TOGGLE_IS_HIDDEN
+                forum_topic_toggle_is_hidden = types.ChatEventActionForumTopicToggleIsHidden(
+                    topic_info=await types.ForumTopic._parse(
+                        client, action.new_topic, users=users, chats=chats
+                    )
+                )
+            else:
+                action_type = enums.ChatEventActionType.FORUM_TOPIC_EDITED
+                forum_topic_edited = types.ChatEventActionForumTopicEdited(
+                    old_topic_info=await types.ForumTopic._parse(
+                        client, action.prev_topic, users=users, chats=chats
+                    ),
+                    new_topic_info=await types.ForumTopic._parse(
+                        client, action.new_topic, users=users, chats=chats
+                    ),
+                )
         elif isinstance(action, raw.types.ChannelAdminLogEventActionDeleteTopic):
-            created_forum_topic = await types.ForumTopic._parse(
-                client, action.topic, users=users, chats=chats
+            action_type = enums.ChatEventActionType.FORUM_TOPIC_DELETED
+            forum_topic_deleted = types.ChatEventActionForumTopicDeleted(
+                topic_info=await types.ForumTopic._parse(
+                    client, action.topic, users=users, chats=chats
+                )
             )
-            action = enums.ChatEventAction.DELETED_FORUM_TOPIC
-
-        else:
-            action = f"{enums.ChatEventAction.UNKNOWN}-{action.QUALNAME}"
+        elif isinstance(action, raw.types.ChannelAdminLogEventActionPinTopic):
+            action_type = enums.ChatEventActionType.FORUM_TOPIC_PINNED
+            forum_topic_pinned = types.ChatEventActionForumTopicPinned(
+                old_topic_info=await types.ForumTopic._parse(
+                    client, action.prev_topic, users=users, chats=chats
+                ),
+                new_topic_info=await types.ForumTopic._parse(
+                    client, action.new_topic, users=users, chats=chats
+                ),
+            )
 
         return ChatEvent(
             id=event.id,
             date=utils.timestamp_to_datetime(event.date),
-            user=user,
-            action=action,
-            old_description=old_description,
-            new_description=new_description,
-            old_history_ttl=old_history_ttl,
-            new_history_ttl=new_history_ttl,
-            old_linked_chat=old_linked_chat,
-            new_linked_chat=new_linked_chat,
-            old_photo=old_photo,
-            new_photo=new_photo,
-            old_title=old_title,
-            new_title=new_title,
-            old_username=old_username,
-            new_username=new_username,
-            old_chat_permissions=old_chat_permissions,
-            new_chat_permissions=new_chat_permissions,
-            deleted_message=deleted_message,
-            old_message=old_message,
-            new_message=new_message,
-            invited_member=invited_member,
-            old_administrator_privileges=old_administrator_privileges,
-            new_administrator_privileges=new_administrator_privileges,
-            old_member_permissions=old_member_permissions,
-            new_member_permissions=new_member_permissions,
-            stopped_poll=stopped_poll,
-            invites_enabled=invites_enabled,
-            history_hidden=history_hidden,
-            signatures_enabled=signatures_enabled,
-            old_slow_mode=old_slow_mode,
-            new_slow_mode=new_slow_mode,
-            pinned_message=pinned_message,
-            unpinned_message=unpinned_message,
-            old_invite_link=old_invite_link,
-            new_invite_link=new_invite_link,
-            revoked_invite_link=revoked_invite_link,
-            deleted_invite_link=deleted_invite_link,
-            created_forum_topic=created_forum_topic,
-            old_forum_topic=old_forum_topic,
-            new_forum_topic=new_forum_topic,
-            deleted_forum_topic=deleted_forum_topic,
+            member=await types.Chat._parse_chat(
+                client, users.get(event.user_id) or chats.get(event.user_id)
+            ),
+            action=action_type,
+            message_edited=message_edited,
+            message_deleted=message_deleted,
+            message_pinned=message_pinned,
+            message_unpinned=message_unpinned,
+            poll_stopped=poll_stopped,
+            member_joined=member_joined,
+            member_joined_by_invite_link=member_joined_by_invite_link,
+            member_joined_by_request=member_joined_by_request,
+            member_invited=member_invited,
+            member_left=member_left,
+            member_promoted=member_promoted,
+            member_restricted=member_restricted,
+            member_tag_changed=member_tag_changed,
+            member_subscription_extended=member_subscription_extended,
+            available_reactions_changed=available_reactions_changed,
+            background_changed=background_changed,
+            description_changed=description_changed,
+            emoji_status_changed=emoji_status_changed,
+            linked_chat_changed=linked_chat_changed,
+            location_changed=location_changed,
+            message_auto_delete_time_changed=message_auto_delete_time_changed,
+            permissions_changed=permissions_changed,
+            photo_changed=photo_changed,
+            slow_mode_delay_changed=slow_mode_delay_changed,
+            sticker_set_changed=sticker_set_changed,
+            custom_emoji_sticker_set_changed=custom_emoji_sticker_set_changed,
+            title_changed=title_changed,
+            username_changed=username_changed,
+            active_usernames_changed=active_usernames_changed,
+            accent_color_changed=accent_color_changed,
+            profile_accent_color_changed=profile_accent_color_changed,
+            has_protected_content_toggled=has_protected_content_toggled,
+            invites_toggled=invites_toggled,
+            is_all_history_available_toggled=is_all_history_available_toggled,
+            has_aggressive_anti_spam_enabled_toggled=has_aggressive_anti_spam_enabled_toggled,
+            sign_messages_toggled=sign_messages_toggled,
+            show_message_sender_toggled=show_message_sender_toggled,
+            automatic_translation_toggled=automatic_translation_toggled,
+            invite_link_edited=invite_link_edited,
+            invite_link_revoked=invite_link_revoked,
+            invite_link_deleted=invite_link_deleted,
+            video_chat_created=video_chat_created,
+            video_chat_ended=video_chat_ended,
+            video_chat_mute_new_participants_toggled=video_chat_mute_new_participants_toggled,
+            video_chat_participant_is_muted_toggled=video_chat_participant_is_muted_toggled,
+            video_chat_participant_volume_level_changed=video_chat_participant_volume_level_changed,
+            is_forum_toggled=is_forum_toggled,
+            forum_topic_created=forum_topic_created,
+            forum_topic_edited=forum_topic_edited,
+            forum_topic_toggle_is_closed=forum_topic_toggle_is_closed,
+            forum_topic_toggle_is_hidden=forum_topic_toggle_is_hidden,
+            forum_topic_deleted=forum_topic_deleted,
+            forum_topic_pinned=forum_topic_pinned,
+            raw=event,
         )

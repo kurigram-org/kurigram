@@ -1,20 +1,22 @@
-#  Pyrogram - Telegram MTProto API Client Library for Python
+#  Kurigram - Telegram MTProto API Client Library for Python
+#
 #  Copyright (C) 2017-present Dan <https://github.com/delivrance>
+#  Copyright (C) 2024-present KurimuzonAkuma <https://github.com/KurimuzonAkuma>
 #
-#  This file is part of Pyrogram.
+#  This file is part of Kurigram.
 #
-#  Pyrogram is free software: you can redistribute it and/or modify
+#  Kurigram is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Lesser General Public License as published
 #  by the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  Pyrogram is distributed in the hope that it will be useful,
+#  Kurigram is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 #  GNU Lesser General Public License for more details.
 #
 #  You should have received a copy of the GNU Lesser General Public License
-#  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
+#  along with Kurigram. If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations as _annotations
 
@@ -26,7 +28,7 @@ from pyrogram import raw, types, utils
 from ..object import Object
 
 if TYPE_CHECKING:
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
 
 class RichText(Object):
@@ -56,6 +58,7 @@ class RichText(Object):
     - :obj:`~pyrogram.types.RichTextMention`
     - :obj:`~pyrogram.types.RichTextHashtag`
     - :obj:`~pyrogram.types.RichTextCashtag`
+    - :obj:`~pyrogram.types.RichTextTonAddress`
     - :obj:`~pyrogram.types.RichTextBotCommand`
     - :obj:`~pyrogram.types.RichTextButton`
     - :obj:`~pyrogram.types.RichTextAnchor`
@@ -241,6 +244,14 @@ class RichText(Object):
                 cashtag=RichText._to_plain_text(content).lstrip("$"),
             )
 
+        if isinstance(rich_text, raw.types.TextTonAddress):
+            content = await RichText._parse(client, rich_text.text)
+
+            return RichTextTonAddress(
+                text=content,
+                address=RichText._to_plain_text(content),
+            )
+
         if isinstance(rich_text, raw.types.TextBotCommand):
             content = await RichText._parse(client, rich_text.text)
 
@@ -393,8 +404,9 @@ class RichTextDateTime(RichText):
         text (:obj:`~pyrogram.types.RichText`):
             The text.
 
-        date (:py:obj:`datetime.datetime`):
+        date (:py:obj:`datetime.datetime` | :py:obj:`datetime.timedelta`):
             The date associated with the entity.
+            A :py:obj:`datetime.timedelta` is counted from now.
 
         date_time_format (``str``, *optional*):
             The string that defines the formatting of the date and time.
@@ -404,7 +416,7 @@ class RichTextDateTime(RichText):
     def __init__(
         self,
         text: types.RichText,
-        date: datetime,
+        date: datetime | timedelta,
         date_time_format: str | None = None,
     ):
         super().__init__()
@@ -759,6 +771,27 @@ class RichTextCashtag(RichText):
 
     async def write(self, client: pyrogram.Client) -> raw.base.RichText:
         return raw.types.TextCashtag(text=await RichText._write(client, self.text))
+
+
+class RichTextTonAddress(RichText):
+    """An address in the TON blockchain.
+
+    Parameters:
+        text (:obj:`~pyrogram.types.RichText`):
+            The text.
+
+        address (``str``):
+            The address.
+    """
+
+    def __init__(self, text: types.RichText, address: str):
+        super().__init__()
+
+        self.text = text
+        self.address = address
+
+    async def write(self, client: pyrogram.Client) -> raw.base.RichText:
+        return raw.types.TextTonAddress(text=await RichText._write(client, self.text))
 
 
 class RichTextBotCommand(RichText):

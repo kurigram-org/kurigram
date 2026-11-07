@@ -72,7 +72,10 @@ class Location(Object):
 
     @staticmethod
     def _parse(
-        geo_point: raw.base.GeoPoint | raw.base.BusinessLocation | raw.base.MessageMedia,
+        geo_point: raw.base.GeoPoint
+        | raw.base.BusinessLocation
+        | raw.base.MessageMedia
+        | raw.base.ChannelLocation,
     ) -> Location | None:
         if isinstance(geo_point, raw.types.GeoPoint):
             return Location._parse_geo_point(geo_point)
@@ -82,6 +85,9 @@ class Location(Object):
 
         if isinstance(geo_point, raw.types.MessageMediaGeoLive):
             return Location._parse_media(geo_point)
+
+        if isinstance(geo_point, raw.types.ChannelLocation):
+            return Location._parse_chat(geo_point)
 
     @staticmethod
     def _parse_geo_point(geo_point: raw.types.GeoPoint) -> Location | None:
@@ -130,6 +136,16 @@ class Location(Object):
                 live_period=media.period,
                 heading=media.heading,
                 proximity_alert_radius=media.proximity_notification_radius,
+            )
+
+    @staticmethod
+    def _parse_chat(location: raw.types.ChannelLocation) -> Location | None:
+        if isinstance(location, raw.types.ChannelLocation):
+            return Location(
+                longitude=location.geo_point.long,
+                latitude=location.geo_point.lat,
+                accuracy_radius=location.geo_point.accuracy_radius,
+                address=location.address,
             )
 
     async def write(self, **kwargs) -> raw.types.InputMediaGeoPoint | raw.types.InputMediaGeoLive:

@@ -26,7 +26,7 @@ from pyrogram import raw, utils
 from ..object import Object
 
 if TYPE_CHECKING:
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
 
 class EmojiStatus(Object):
@@ -36,8 +36,9 @@ class EmojiStatus(Object):
         custom_emoji_id (``str``, *optional*):
             Custom emoji id.
 
-        until_date (:py:obj:`~datetime.datetime`, *optional*):
+        until_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
             Valid until date.
+            A :py:obj:`~datetime.timedelta` is counted from now.
 
         title (``str``, *optional*):
             Title of the collectible.
@@ -70,7 +71,7 @@ class EmojiStatus(Object):
         client: pyrogram.Client | None = None,
         custom_emoji_id: str | None = None,
         gift_id: int | None = None,
-        until_date: datetime | None = None,
+        until_date: datetime | timedelta | None = None,
         title: str | None = None,
         name: str | None = None,
         pattern_custom_emoji_id: str | None = None,

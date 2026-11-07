@@ -37,7 +37,7 @@ class SetChatPermissions:
             chat_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the target chat.
 
-            permissions (:obj:`~pyrogram.types.ChatPermissions`):
+            permissions (:obj:`~pyrogram.types.ChatPermissions`, *optional*):
                 New default chat permissions.
 
         Returns:

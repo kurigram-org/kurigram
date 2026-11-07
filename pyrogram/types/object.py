@@ -40,12 +40,12 @@ class Object:
         self._client = client
 
     def bind(self, client: pyrogram.Client):
-        """Bind a Client instance to this and to all nested Pyrogram objects.
+        """Bind a Client instance to this and to all nested Kurigram objects.
 
         Parameters:
             client (:obj:`~pyrogram.Client`):
                 The Client instance to bind this object with. Useful to re-enable bound methods after serializing and
-                deserializing Pyrogram objects with ``repr`` and ``eval``.
+                deserializing Kurigram objects with ``repr`` and ``eval``.
         """
         self._client = client
 

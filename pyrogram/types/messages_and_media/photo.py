@@ -85,7 +85,7 @@ class Photo(Object):
         self.thumbs = thumbs
 
     @staticmethod
-    def _parse(client, photo: raw.types.Photo, ttl_seconds: int | None = None) -> Photo:
+    def _parse(client, photo: raw.types.Photo, ttl_seconds: int | None = None) -> Photo | None:
         if isinstance(photo, raw.types.Photo):
             photos: list[raw.types.PhotoSize] = []
 
@@ -95,6 +95,12 @@ class Photo(Object):
 
                 if isinstance(p, raw.types.PhotoSizeProgressive):
                     photos.append(raw.types.PhotoSize(type=p.type, w=p.w, h=p.h, size=max(p.sizes)))
+
+            # `PhotoSize` is a union, and `photoStrippedSize` / `photoPathSize` carry no real
+            #  dimensions, so a photo built only from such entries filters down to nothing here.
+            #  https://core.telegram.org/type/PhotoSize
+            if not photos:
+                return None
 
             photos.sort(key=lambda p: p.w * p.h)
 

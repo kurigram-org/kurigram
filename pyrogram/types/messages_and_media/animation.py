@@ -106,7 +106,7 @@ class Animation(Object):
             await app.add_to_gifs(message.animation.file_id)
 
         Parameters:
-            unsave (``bool``, optional):
+            unsave (``bool``, optional, *optional*):
                 Whether to remove the GIF from the list of saved GIFs. Defaults to ``False``.
 
         Returns:

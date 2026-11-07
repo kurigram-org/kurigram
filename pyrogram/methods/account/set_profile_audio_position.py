@@ -35,7 +35,7 @@ class SetProfileAudioPosition:
             file_id (``str``):
                 Identifier of the file from profile audio files, which position will be changed.
 
-            after_file_id (``str``):
+            after_file_id (``str``, *optional*):
                 Identifier of the file from profile audio files after which the file will be positioned.
                 Pass None to move the file to the beginning of the list.
 

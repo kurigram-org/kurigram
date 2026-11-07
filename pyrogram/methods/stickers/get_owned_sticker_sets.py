@@ -36,11 +36,11 @@ class GetOwnedStickerSets:
         .. include:: /_includes/usable-by/users.rst
 
         Parameters:
-            limit (``int``):
+            limit (``int``, *optional*):
                 Limits the number of sticker sets to be retrieved.
                 By default, no limit is applied and all sets are returned.
 
-            offset_sticker_set_id (``int``):
+            offset_sticker_set_id (``int``, *optional*):
                 Identifier of the sticker set from which to return owned sticker sets.
 
         Returns:

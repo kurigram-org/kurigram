@@ -25,7 +25,7 @@ import pyrogram
 from pyrogram import raw, types, utils
 
 if TYPE_CHECKING:
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ class SendChecklist:
         message_thread_id: int | None = None,
         effect_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         business_connection_id: str | None = None,
         paid_message_star_count: int | None = None,
@@ -83,8 +83,9 @@ class SendChecklist:
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.

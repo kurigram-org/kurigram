@@ -25,7 +25,7 @@ from pyrogram import raw
 from pyrogram import utils
 
 if TYPE_CHECKING:
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
 
 class ApproveSuggestedPost:
@@ -33,7 +33,7 @@ class ApproveSuggestedPost:
         self: pyrogram.Client,
         chat_id: int | str,
         message_id: int,
-        send_date: datetime | None = None,
+        send_date: datetime | timedelta | None = None,
     ) -> bool:
         """Use this method to approve a suggested post in a direct messages chat.
 
@@ -46,10 +46,11 @@ class ApproveSuggestedPost:
             message_id (``int``):
                 Identifier of a suggested post message to approve.
 
-            send_date (:py:obj:`~datetime.datetime`, *optional*):
+            send_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the post is expected to be published.
                 Omit if the date has already been specified when the suggested post was created.
                 If specified, then the date must be not more than 2678400 seconds (30 days) in the future.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
         Returns:
             ``bool``: True on success.

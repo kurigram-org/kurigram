@@ -41,7 +41,7 @@ class DeleteEphemeralMessage:
             receiver_user_id (``int`` | ``str``):
                 Identifier (int) or username (str) of the user who received the message.
 
-            ephemeral_message_id (``bool``, *optional*):
+            ephemeral_message_id (``int``):
                 Identifier of the ephemeral message to delete.
 
         Returns:

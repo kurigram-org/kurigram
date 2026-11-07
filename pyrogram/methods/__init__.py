@@ -35,6 +35,7 @@ from .stickers import Stickers
 from .stories import Stories
 from .users import Users
 from .utilities import Utilities
+from .wallet import Wallet
 
 
 class Methods(
@@ -57,5 +58,6 @@ class Methods(
     Stories,
     Users,
     Utilities,
+    Wallet,
 ):
     pass

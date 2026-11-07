@@ -34,7 +34,12 @@ import ast
 from itertools import chain
 from typing import Final
 
-from tests.guards.name_resolution import REPOSITORY_ROOT, hand_written_files, tooling_files
+from tests.guards.name_resolution import (
+    REPOSITORY_ROOT,
+    hand_written_files,
+    source_of,
+    tooling_files,
+)
 
 # `pyrogram/errors/__init__.py` is the one module that cannot declare one: it re-exports a
 #  package `make api` generates, which is absent from a fresh checkout and unenumerable.
@@ -89,7 +94,7 @@ def modules_declaring_exports() -> list[tuple[str, list[str], list[str]]]:
     found: list[tuple[str, list[str], list[str]]] = []
 
     for path in chain(hand_written_files(), tooling_files()):
-        tree = ast.parse(path.read_text(), filename=path.name)
+        tree = ast.parse(source_of(path), filename=path.name)
         exports = declared_exports(tree)
 
         if exports is not None:

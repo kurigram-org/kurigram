@@ -25,7 +25,7 @@ import pyrogram
 from pyrogram import enums, raw, types, utils
 
 if TYPE_CHECKING:
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
 log = logging.getLogger(__name__)
 
@@ -53,14 +53,14 @@ class SendPoll:
         explanation: str | types.FormattedText | None = None,
         explanation_media: types.InputPollMedia | None = None,
         open_period: int | None = None,
-        close_date: datetime | None = None,
+        close_date: datetime | timedelta | None = None,
         is_closed: bool | None = None,
         disable_notification: bool | None = None,
         protect_content: bool | None = None,
         allow_paid_broadcast: bool | None = None,
         effect_id: int | None = None,
         reply_parameters: types.ReplyParameters | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         paid_message_star_count: int | None = None,
         reply_markup: (
@@ -153,10 +153,11 @@ class SendPoll:
                 Amount of time in seconds the poll will be active after creation, 5-2628000.
                 Can't be used together with *close_date*.
 
-            close_date (:py:obj:`~datetime.datetime`, *optional*):
+            close_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Point in time when the poll will be automatically closed.
                 Must be at least 5 and no more than 2628000 seconds in the future.
                 Can't be used together with *open_period*.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             is_closed (``bool``, *optional*):
                 Pass True, if the poll needs to be immediately closed.
@@ -183,8 +184,9 @@ class SendPoll:
             reply_parameters (:obj:`~pyrogram.types.ReplyParameters`, *optional*):
                 Describes reply parameters for the message that is being sent.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.

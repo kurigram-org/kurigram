@@ -45,6 +45,16 @@ class GiftPremiumWithStars:
             month_count (``int``):
                 Number of months the Telegram Premium subscription will be active for the user.
 
+            text (``str``, *optional*):
+                Text of the message to be sent along with the gift.
+
+            parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
+                By default, texts are parsed using both Markdown and HTML styles.
+                You can combine both syntaxes together.
+
+            entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
+                List of special entities that appear in the text, which can be specified instead of *parse_mode*.
+
             star_count (``int``, *optional*):
                 The number of Telegram Stars to pay for subscription.
 

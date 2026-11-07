@@ -24,7 +24,7 @@ import pyrogram
 from pyrogram import raw, types, utils
 
 if TYPE_CHECKING:
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
 
 class BanChatMember:
@@ -32,7 +32,7 @@ class BanChatMember:
         self: pyrogram.Client,
         chat_id: int | str,
         user_id: int | str,
-        until_date: datetime | None = None,
+        until_date: datetime | timedelta | None = None,
         revoke_messages: bool | None = None,
         revoke_reactions: bool | None = None,
     ) -> types.Message | bool:
@@ -51,10 +51,11 @@ class BanChatMember:
                 Unique identifier (int) or username (str) of the target user.
                 For a contact that exists in your Telegram address book you can use his phone number (str).
 
-            until_date (:py:obj:`~datetime.datetime`, *optional*):
+            until_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the user will be unbanned.
                 If user is banned for more than 366 days or less than 30 seconds from the current time they are
                 considered to be banned forever. Defaults to epoch (ban forever).
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             revoke_messages (``bool``, *optional*):
                 Pass True to delete all messages in the chat for the user who is being removed.

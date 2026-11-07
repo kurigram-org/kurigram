@@ -26,8 +26,9 @@ a query keeps the query's own return type rather than erasing it.
 
 Only a type checker can see any of that, so a suite full of green tests says nothing about it.
 The first test below asks `ty` what it reveals and asserts the answers; the second reads the
-generated tree and asserts that every function's declared return type resolves, which is what
-would have reported the erasure when it was still there.
+generated tree and asserts the declared subscripts the first one relies on, the TL core
+returns among them, which the compiler maps to real Python types (`bool`, `list[int]`,
+`raw.core.FutureSalts`) because they have no module under `pyrogram.raw.base`.
 
 The case the first test drives is written to a temporary file rather than kept in the tree
 because `reveal_type` is an undefined name: in the tree it would fail `ruff`'s `F821` and add
@@ -45,7 +46,7 @@ from typing import Final
 
 import pytest
 
-from tests.guards.name_resolution import REPOSITORY_ROOT, resolves
+from tests.guards.name_resolution import REPOSITORY_ROOT
 
 # Installed by the `lint` dependency group, which a full `uv sync` brings in. `make test-floor`
 #  and `make test-ceil` install the `test` group alone, so the guard skips there.
@@ -89,7 +90,6 @@ async def case(app: pyrogram.Client) -> None:
 # A function's return type is written as a string, since `raw` is `TYPE_CHECKING`-only in the
 #  generated modules. A schema-generic one is written as the bare type variable instead.
 _RETURN_TYPE_VARIABLE: Final[str] = "ReturnType"
-_BASE_REFERENCE_RE: Final[re.Pattern[str]] = re.compile(r"raw\.base\.[\w.]+")
 
 
 def case_source() -> str:
@@ -160,40 +160,22 @@ def test_a_plain_and_a_wrapped_invoke_both_reveal_the_query_s_own_return_type(
     assert revealed == dict.fromkeys(_CALLS, _QUERY_RETURNS)
 
 
-def unresolved_return_types() -> set[str]:
-    """The declared return types naming something that is not under `pyrogram.raw.base`."""
-    declared: set[str] = set(declared_return_types().values()) - {_RETURN_TYPE_VARIABLE}
-
-    return {
-        hint
-        for hint in declared
-        if any(
-            not resolves(f"pyrogram.{reference}") for reference in _BASE_REFERENCE_RE.findall(hint)
-        )
-    }
-
-
-# A ceiling, not a target. The schema-generic functions used to sit here too, written
-#  `raw.base.X`; what is left is the separate defect K116 tracks: the compiler prefixes
-#  `raw.base.` onto the TL core types, which have no module there, so 228 functions still
-#  reveal `Unknown`. Closing K116 empties this set and deletes the constant with it.
-_UNRESOLVED_RETURN_TYPES: Final[frozenset[str]] = frozenset(
-    {
-        "raw.base.Bool",
-        "list[raw.base.int]",
-        "list[raw.base.long]",
-        "raw.base.FutureSalts",
-    }
-)
-
-
-def test_no_function_declares_a_return_type_beyond_the_known_unresolved_ones() -> None:
-    assert unresolved_return_types() == _UNRESOLVED_RETURN_TYPES
+# One function per declared shape: the type variable, a plain base, and the four TL core
+#  returns the compiler maps to real Python types because they have no `raw.base` module:
+#  `Bool`, `Vector<int>` (`stories.readStories`), `Vector<long>` (`messages.receivedQueue`)
+#  and the hand-written `raw.core.FutureSalts`.
+_DECLARED_SAMPLES: Final[dict[str, str]] = {
+    "InvokeWithoutUpdates": _RETURN_TYPE_VARIABLE,
+    "help/GetConfig": "raw.base.Config",
+    "account/ChangeAuthorizationSettings": "bool",
+    "stories/ReadStories": "list[int]",
+    "messages/ReceivedQueue": "list[int]",
+    "GetFutureSalts": "raw.core.FutureSalts",
+}
 
 
 def test_the_guard_reads_the_functions_it_claims_to() -> None:
     declared = declared_return_types()
 
     assert len(declared) > 800
-    assert declared["InvokeWithoutUpdates"] == _RETURN_TYPE_VARIABLE
-    assert declared["help/GetConfig"] == "raw.base.Config"
+    assert {name: declared.get(name) for name in _DECLARED_SAMPLES} == _DECLARED_SAMPLES

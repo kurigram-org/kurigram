@@ -48,7 +48,7 @@ class EditEphemeralMessageCaption:
             chat_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the target chat.
 
-            receiver_user_id (``int`` | ``str``, *optional*):
+            receiver_user_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the user who received the message.
 
             ephemeral_message_id (``int``):
@@ -61,7 +61,7 @@ class EditEphemeralMessageCaption:
                 By default, texts are parsed using both Markdown and HTML styles.
                 You can combine both syntaxes together.
 
-            caption_entities (List of :obj:`~pyrogram.types.MessageEntity`):
+            caption_entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
                 List of special entities that appear in the caption, which can be specified instead of *parse_mode*.
 
             show_caption_above_media (``bool``, *optional*):

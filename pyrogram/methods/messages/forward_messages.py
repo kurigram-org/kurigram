@@ -25,7 +25,7 @@ from pyrogram import raw, types, utils
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
 
 class ForwardMessages:
@@ -37,7 +37,7 @@ class ForwardMessages:
         message_ids: int,
         message_thread_id: int | None = None,
         disable_notification: bool | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         hide_sender_name: bool | None = None,
         hide_captions: bool | None = None,
@@ -56,7 +56,7 @@ class ForwardMessages:
         message_ids: Iterable[int],
         message_thread_id: int | None = None,
         disable_notification: bool | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         hide_sender_name: bool | None = None,
         hide_captions: bool | None = None,
@@ -74,7 +74,7 @@ class ForwardMessages:
         message_ids: int | Iterable[int],
         message_thread_id: int | None = None,
         disable_notification: bool | None = None,
-        schedule_date: datetime | None = None,
+        schedule_date: datetime | timedelta | None = None,
         repeat_period: int | None = None,
         hide_sender_name: bool | None = None,
         hide_captions: bool | None = None,
@@ -110,8 +110,9 @@ class ForwardMessages:
                 Sends the message silently.
                 Users will receive a notification with no sound.
 
-            schedule_date (:py:obj:`~datetime.datetime`, *optional*):
+            schedule_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date when the message will be automatically sent.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             repeat_period (``int``, *optional*):
                 Period after which the message will be sent again in seconds.

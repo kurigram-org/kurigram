@@ -32,7 +32,7 @@ class SetPersonalChannel:
         :meth:`~pyrogram.Client.get_personal_channels`.
 
         Parameters:
-            chat_id (``int`` | ``str``):
+            chat_id (``int`` | ``str``, *optional*):
                 Unique identifier (int) or username (str) of the target user or None to remove it.
 
         Returns:

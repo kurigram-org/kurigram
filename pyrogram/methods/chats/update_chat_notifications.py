@@ -24,7 +24,7 @@ import pyrogram
 from pyrogram import raw, utils
 
 if TYPE_CHECKING:
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
 
 class UpdateChatNotifications:
@@ -32,7 +32,7 @@ class UpdateChatNotifications:
         self: pyrogram.Client,
         chat_id: int | str,
         mute: bool | None = None,
-        mute_until: datetime | None = None,
+        mute_until: datetime | timedelta | None = None,
         stories_muted: bool | None = None,
         stories_hide_sender: bool | None = None,
         show_previews: bool | None = None,
@@ -48,9 +48,10 @@ class UpdateChatNotifications:
             mute (``bool``, *optional*):
                 Pass True if you want to mute chat.
 
-            mute_until (:py:obj:`~datetime.datetime`, *optional*):
+            mute_until (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
                 Date until which the chat stays muted.
                 Defaults to forever when mute is True, and to the epoch (not muted) otherwise.
+                A :py:obj:`~datetime.timedelta` is counted from now.
 
             stories_muted (``bool``, *optional*):
                 Pass True to stop being notified about new stories posted by this chat.

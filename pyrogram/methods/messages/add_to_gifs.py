@@ -33,7 +33,7 @@ class AddToGifs:
             file_id (``str``):
                 Unique identifier for the GIF.
 
-            unsave (``bool``, optional):
+            unsave (``bool``, optional, *optional*):
                 Whether to remove the GIF from the list of saved GIFs. Defaults to ``False``.
 
         Returns:

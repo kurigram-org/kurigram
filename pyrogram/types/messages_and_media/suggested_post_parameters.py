@@ -25,7 +25,7 @@ from pyrogram import raw, types, utils
 from ..object import Object
 
 if TYPE_CHECKING:
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
 
 class SuggestedPostParameters(Object):
@@ -35,14 +35,18 @@ class SuggestedPostParameters(Object):
         price (:obj:`~pyrogram.types.SuggestedPostPrice`, *optional*):
             Proposed price for the post. If the field is omitted, then the post is unpaid.
 
-        send_date (:py:obj:`~datetime.datetime`, *optional*):
+        send_date (:py:obj:`~datetime.datetime` | :py:obj:`~datetime.timedelta`, *optional*):
             Proposed send date of the post.
             If specified, then the date must be between 300 second and 2678400 seconds (30 days) in the future.
             If the field is omitted, then the post can be published at any time within 30 days at the sole discretion of the user who approves it.
+            A :py:obj:`~datetime.timedelta` is counted from now.
     """
 
     def __init__(
-        self, *, price: types.SuggestedPostPrice | None = None, send_date: datetime | None = None
+        self,
+        *,
+        price: types.SuggestedPostPrice | None = None,
+        send_date: datetime | timedelta | None = None,
     ):
         super().__init__()
 

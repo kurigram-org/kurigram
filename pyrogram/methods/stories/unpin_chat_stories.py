@@ -40,7 +40,7 @@ class UnpinChatStories:
                 Unique identifier (int) or username (str) of the target chat.
                 For your personal cloud (Saved Messages) you can simply use "me" or "self".
 
-            stories_ids (``int`` | Iterable of ``int``, *optional*):
+            stories_ids (``int`` | Iterable of ``int``):
                 List of unique identifiers of the target stories.
 
         Returns:

@@ -129,40 +129,48 @@ class ChatPhoto(Object):
         ).encode()
 
         if isinstance(chat_photo, raw.types.Photo):
-            sizes: list[raw.types.PhotoSize] = sorted(
-                [size for size in chat_photo.sizes if isinstance(size, raw.types.PhotoSize)],
+            sizes: list[raw.types.PhotoSize | raw.types.PhotoSizeProgressive] = sorted(
+                [
+                    size
+                    for size in chat_photo.sizes
+                    if isinstance(size, (raw.types.PhotoSize, raw.types.PhotoSizeProgressive))
+                ],
                 key=lambda size: size.w * size.h,
             )
 
-            small_file_id = FileId(
-                file_type=FileType.PHOTO,
-                dc_id=chat_photo.dc_id,
-                media_id=chat_photo.id,
-                access_hash=chat_photo.access_hash,
-                file_reference=chat_photo.file_reference,
-                thumbnail_source=ThumbnailSource.THUMBNAIL,
-                thumbnail_file_type=FileType.PHOTO,
-                thumbnail_size=sizes[0].type,
-                volume_id=0,
-                local_id=0,
-                chat_id=peer_id,
-                chat_access_hash=peer_access_hash,
-            )
+            # No concrete size, same case as in `Photo._parse()`, so the `CHAT_PHOTO_*` ids above
+            #  stay. They download the peer's current photo; for an older one `upload.getFile`
+            #  answers `400 FILE_ID_INVALID`.
+            if sizes:
+                small_file_id = FileId(
+                    file_type=FileType.PHOTO,
+                    dc_id=chat_photo.dc_id,
+                    media_id=chat_photo.id,
+                    access_hash=chat_photo.access_hash,
+                    file_reference=chat_photo.file_reference,
+                    thumbnail_source=ThumbnailSource.THUMBNAIL,
+                    thumbnail_file_type=FileType.PHOTO,
+                    thumbnail_size=sizes[0].type,
+                    volume_id=0,
+                    local_id=0,
+                    chat_id=peer_id,
+                    chat_access_hash=peer_access_hash,
+                )
 
-            big_file_id = FileId(
-                file_type=FileType.PHOTO,
-                dc_id=chat_photo.dc_id,
-                media_id=chat_photo.id,
-                access_hash=chat_photo.access_hash,
-                file_reference=chat_photo.file_reference,
-                thumbnail_source=ThumbnailSource.THUMBNAIL,
-                thumbnail_file_type=FileType.PHOTO,
-                thumbnail_size=sizes[-1].type,
-                volume_id=0,
-                local_id=0,
-                chat_id=peer_id,
-                chat_access_hash=peer_access_hash,
-            )
+                big_file_id = FileId(
+                    file_type=FileType.PHOTO,
+                    dc_id=chat_photo.dc_id,
+                    media_id=chat_photo.id,
+                    access_hash=chat_photo.access_hash,
+                    file_reference=chat_photo.file_reference,
+                    thumbnail_source=ThumbnailSource.THUMBNAIL,
+                    thumbnail_file_type=FileType.PHOTO,
+                    thumbnail_size=sizes[-1].type,
+                    volume_id=0,
+                    local_id=0,
+                    chat_id=peer_id,
+                    chat_access_hash=peer_access_hash,
+                )
 
         return ChatPhoto(
             small_file_id=small_file_id.encode(),

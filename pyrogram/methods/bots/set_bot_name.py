@@ -54,7 +54,7 @@ class SetBotName:
         Example:
             .. code-block:: python
 
-                await app.set_bot_name("Pyrogram Assistant")
+                await app.set_bot_name("Kurigram Assistant")
         """
 
         return await self.invoke(

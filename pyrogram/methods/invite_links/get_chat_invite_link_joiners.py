@@ -40,7 +40,7 @@ class GetChatInviteLinkJoiners:
                 Unique identifier for the target chat or username of the target channel/supergroup
                 (in the format @username).
 
-            invite_link (str):
+            invite_link (``str``):
                 The invite link.
 
             limit (``int``, *optional*):

@@ -1,20 +1,22 @@
-#  Pyrogram - Telegram MTProto API Client Library for Python
+#  Kurigram - Telegram MTProto API Client Library for Python
+#
 #  Copyright (C) 2017-present Dan <https://github.com/delivrance>
+#  Copyright (C) 2024-present KurimuzonAkuma <https://github.com/KurimuzonAkuma>
 #
-#  This file is part of Pyrogram.
+#  This file is part of Kurigram.
 #
-#  Pyrogram is free software: you can redistribute it and/or modify
+#  Kurigram is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Lesser General Public License as published
 #  by the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  Pyrogram is distributed in the hope that it will be useful,
+#  Kurigram is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 #  GNU Lesser General Public License for more details.
 #
 #  You should have received a copy of the GNU Lesser General Public License
-#  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
+#  along with Kurigram. If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations as _annotations
 
@@ -520,6 +522,7 @@ def pyrogram_api():
             buy_gift_upgrade
             check_gift_code
             convert_gift_to_stars
+            delete_gift
             get_available_gifts
             get_chat_gifts
             get_gift_auction_state
@@ -651,6 +654,7 @@ def pyrogram_api():
         Advanced
             invoke
             recover_gaps
+            get_app_config
             resolve_peer
             save_file
         """,
@@ -697,6 +701,15 @@ def pyrogram_api():
             set_inactive_session_ttl
             get_global_privacy_settings
         """,
+        "wallet": """
+        Wallet
+            create_user_wallet
+            delete_ton_wallet
+            replace_ton_wallet
+            get_address_ton_wallet
+            get_user_ton_wallet_addresses
+            get_ton_wallet_ownership_proof_challenge
+        """,
     }
 
     root = PYROGRAM_API_DEST + "/methods"
@@ -704,10 +717,10 @@ def pyrogram_api():
     shutil.rmtree(root, ignore_errors=True)
     os.mkdir(root)
 
-    with open(HOME + "/template/methods.rst") as f:
+    with open(HOME + "/template/methods.rst", encoding="utf-8") as f:
         template = f.read()
 
-    with open(root + "/index.rst", "w") as f:
+    with open(root + "/index.rst", "w", encoding="utf-8") as f:
         fmt_keys = {}
 
         for k, v in categories.items():
@@ -715,7 +728,7 @@ def pyrogram_api():
             fmt_keys.update({k: "\n    ".join(f"{m} <{m}>" for m in methods)})
 
             for method in methods:
-                with open(root + f"/{method}.rst", "w") as f2:
+                with open(root + f"/{method}.rst", "w", encoding="utf-8") as f2:
                     title = f"{method}()"
 
                     f2.write(title + "\n" + "=" * len(title) + "\n\n")
@@ -724,7 +737,7 @@ def pyrogram_api():
             functions = ["idle", "compose"]
 
             for func in functions:
-                with open(root + f"/{func}.rst", "w") as f2:
+                with open(root + f"/{func}.rst", "w", encoding="utf-8") as f2:
                     title = f"{func}()"
 
                     f2.write(title + "\n" + "=" * len(title) + "\n\n")
@@ -757,7 +770,7 @@ def pyrogram_api():
             ChatInviteLink
             ChatAdminWithInviteLinks
             ChatEvent
-            ChatEventFilter
+            ChatEventLogFilters
             ChatMemberUpdated
             ChatJoinRequest
             ChatJoinResult
@@ -776,6 +789,10 @@ def pyrogram_api():
             PrivacyRule
             StoriesStealthMode
             UserRating
+            UserTonWalletAddress
+            TonWalletOwnershipProof
+            TonWalletOwnershipProofChallenge
+            TonWalletState
             BotVerification
             BusinessBotRights
             ChatSettings
@@ -791,6 +808,60 @@ def pyrogram_api():
             CommunityMemberStatusLeft
             CommunityMemberStatusBanned
             CommunityPermissions
+            ChatEventAction
+            ChatEventActionMessageEdited
+            ChatEventActionMessageDeleted
+            ChatEventActionMessagePinned
+            ChatEventActionMessageUnpinned
+            ChatEventActionPollStopped
+            ChatEventActionMemberJoined
+            ChatEventActionMemberJoinedByInviteLink
+            ChatEventActionMemberJoinedByRequest
+            ChatEventActionMemberInvited
+            ChatEventActionMemberLeft
+            ChatEventActionMemberPromoted
+            ChatEventActionMemberRestricted
+            ChatEventActionMemberTagChanged
+            ChatEventActionMemberSubscriptionExtended
+            ChatEventActionAvailableReactionsChanged
+            ChatEventActionBackgroundChanged
+            ChatEventActionDescriptionChanged
+            ChatEventActionEmojiStatusChanged
+            ChatEventActionLinkedChatChanged
+            ChatEventActionLocationChanged
+            ChatEventActionMessageAutoDeleteTimeChanged
+            ChatEventActionPermissionsChanged
+            ChatEventActionPhotoChanged
+            ChatEventActionSlowModeDelayChanged
+            ChatEventActionStickerSetChanged
+            ChatEventActionCustomEmojiStickerSetChanged
+            ChatEventActionTitleChanged
+            ChatEventActionUsernameChanged
+            ChatEventActionActiveUsernamesChanged
+            ChatEventActionAccentColorChanged
+            ChatEventActionProfileAccentColorChanged
+            ChatEventActionHasProtectedContentToggled
+            ChatEventActionInvitesToggled
+            ChatEventActionIsAllHistoryAvailableToggled
+            ChatEventActionHasAggressiveAntiSpamEnabledToggled
+            ChatEventActionSignMessagesToggled
+            ChatEventActionShowMessageSenderToggled
+            ChatEventActionAutomaticTranslationToggled
+            ChatEventActionInviteLinkEdited
+            ChatEventActionInviteLinkRevoked
+            ChatEventActionInviteLinkDeleted
+            ChatEventActionVideoChatCreated
+            ChatEventActionVideoChatEnded
+            ChatEventActionVideoChatMuteNewParticipantsToggled
+            ChatEventActionVideoChatParticipantIsMutedToggled
+            ChatEventActionVideoChatParticipantVolumeLevelChanged
+            ChatEventActionIsForumToggled
+            ChatEventActionForumTopicCreated
+            ChatEventActionForumTopicEdited
+            ChatEventActionForumTopicToggleIsClosed
+            ChatEventActionForumTopicToggleIsHidden
+            ChatEventActionForumTopicDeleted
+            ChatEventActionForumTopicPinned
         """,
         "messages_media": """
         Messages & Media
@@ -882,6 +953,7 @@ def pyrogram_api():
             RichTextAnchorLink
             RichTextBankCardNumber
             RichTextBold
+            RichTextTonAddress
             RichTextBotCommand
             RichTextButton
             RichTextCashtag
@@ -942,6 +1014,8 @@ def pyrogram_api():
             CommunityChatAdded
             CommunityChatJoined
             CommunityChatRemoved
+            TonWalletTransfer
+            TonConnectRequest
             Checklist
             RefundedPayment
             ReplyParameters
@@ -1201,10 +1275,10 @@ def pyrogram_api():
     shutil.rmtree(root, ignore_errors=True)
     os.mkdir(root)
 
-    with open(HOME + "/template/types.rst") as f:
+    with open(HOME + "/template/types.rst", encoding="utf-8") as f:
         template = f.read()
 
-    with open(root + "/index.rst", "w") as f:
+    with open(root + "/index.rst", "w", encoding="utf-8") as f:
         fmt_keys = {}
 
         for k, v in categories.items():
@@ -1214,7 +1288,7 @@ def pyrogram_api():
 
             # noinspection PyShadowingBuiltins
             for type in types:
-                with open(root + f"/{type}.rst", "w") as f2:
+                with open(root + f"/{type}.rst", "w", encoding="utf-8") as f2:
                     title = type
 
                     f2.write(title + "\n" + "=" * len(title) + "\n\n")
@@ -1422,10 +1496,10 @@ def pyrogram_api():
     shutil.rmtree(root, ignore_errors=True)
     os.mkdir(root)
 
-    with open(HOME + "/template/bound-methods.rst") as f:
+    with open(HOME + "/template/bound-methods.rst", encoding="utf-8") as f:
         template = f.read()
 
-    with open(root + "/index.rst", "w") as f:
+    with open(root + "/index.rst", "w", encoding="utf-8") as f:
         fmt_keys = {}
 
         for k, v in categories.items():
@@ -1445,7 +1519,7 @@ def pyrogram_api():
 
             # noinspection PyShadowingBuiltins
             for bm in bound_methods:
-                with open(root + f"/{bm}.rst", "w") as f2:
+                with open(root + f"/{bm}.rst", "w", encoding="utf-8") as f2:
                     title = f"{bm}()"
 
                     f2.write(title + "\n" + "=" * len(title) + "\n\n")
@@ -1462,7 +1536,7 @@ def pyrogram_api():
             BusinessSchedule
             ButtonStyle
             ChatAction
-            ChatEventAction
+            ChatEventActionType
             ChatJoinType
             ChatMemberStatus
             ChatMembersFilter
@@ -1507,10 +1581,10 @@ def pyrogram_api():
     shutil.rmtree(root, ignore_errors=True)
     os.mkdir(root)
 
-    with open(HOME + "/template/enums.rst") as f:
+    with open(HOME + "/template/enums.rst", encoding="utf-8") as f:
         template = f.read()
 
-    with open(root + "/cleanup.html", "w") as f:
+    with open(root + "/cleanup.html", "w", encoding="utf-8") as f:
         f.write("""<script>
   document
     .querySelectorAll("em.property")
@@ -1521,7 +1595,7 @@ def pyrogram_api():
     .forEach((elem, i) => [0, 1].includes(i) ? true : elem.remove())
 </script>""")
 
-    with open(root + "/index.rst", "w") as f:
+    with open(root + "/index.rst", "w", encoding="utf-8") as f:
         fmt_keys = {}
 
         for k, v in categories.items():
@@ -1533,7 +1607,7 @@ def pyrogram_api():
 
             # noinspection PyShadowingBuiltins
             for enum in enums:
-                with open(root + f"/{enum}.rst", "w") as f2:
+                with open(root + f"/{enum}.rst", "w", encoding="utf-8") as f2:
                     title = enum
 
                     f2.write(title + "\n" + "=" * len(title) + "\n\n")

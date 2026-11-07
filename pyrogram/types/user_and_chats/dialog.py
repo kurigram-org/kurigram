@@ -62,7 +62,7 @@ class Dialog(Object):
         folder_id (``int``, *optional*):
             Unique identifier (int) of the folder.
 
-        ttl_period (``int``, *optional*)
+        ttl_period (``int``, *optional*):
             Time-to-live of all messages sent in this dialog (in seconds).
 
         raw (:obj:`~pyrogram.raw.types.Dialog`, *optional*):

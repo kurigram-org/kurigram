@@ -31,7 +31,7 @@ class GetBusinessConnection:
         .. include:: /_includes/usable-by/bots.rst
 
         Parameters:
-            connection_id (``str``):
+            business_connection_id (``str``):
                 Unique identifier of the business connection.
 
         Returns:
@@ -41,7 +41,7 @@ class GetBusinessConnection:
             .. code-block:: python
 
                 # Get a business connection information
-                await app.get_business_connection(connection_id)
+                await app.get_business_connection(business_connection_id)
         """
         r = await self.invoke(
             raw.functions.account.GetBotBusinessConnection(connection_id=business_connection_id)

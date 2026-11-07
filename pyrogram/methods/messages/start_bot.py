@@ -36,7 +36,7 @@ class StartBot:
                 Unique identifier of the bot you want to be started. You can specify
                 a @username (str) or a bot ID (int).
 
-            param (``str``):
+            param (``str``, *optional*):
                 Text of the deep linking parameter (up to 64 characters).
                 Defaults to "" (empty string).
 

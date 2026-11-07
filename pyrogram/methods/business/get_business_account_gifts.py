@@ -89,6 +89,9 @@ class GetBusinessAccountGifts:
             limit (``int``, *optional*):
                 The maximum number of gifts to be returned.
 
+            offset (``str``, *optional*):
+                Offset of the first entry to return as received from the previous request.
+
         Returns:
             ``Generator``: A generator yielding :obj:`~pyrogram.types.Gift` objects.
 

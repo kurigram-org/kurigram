@@ -1,52 +1,45 @@
-#  Pyrogram - Telegram MTProto API Client Library for Python
+#  Kurigram - Telegram MTProto API Client Library for Python
+#
 #  Copyright (C) 2017-present Dan <https://github.com/delivrance>
+#  Copyright (C) 2024-present KurimuzonAkuma <https://github.com/KurimuzonAkuma>
 #
-#  This file is part of Pyrogram.
+#  This file is part of Kurigram.
 #
-#  Pyrogram is free software: you can redistribute it and/or modify
+#  Kurigram is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Lesser General Public License as published
 #  by the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  Pyrogram is distributed in the hope that it will be useful,
+#  Kurigram is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 #  GNU Lesser General Public License for more details.
 #
 #  You should have received a copy of the GNU Lesser General Public License
-#  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
+#  along with Kurigram. If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
-from pyrogram import types
+from pyrogram import raw, types, utils
 
 
 class SetGameScore:
     async def set_game_score(
         self: pyrogram.Client,
-        chat_id: int | str,
-        message_id: int,
         user_id: int | str,
         score: int,
         force: bool | None = None,
         disable_edit_message: bool | None = None,
+        chat_id: int | str | None = None,
+        message_id: int | None = None,
+        inline_message_id: str | None = None,
     ) -> types.Message | bool:
-        # inline_message_id: str = None):  TODO Add inline_message_id
         """Set the score of the specified user in a game.
 
         .. include:: /_includes/usable-by/bots.rst
 
         Parameters:
-            chat_id (``int`` | ``str``):
-                Unique identifier (int) or username (str) of the target chat.
-                For your personal cloud (Saved Messages) you can simply use "me" or "self".
-                For a contact that exists in your Telegram address book you can use his phone number (str).
-
-            message_id (``int``):
-                Identifier of the sent message.
-
             user_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the target chat.
                 For your personal cloud (Saved Messages) you can simply use "me" or "self".
@@ -56,11 +49,25 @@ class SetGameScore:
                 New score, must be non-negative.
 
             force (``bool``, *optional*):
-                Pass True, if the high score is allowed to decrease.
+                Pass *True*, if the high score is allowed to decrease.
                 This can be useful when fixing mistakes or banning cheaters.
 
             disable_edit_message (``bool``, *optional*):
-                Pass True, if the game message should not be automatically edited to include the current scoreboard.
+                Pass *True*, if the game message should not be automatically edited to include the current scoreboard.
+
+            chat_id (``int`` | ``str``, *optional*):
+                Required if *inline_message_id* is not specified.
+                Unique identifier (int) or username (str) of the target chat.
+                For your personal cloud (Saved Messages) you can simply use "me" or "self".
+                For a contact that exists in your Telegram address book you can use his phone number (str).
+
+            message_id (``int``, *optional*):
+                Required if *inline_message_id* is not specified.
+                Identifier of the sent message.
+
+            inline_message_id (``str``, *optional*):
+                Required if *chat_id* and *message_id* are not specified.
+                Identifier of the sent message.
 
         Returns:
             :obj:`~pyrogram.types.Message` | ``bool``: On success, if the message was sent by the bot, the edited
@@ -70,26 +77,39 @@ class SetGameScore:
             .. code-block:: python
 
                 # Set new score
-                await app.set_game_score(chat_id, message_id, user_id, 1000)
+                await app.set_game_score(chat_id=chat_id, message_id=message_id, user_id=user_id, score=1000)
 
                 # Force set new score
-                await app.set_game_score(chat_id, message_id, user_id, 25, force=True)
+                await app.set_game_score(chat_id=chat_id, message_id=message_id, user_id=user_id, score=25, force=True)
         """
-        r = await self.invoke(
-            raw.functions.messages.SetGameScore(
-                peer=await self.resolve_peer(chat_id),
-                score=score,
-                id=message_id,
-                user_id=await self.resolve_peer(user_id),
-                force=force,
-                edit_message=not disable_edit_message,
-            )
-        )
+        if inline_message_id is not None:
+            unpacked = utils.unpack_inline_message_id(inline_message_id)
+            dc_id = unpacked.dc_id
 
-        for i in r.updates:
-            if isinstance(i, (raw.types.UpdateEditMessage, raw.types.UpdateEditChannelMessage)):
-                return await types.Message._parse(
-                    self, i.message, {i.id: i for i in r.users}, {i.id: i for i in r.chats}
+            session = await self.get_session(dc_id, is_media=True)
+
+            r = await session.invoke(
+                raw.functions.messages.SetInlineGameScore(
+                    id=unpacked,
+                    user_id=await self.resolve_peer(user_id),
+                    score=score,
+                    edit_message=not disable_edit_message,
+                    force=force,
                 )
+            )
+        else:
+            if chat_id is None or message_id is None:
+                raise ValueError("chat_id and message_id are required")
 
-        return True
+            r = await self.invoke(
+                raw.functions.messages.SetGameScore(
+                    peer=await self.resolve_peer(chat_id),
+                    id=message_id,
+                    user_id=await self.resolve_peer(user_id),
+                    score=score,
+                    edit_message=not disable_edit_message,
+                    force=force,
+                )
+            )
+
+        return next(iter(await utils.parse_messages(client=self, messages=r)), True)
