@@ -2692,6 +2692,48 @@ _ROUND_TRIP_CORPUS: Final[tuple[pytest.ParameterSet, ...]] = (
         ],
         id="link-cut-on-the-last-line-break-keeps-the-text-a-later-cut-would-break",
     ),
+    pytest.param(
+        "ab\ncd",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=3,
+                length=2,
+                expandable=True,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.UNDERLINE,
+                offset=1,
+                length=4,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.UNDERLINE,
+                offset=3,
+                length=2,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.CODE,
+                offset=1,
+                length=2,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityUnderline(
+                offset=1,
+                length=2,
+            ),
+            pyrogram.raw.types.MessageEntityCode(
+                offset=1,
+                length=1,
+            ),
+            pyrogram.raw.types.MessageEntityBlockquote(
+                offset=3,
+                length=2,
+                collapsed=True,
+            ),
+        ],
+        id="code-cut-before-an-expandable-quote-keeps-the-earliest-of-two-equal-rounds",
+    ),
     # The cut markup reads back no better than the uncut markup here, so `unparse`
     #  writes the entities uncut.
     pytest.param(
