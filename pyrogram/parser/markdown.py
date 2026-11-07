@@ -825,7 +825,7 @@ def _writable(entities: list[types.MessageEntity], *, text: str) -> list[types.M
       line there and be read as the end of the quote, so it loses every break it opens
       with, and a spoiler of nothing else is dropped.
 
-    The cut entities are kept only when their markup reads back no worse than the uncut
+    The cut entities are kept only when their markup reads back better than the uncut
     markup, counting every entity read back wrong or cut to nothing and a changed text.
     Each round of cuts costs one more write and read, and every round adds a cut.
     """
@@ -885,7 +885,7 @@ def _writable(entities: list[types.MessageEntity], *, text: str) -> list[types.M
         grown = any(more.values())
 
         if not grown:
-            return entities if wrong > uncut_wrong else written
+            return entities if wrong >= uncut_wrong else written
 
 
 def _write(text: str, *, entities: list[types.MessageEntity]) -> str:

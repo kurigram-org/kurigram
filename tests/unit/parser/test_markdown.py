@@ -285,6 +285,32 @@ def test_markdown_unparse_closes_entities_on_one_span_inner_first() -> None:
     assert markup == expected
 
 
+def test_markdown_unparse_keeps_the_uncut_markup_when_the_cut_reads_back_no_better() -> None:
+    expected: str = "`a\n> b\\\n`c"
+    text: str = "a\nb\\\nc"
+    entities = pyrogram.types.List(
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=2,
+                length=2,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.CODE,
+                offset=0,
+                length=5,
+            ),
+        ]
+    )
+
+    markup: str = Markdown.unparse(
+        text=text,
+        entities=entities,
+    )
+
+    assert markup == expected
+
+
 def test_markdown_unparse_no_entities() -> None:
     expected: str = "text"
     text: str = "text"
