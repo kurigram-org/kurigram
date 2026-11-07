@@ -703,45 +703,75 @@ def _piece(entity: types.MessageEntity, *, start: int, end: int) -> types.Messag
     )
 
 
-def _newline_cuts(positions: Iterable[int], *, text: str) -> set[int]:
-    return {position for position in positions if position < len(text) and text[position] == "\n"}
+@dataclass(frozen=True, slots=True)
+class _Boundaries:
+    """The line breaks around the quotes and fenced blocks of one message, sorted."""
+
+    expandable_ends: list[int]
+    block_starts: list[int]
+    expandable: list[range]
 
 
-def _own_cuts(
-    entity: types.MessageEntity,
-    *,
-    quotes: list[types.MessageEntity],
-    fences: list[types.MessageEntity],
-    text: str,
-) -> set[int]:
+def _boundaries(entities: list[types.MessageEntity], *, text: str) -> _Boundaries:
+    """The boundaries `_own_cuts` reads, found once per message so each lookup bisects."""
+    quotes = [entity for entity in entities if spec_for_type(entity.type) is BLOCKQUOTE]
+    fences = [entity for entity in entities if spec_for_type(entity.type) is PRE]
+    expandable = [quote for quote in quotes if quote.expandable]
+
+    return _Boundaries(
+        expandable_ends=_line_breaks(
+            (quote.offset + quote.length for quote in expandable),
+            text=text,
+        ),
+        block_starts=_line_breaks(
+            (block.offset - 1 for block in [*quotes, *fences]),
+            text=text,
+        ),
+        expandable=_merged(
+            range(quote.offset, quote.offset + quote.length) for quote in expandable
+        ),
+    )
+
+
+def _line_breaks(positions: Iterable[int], *, text: str) -> list[int]:
+    return sorted(
+        {position for position in positions if 0 <= position < len(text) and text[position] == "\n"}
+    )
+
+
+def _between(positions: list[int], *, span: range) -> list[int]:
+    """The sorted positions inside `span`."""
+    return positions[
+        bisect.bisect_left(positions, span.start) : bisect.bisect_left(positions, span.stop)
+    ]
+
+
+def _own_cuts(entity: types.MessageEntity, *, boundaries: _Boundaries, text: str) -> set[int]:
     """The newlines where the entity's markup could not be read back, by its own type."""
     spec = spec_for_type(entity.type)
     start: int = entity.offset
     end: int = entity.offset + entity.length
-    expandable = [quote for quote in quotes if quote.expandable]
+    span = range(start, end)
 
     if spec is SPOILER:
-        opening: str = text[start:end]
-        breaks: int = len(opening) - len(opening.lstrip("\n"))
-        candidates = [quote.offset + quote.length for quote in expandable]
-        candidates.extend(
-            position
-            for quote in expandable
-            if quote.offset <= start < quote.offset + quote.length
-            for position in range(start, start + breaks)
-        )
+        cuts = set(_between(boundaries.expandable_ends, span=span))
 
-    elif spec is CODE:
-        candidates = [quote.offset + quote.length for quote in expandable]
-        candidates.extend(block.offset - 1 for block in [*quotes, *fences])
+        if _covers(start, spans=boundaries.expandable):
+            opening: str = text[start:end]
+            cuts.update(range(start, start + len(opening) - len(opening.lstrip("\n"))))
 
-    elif spec in _LINK_FORMS:
-        candidates = [quote.offset + quote.length for quote in expandable]
+        return cuts
 
-    else:
-        return set()
+    if spec is CODE:
+        return {
+            *_between(boundaries.expandable_ends, span=span),
+            *_between(boundaries.block_starts, span=span),
+        }
 
-    return {cut for cut in _newline_cuts(candidates, text=text) if start <= cut < end}
+    if spec in _LINK_FORMS:
+        return set(_between(boundaries.expandable_ends, span=span))
+
+    return set()
 
 
 def _pieces(entity: types.MessageEntity, *, cuts: set[int]) -> list[types.MessageEntity]:
@@ -833,19 +863,18 @@ def _writable(entities: list[types.MessageEntity], *, text: str) -> list[types.M
       line there and be read as the end of the quote, so it loses every break it opens
       with, and a spoiler of nothing else is dropped.
 
-    The cut entities are kept only when their markup reads back better than the uncut
-    markup, counting every entity read back wrong or cut to nothing and a changed text.
-    On a tie, the markup with fewer quotes read back wrong wins, and the uncut markup
-    when that ties too.
-    Each round of cuts costs one more write and read, and every round adds a cut.
+    Every round is scored by the entities read back wrong or cut to nothing and a
+    changed text, a tie broken by the quotes read back wrong, and the lowest-scoring
+    round is returned: the uncut entities on a tie, or a cut round only when it scores
+    strictly lower than every round before it.
+    Finding the cuts bisects the quote and fence boundaries, found once per message;
+    each round of cuts costs one more write and read, and every round adds a cut.
     """
-    quotes = [entity for entity in entities if spec_for_type(entity.type) is BLOCKQUOTE]
-    fences = [entity for entity in entities if spec_for_type(entity.type) is PRE]
+    boundaries = _boundaries(entities, text=text)
     own: dict[int, set[int]] = {
         index: _own_cuts(
             entity,
-            quotes=quotes,
-            fences=fences,
+            boundaries=boundaries,
             text=text,
         )
         for index, entity in enumerate(entities)
@@ -856,7 +885,8 @@ def _writable(entities: list[types.MessageEntity], *, text: str) -> list[types.M
         return entities
 
     cuts: dict[int, set[int]] = {index: set() for index in own}
-    uncut_score: _Score | None = None
+    best_score: _Score | None = None
+    best: list[types.MessageEntity] = entities
 
     while True:
         pieces = [
@@ -875,8 +905,12 @@ def _writable(entities: list[types.MessageEntity], *, text: str) -> list[types.M
             ),
         )
 
-        if uncut_score is None:
-            uncut_score = score
+        if best_score is None:
+            best_score = score
+
+        elif score < best_score:
+            best_score = score
+            best = written
 
         misread: set[int] = own.keys() & read.misread
         more: dict[int, set[int]] = {index: own[index] - cuts[index] for index in misread}
@@ -900,7 +934,7 @@ def _writable(entities: list[types.MessageEntity], *, text: str) -> list[types.M
         grown = any(more.values())
 
         if not grown:
-            return entities if score >= uncut_score else written
+            return best
 
 
 def _write(text: str, *, entities: list[types.MessageEntity]) -> str:
