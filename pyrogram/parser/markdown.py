@@ -62,7 +62,7 @@ from .entities import (
     spec_for_type,
     valid_date_time_format,
 )
-from .html import HTML
+from .html import HTML, Parser, _build
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -741,47 +741,30 @@ def _own_cuts(
     return {cut for cut in _newline_cuts(candidates, text=text) if start <= cut < end}
 
 
-def _writable(entities: list[types.MessageEntity], *, text: str) -> list[types.MessageEntity]:
-    """The entities cut where Markdown has no way to write them, the text left whole.
-
-    Each cut is a newline the entity then loses, its pieces keeping every other character:
-
-    - a spoiler, a code run or a link running past the end of an expandable quote: a
-      spoiler's `||` is read as that end, a code run or a link label swallows it;
-    - code holding the newline before a quote or a fence: the marker or the fence must
-      open its line, and inside a code run it is text;
-    - a spoiler opening on a line break inside an expandable quote: its `||` ends a line
-      there and is read as the end of the quote.
+def _cut(
+    entities: list[types.MessageEntity],
+    *,
+    own: dict[int, set[int]],
+    positions: set[int],
+) -> list[types.MessageEntity]:
+    """The entities with every cut at `positions` made, the cut newline in no piece.
 
     An entity nested in a cut one is cut at the same newline, so the pieces still nest.
     """
-    quotes = [entity for entity in entities if spec_for_type(entity.type) is BLOCKQUOTE]
-    fences = [entity for entity in entities if spec_for_type(entity.type) is PRE]
-    inline = [
-        index
-        for index, entity in enumerate(entities)
-        if spec_for_type(entity.type) not in {BLOCKQUOTE, PRE}
-    ]
-    cuts: dict[int, set[int]] = {
-        index: _own_cuts(
-            entities[index],
-            quotes=quotes,
-            fences=fences,
-            text=text,
-        )
-        for index in inline
-    }
+    cuts: dict[int, set[int]] = {index: own[index] & positions for index in own}
 
-    for outer in sorted(inline, key=lambda index: -entities[index].length):
+    for outer, outer_cuts in own.items():
         outer_start: int = entities[outer].offset
         outer_end: int = outer_start + entities[outer].length
 
-        for inner in inline:
+        for inner in own:
             inner_start: int = entities[inner].offset
             inner_end: int = inner_start + entities[inner].length
 
             if inner != outer and outer_start <= inner_start and inner_end <= outer_end:
-                cuts[inner] |= {cut for cut in cuts[outer] if inner_start <= cut < inner_end}
+                cuts[inner] |= {
+                    cut for cut in outer_cuts & positions if inner_start <= cut < inner_end
+                }
 
     written: list[types.MessageEntity] = []
 
@@ -814,6 +797,150 @@ def _writable(entities: list[types.MessageEntity], *, text: str) -> list[types.M
     return written
 
 
+def _misread(markup: str, *, entities: list[types.MessageEntity]) -> set[int]:
+    """The indices of the entities strict `parse` does not give back, by type and span."""
+    read = _build(
+        Parser().tokenize(
+            utils.add_surrogates(_convert_inline(_wrap_blockquotes(markup, strict=True)))
+        )
+    )
+
+    got = {
+        (type(entity).__name__, entity.offset, entity.length)
+        for entity in read.entities
+        if entity.length
+    }
+
+    return {
+        index
+        for index, entity in enumerate(entities)
+        if (spec := spec_for_type(entity.type)) is not None
+        and (spec.raw_type.__name__, entity.offset, entity.length) not in got
+    }
+
+
+def _writable(entities: list[types.MessageEntity], *, text: str) -> list[types.MessageEntity]:
+    """The entities cut where Markdown has no way to write them, the text left whole.
+
+    Each cut is a newline the entity then loses, its pieces keeping every other character.
+    The candidates are the shapes below, and markup written without them that reads back
+    keeps every entity whole; otherwise only the entities read back wrong are cut:
+
+    - a spoiler, a code run or a link running past the end of an expandable quote: a
+      spoiler's `||` is read as that end, a code run or a link label swallows it;
+    - code holding the newline before a quote or a fence: the marker or the fence must
+      open its line, and inside a code run it is text;
+    - a spoiler opening on a line break inside an expandable quote: its `||` can end the
+      line there and be read as the end of the quote.
+
+    At most two writes and one read, so the cost stays linear in the message.
+    """
+    quotes = [entity for entity in entities if spec_for_type(entity.type) is BLOCKQUOTE]
+    fences = [entity for entity in entities if spec_for_type(entity.type) is PRE]
+    own: dict[int, set[int]] = {
+        index: _own_cuts(
+            entity,
+            quotes=quotes,
+            fences=fences,
+            text=text,
+        )
+        for index, entity in enumerate(entities)
+        if spec_for_type(entity.type) not in {BLOCKQUOTE, PRE}
+    }
+    candidates: set[int] = set().union(*own.values())
+
+    if not candidates:
+        return entities
+
+    misread = _misread(
+        _write(text, entities=entities),
+        entities=entities,
+    )
+
+    if not misread:
+        return entities
+
+    blamed: set[int] = set().union(*(own.get(index, set()) for index in misread))
+
+    return _cut(
+        entities,
+        own=own,
+        positions=blamed,
+    )
+
+
+def _write(text: str, *, entities: list[types.MessageEntity]) -> str:
+    """The markup for `text`, given with surrogates, and `entities`."""
+    placed: list[_PlacedInsertion] = []
+
+    for index, entity in enumerate(entities):
+        spec = spec_for_type(entity.type)
+
+        if spec is None:
+            continue
+
+        placed.extend(
+            _place(
+                insertion,
+                length=entity.length,
+                index=index,
+                fixed_width=spec in {CODE, PRE},
+            )
+            for insertion in spec.markdown_insertions(entity, message=text)
+        )
+
+    # `parse` reads the text of a fixed-width run as typed, backslashes included, so
+    #  an escape written there would reach the message.
+    fixed_width = _merged(
+        range(entity.offset, entity.offset + entity.length)
+        for entity in entities
+        if spec_for_type(entity.type) in {CODE, PRE}
+    )
+
+    # A fence writes line breaks the message does not have; inside a quote each one
+    #  starts a line that needs the marker too, or `parse` ends the quote there and
+    #  the rest of it reaches the message as a literal `<blockquote>`.
+    quotes = _merged(
+        range(entity.offset, entity.offset + entity.length)
+        for entity in entities
+        if spec_for_type(entity.type) is BLOCKQUOTE
+    )
+
+    parts: list[str] = []
+    written: int = 0
+    line_prefix: str = ""
+
+    for item in sorted(placed):
+        insertion = item.insertion
+        chunk = text[written : insertion.offset]
+        markup = insertion.text
+
+        if "\n" in markup and _inside(insertion, spans=quotes):
+            markup = markup.replace("\n", f"\n{BLOCKQUOTE_MARKER} ")
+
+        if not _covers(written, spans=fixed_width):
+            chunk = _escape_chunk(
+                chunk,
+                line_prefix=line_prefix,
+                following=markup,
+            )
+
+        parts.append(chunk)
+        parts.append(markup)
+
+        line_prefix = _advance_line_prefix(line_prefix, piece=f"{chunk}{markup}")
+        written = insertion.offset
+
+    tail = _escape_chunk(
+        text[written:],
+        line_prefix=line_prefix,
+        following="",
+    )
+    parts.append(tail)
+
+    return utils.remove_surrogates("".join(parts))
+
+
 class Markdown:
     def __init__(self, client: pyrogram.Client | None):
         self.html = HTML(client)
@@ -824,73 +951,5 @@ class Markdown:
     @staticmethod
     def unparse(text: str, entities: list[types.MessageEntity]) -> str:
         text = utils.add_surrogates(text)
-        entities = _writable(entities, text=text)
-        placed: list[_PlacedInsertion] = []
 
-        for index, entity in enumerate(entities):
-            spec = spec_for_type(entity.type)
-
-            if spec is None:
-                continue
-
-            placed.extend(
-                _place(
-                    insertion,
-                    length=entity.length,
-                    index=index,
-                    fixed_width=spec in {CODE, PRE},
-                )
-                for insertion in spec.markdown_insertions(entity, message=text)
-            )
-
-        # `parse` reads the text of a fixed-width run as typed, backslashes included, so
-        #  an escape written there would reach the message.
-        fixed_width = _merged(
-            range(entity.offset, entity.offset + entity.length)
-            for entity in entities
-            if spec_for_type(entity.type) in {CODE, PRE}
-        )
-
-        # A fence writes line breaks the message does not have; inside a quote each one
-        #  starts a line that needs the marker too, or `parse` ends the quote there and
-        #  the rest of it reaches the message as a literal `<blockquote>`.
-        quotes = _merged(
-            range(entity.offset, entity.offset + entity.length)
-            for entity in entities
-            if spec_for_type(entity.type) is BLOCKQUOTE
-        )
-
-        parts: list[str] = []
-        written: int = 0
-        line_prefix: str = ""
-
-        for item in sorted(placed):
-            insertion = item.insertion
-            chunk = text[written : insertion.offset]
-            markup = insertion.text
-
-            if "\n" in markup and _inside(insertion, spans=quotes):
-                markup = markup.replace("\n", f"\n{BLOCKQUOTE_MARKER} ")
-
-            if not _covers(written, spans=fixed_width):
-                chunk = _escape_chunk(
-                    chunk,
-                    line_prefix=line_prefix,
-                    following=markup,
-                )
-
-            parts.append(chunk)
-            parts.append(markup)
-
-            line_prefix = _advance_line_prefix(line_prefix, piece=f"{chunk}{markup}")
-            written = insertion.offset
-
-        parts.append(
-            _escape_chunk(
-                text[written:],
-                line_prefix=line_prefix,
-                following="",
-            )
-        )
-
-        return utils.remove_surrogates("".join(parts))
+        return _write(text, entities=_writable(entities, text=text))
