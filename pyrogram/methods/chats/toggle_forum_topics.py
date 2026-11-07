@@ -61,7 +61,12 @@ class ToggleForumTopics:
         try:
             r = await self.invoke(
                 raw.functions.channels.ToggleForum(
-                    channel=await self.resolve_peer(chat_id), enabled=is_forum, tabs=has_forum_tabs
+                    channel=await self.resolve_peer(chat_id),
+                    enabled=is_forum,
+                    tabs=has_forum_tabs,
+                    # Undocumented flag from layer 233; Telegram Desktop always sends false.
+                    #  https://github.com/telegramdesktop/tdesktop/blob/7381fb1df75d863eb3463fdddef57a2ac51f1d56/Telegram/SourceFiles/boxes/peers/edit_peer_info_box.cpp#L2899-L2903
+                    sidebar=False,
                 )
             )
 
