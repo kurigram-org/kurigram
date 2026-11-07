@@ -51,6 +51,7 @@ from .entities import (
     DATE_TIME,
     FIXED_WIDTH_DELIMITERS,
     MARKDOWN_DELIMITERS,
+    MENTION,
     PRE,
     SPOILER,
     TEXT_LINK,
@@ -68,6 +69,16 @@ if TYPE_CHECKING:
 
 _DELIMITER_PATTERN: Final[str] = "|".join(re.escape(delimiter) for delimiter in MARKDOWN_DELIMITERS)
 
+
+# Written as a link, whose label swallows the `||` ending an expandable quote.
+_LINK_FORMS: Final[frozenset[EntitySpec]] = frozenset(
+    {
+        TEXT_LINK,
+        MENTION,
+        CUSTOM_EMOJI,
+        DATE_TIME,
+    }
+)
 
 # A label ends at the first unescaped `]`, a url at the first unescaped `)`; an escaped
 #  pair passes through whole, so a `\]` or `\)` written by `unparse` stays inside instead
@@ -679,6 +690,130 @@ def _convert_inline(text: str) -> str:
     return "".join(parts)
 
 
+def _piece(entity: types.MessageEntity, *, start: int, end: int) -> types.MessageEntity:
+    return types.MessageEntity(
+        type=entity.type,
+        offset=start,
+        length=end - start,
+        url=entity.url,
+        user=entity.user,
+        custom_emoji_id=entity.custom_emoji_id,
+        unix_time=entity.unix_time,
+        date_time_format=entity.date_time_format,
+    )
+
+
+def _newline_cuts(positions: Iterable[int], *, text: str) -> set[int]:
+    return {
+        position for position in positions if 0 <= position < len(text) and text[position] == "\n"
+    }
+
+
+def _own_cuts(
+    entity: types.MessageEntity,
+    *,
+    quotes: list[types.MessageEntity],
+    fences: list[types.MessageEntity],
+    text: str,
+) -> set[int]:
+    """The newlines where the entity's markup could not be read back, by its own type."""
+    spec = spec_for_type(entity.type)
+    start: int = entity.offset
+    end: int = entity.offset + entity.length
+    expandable = [quote for quote in quotes if quote.expandable]
+
+    if spec is SPOILER:
+        candidates = [quote.offset + quote.length for quote in expandable]
+        candidates.extend(
+            start for quote in expandable if quote.offset < start < quote.offset + quote.length
+        )
+
+    elif spec is CODE:
+        candidates = [quote.offset + quote.length for quote in expandable]
+        candidates.extend(block.offset - 1 for block in [*quotes, *fences])
+
+    elif spec in _LINK_FORMS:
+        candidates = [quote.offset + quote.length for quote in expandable]
+
+    else:
+        return set()
+
+    return {cut for cut in _newline_cuts(candidates, text=text) if start <= cut < end}
+
+
+def _writable(entities: list[types.MessageEntity], *, text: str) -> list[types.MessageEntity]:
+    """The entities cut where Markdown has no way to write them, the text left whole.
+
+    Each cut is a newline the entity then loses, its pieces keeping every other character:
+
+    - a spoiler, a code run or a link running past the end of an expandable quote: a
+      spoiler's `||` is read as that end, a code run or a link label swallows it;
+    - code holding the newline before a quote or a fence: the marker or the fence must
+      open its line, and inside a code run it is text;
+    - a spoiler opening on a line break inside an expandable quote: its `||` ends a line
+      there and is read as the end of the quote.
+
+    An entity nested in a cut one is cut at the same newline, so the pieces still nest.
+    """
+    quotes = [entity for entity in entities if spec_for_type(entity.type) is BLOCKQUOTE]
+    fences = [entity for entity in entities if spec_for_type(entity.type) is PRE]
+    inline = [
+        index
+        for index, entity in enumerate(entities)
+        if spec_for_type(entity.type) not in {BLOCKQUOTE, PRE}
+    ]
+    cuts: dict[int, set[int]] = {
+        index: _own_cuts(
+            entities[index],
+            quotes=quotes,
+            fences=fences,
+            text=text,
+        )
+        for index in inline
+    }
+
+    for outer in sorted(inline, key=lambda index: -entities[index].length):
+        outer_start: int = entities[outer].offset
+        outer_end: int = outer_start + entities[outer].length
+
+        for inner in inline:
+            inner_start: int = entities[inner].offset
+            inner_end: int = inner_start + entities[inner].length
+
+            if inner != outer and outer_start <= inner_start and inner_end <= outer_end:
+                cuts[inner] |= {cut for cut in cuts[outer] if inner_start <= cut < inner_end}
+
+    written: list[types.MessageEntity] = []
+
+    for index, entity in enumerate(entities):
+        if not cuts.get(index):
+            written.append(entity)
+            continue
+
+        start: int = entity.offset
+
+        for cut in sorted(cuts[index]):
+            if start < cut:
+                piece = _piece(
+                    entity,
+                    start=start,
+                    end=cut,
+                )
+                written.append(piece)
+
+            start = cut + 1
+
+        if start < entity.offset + entity.length:
+            piece = _piece(
+                entity,
+                start=start,
+                end=entity.offset + entity.length,
+            )
+            written.append(piece)
+
+    return written
+
+
 class Markdown:
     def __init__(self, client: pyrogram.Client | None):
         self.html = HTML(client)
@@ -689,6 +824,7 @@ class Markdown:
     @staticmethod
     def unparse(text: str, entities: list[types.MessageEntity]) -> str:
         text = utils.add_surrogates(text)
+        entities = _writable(entities, text=text)
         placed: list[_PlacedInsertion] = []
 
         for index, entity in enumerate(entities):
