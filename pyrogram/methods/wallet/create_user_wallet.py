@@ -28,7 +28,7 @@ from pyrogram import raw, types
 class CreateUserWallet:
     async def create_user_wallet(
         self: pyrogram.Client, user_id: int | str
-    ) -> types.UserTonWalletAddress:
+    ) -> types.UserTonWalletAddress | None:
         """Creates a TON wallet for the specified regular user.
 
         .. include:: /_includes/usable-by/users.rst
@@ -39,13 +39,16 @@ class CreateUserWallet:
                 For a contact that exists in your Telegram address book you can use his phone number (str).
 
         Returns:
-            :obj:`~pyrogram.types.UserTonWalletAddress`: On success, information about created user wallet address is returned.
+            :obj:`~pyrogram.types.UserTonWalletAddress` | None: On success, information about created user wallet address is returned.
         """
         r = await self.invoke(
             raw.functions.wallet.GetUserAddresses(
                 force=True, id=[await self.resolve_peer(user_id)], addresses=[]
             )
         )
+
+        if not r.addresses:
+            return None
 
         users = {i.id: i for i in r.users}
 
