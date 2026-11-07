@@ -28,7 +28,7 @@ class TonWalletOwnershipProof(Object):
 
     Parameters:
         public_key (``bytes``):
-            Additional description about the verification.
+            Public key of the wallet.
 
         timestamp (``int``):
             The current UNIX timestamp which was used to create the proof.
