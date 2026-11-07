@@ -782,6 +782,14 @@ class _ReadBack:
     text_kept: bool
 
 
+@dataclass(frozen=True, slots=True, order=True)
+class _Score:
+    """How far a round of cuts reads back from the message, compared field by field."""
+
+    wrong: int
+    quotes_wrong: int
+
+
 def _read_back(
     markup: str,
     *,
@@ -827,6 +835,8 @@ def _writable(entities: list[types.MessageEntity], *, text: str) -> list[types.M
 
     The cut entities are kept only when their markup reads back better than the uncut
     markup, counting every entity read back wrong or cut to nothing and a changed text.
+    On a tie, the markup with fewer quotes read back wrong wins, and the uncut markup
+    when that ties too.
     Each round of cuts costs one more write and read, and every round adds a cut.
     """
     quotes = [entity for entity in entities if spec_for_type(entity.type) is BLOCKQUOTE]
@@ -846,7 +856,7 @@ def _writable(entities: list[types.MessageEntity], *, text: str) -> list[types.M
         return entities
 
     cuts: dict[int, set[int]] = {index: set() for index in own}
-    uncut_wrong: int | None = None
+    uncut_score: _Score | None = None
 
     while True:
         pieces = [
@@ -858,10 +868,15 @@ def _writable(entities: list[types.MessageEntity], *, text: str) -> list[types.M
             pieces=pieces,
             text=text,
         )
-        wrong: int = len(read.misread) + sum(not group for group in pieces) + (not read.text_kept)
+        score = _Score(
+            wrong=len(read.misread) + sum(not group for group in pieces) + (not read.text_kept),
+            quotes_wrong=sum(
+                spec_for_type(entities[index].type) is BLOCKQUOTE for index in read.misread
+            ),
+        )
 
-        if uncut_wrong is None:
-            uncut_wrong = wrong
+        if uncut_score is None:
+            uncut_score = score
 
         misread: set[int] = own.keys() & read.misread
         more: dict[int, set[int]] = {index: own[index] - cuts[index] for index in misread}
@@ -885,7 +900,7 @@ def _writable(entities: list[types.MessageEntity], *, text: str) -> list[types.M
         grown = any(more.values())
 
         if not grown:
-            return entities if wrong >= uncut_wrong else written
+            return entities if score >= uncut_score else written
 
 
 def _write(text: str, *, entities: list[types.MessageEntity]) -> str:
