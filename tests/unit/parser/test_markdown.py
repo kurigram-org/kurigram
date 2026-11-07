@@ -2029,26 +2029,22 @@ _ROUND_TRIP_CORPUS: Final[tuple[pytest.ParameterSet, ...]] = (
                 length=2,
                 collapsed=True,
             ),
+            pyrogram.raw.types.MessageEntityBold(
+                offset=1,
+                length=4,
+            ),
             pyrogram.raw.types.MessageEntityCustomEmoji(
                 offset=1,
                 length=1,
                 document_id=5,
             ),
-            pyrogram.raw.types.MessageEntityBold(
-                offset=1,
-                length=1,
-            ),
             pyrogram.raw.types.MessageEntityCustomEmoji(
                 offset=3,
                 length=2,
                 document_id=5,
-            ),
-            pyrogram.raw.types.MessageEntityBold(
-                offset=3,
-                length=2,
             ),
         ],
-        id="bold-holding-a-cut-custom-emoji-is-cut-with-its-label",
+        id="bold-holding-a-cut-custom-emoji-stays-whole",
     ),
     pytest.param(
         "ab\ncd",
@@ -2149,6 +2145,215 @@ _ROUND_TRIP_CORPUS: Final[tuple[pytest.ParameterSet, ...]] = (
             ),
         ],
         id="spoiler-opening-on-the-first-two-line-breaks-of-an-expandable-quote",
+    ),
+    pytest.param(
+        "ab\ncd\nef",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=0,
+                length=5,
+                expandable=True,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.SPOILER,
+                offset=2,
+                length=2,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.SPOILER,
+                offset=5,
+                length=2,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBlockquote(
+                offset=0,
+                length=5,
+                collapsed=True,
+            ),
+            pyrogram.raw.types.MessageEntitySpoiler(
+                offset=3,
+                length=1,
+            ),
+            pyrogram.raw.types.MessageEntitySpoiler(
+                offset=6,
+                length=1,
+            ),
+        ],
+        id="spoiler-on-the-end-of-an-expandable-quote-cut-after-another-spoiler-is",
+    ),
+    pytest.param(
+        "ab\n\ncd",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=0,
+                length=6,
+                expandable=True,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.SPOILER,
+                offset=2,
+                length=4,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.CODE,
+                offset=3,
+                length=2,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBlockquote(
+                offset=0,
+                length=6,
+                collapsed=True,
+            ),
+            pyrogram.raw.types.MessageEntitySpoiler(
+                offset=4,
+                length=2,
+            ),
+            pyrogram.raw.types.MessageEntityCode(
+                offset=4,
+                length=1,
+            ),
+        ],
+        id="code-on-a-line-break-a-cut-spoiler-drops-is-cut-with-it",
+    ),
+    pytest.param(
+        "ab\n\ncd",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=0,
+                length=6,
+                expandable=True,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.SPOILER,
+                offset=2,
+                length=4,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.TEXT_LINK,
+                offset=3,
+                length=2,
+                url="https://example.com",
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBlockquote(
+                offset=0,
+                length=6,
+                collapsed=True,
+            ),
+            pyrogram.raw.types.MessageEntitySpoiler(
+                offset=4,
+                length=2,
+            ),
+            pyrogram.raw.types.MessageEntityTextUrl(
+                offset=4,
+                length=1,
+                url="https://example.com",
+            ),
+        ],
+        id="link-on-a-line-break-a-cut-spoiler-drops-is-cut-with-it",
+    ),
+    pytest.param(
+        "+\n\n=_",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.TEXT_LINK,
+                offset=1,
+                length=4,
+                url="https://example.com",
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.SPOILER,
+                offset=1,
+                length=2,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=0,
+                length=1,
+                expandable=True,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBlockquote(
+                offset=0,
+                length=1,
+                collapsed=True,
+            ),
+            pyrogram.raw.types.MessageEntityTextUrl(
+                offset=2,
+                length=3,
+                url="https://example.com",
+            ),
+            pyrogram.raw.types.MessageEntitySpoiler(
+                offset=2,
+                length=1,
+            ),
+        ],
+        id="spoiler-on-two-line-breaks-after-an-expandable-quote-keeps-the-second",
+    ),
+    pytest.param(
+        "ab\ncd\nef",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=0,
+                length=2,
+                expandable=True,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.STRIKETHROUGH,
+                offset=0,
+                length=4,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.ITALIC,
+                offset=6,
+                length=2,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.CUSTOM_EMOJI,
+                offset=0,
+                length=8,
+                custom_emoji_id=5,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBlockquote(
+                offset=0,
+                length=2,
+                collapsed=True,
+            ),
+            pyrogram.raw.types.MessageEntityStrike(
+                offset=0,
+                length=2,
+            ),
+            pyrogram.raw.types.MessageEntityCustomEmoji(
+                offset=0,
+                length=2,
+                document_id=5,
+            ),
+            pyrogram.raw.types.MessageEntityCustomEmoji(
+                offset=3,
+                length=5,
+                document_id=5,
+            ),
+            pyrogram.raw.types.MessageEntityStrike(
+                offset=3,
+                length=1,
+            ),
+            pyrogram.raw.types.MessageEntityItalic(
+                offset=6,
+                length=2,
+            ),
+        ],
+        id="italic-past-the-cut-of-a-strikethrough-keeps-its-span",
     ),
     # The same shapes, kept whole where the markup written without a cut reads back.
     pytest.param(

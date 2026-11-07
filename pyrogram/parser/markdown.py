@@ -744,68 +744,38 @@ def _own_cuts(
     return {cut for cut in _newline_cuts(candidates, text=text) if start <= cut < end}
 
 
-def _cut(
-    entities: list[types.MessageEntity],
-    *,
-    own: dict[int, set[int]],
-    positions: set[int],
-) -> list[types.MessageEntity]:
-    """The entities with every cut at `positions` made, the cut newline in no piece.
+def _pieces(entity: types.MessageEntity, *, cuts: set[int]) -> list[types.MessageEntity]:
+    """The entity split at each newline in `cuts`, the cut newline in no piece."""
+    if not cuts:
+        return [entity]
 
-    An entity nested in a cut link is cut at the same newline, since it cannot cross the
-    `](url)` that closes each label.
-    """
-    cuts: dict[int, set[int]] = {index: own[index] & positions for index in own}
+    pieces: list[types.MessageEntity] = []
+    start: int = entity.offset
 
-    for outer, outer_cuts in own.items():
-        if spec_for_type(entities[outer].type) not in _LINK_FORMS:
-            continue
-
-        outer_start: int = entities[outer].offset
-        outer_end: int = outer_start + entities[outer].length
-
-        for inner in own:
-            inner_start: int = entities[inner].offset
-            inner_end: int = inner_start + entities[inner].length
-
-            if inner != outer and outer_start <= inner_start and inner_end <= outer_end:
-                cuts[inner] |= {
-                    cut for cut in outer_cuts & positions if inner_start <= cut < inner_end
-                }
-
-    written: list[types.MessageEntity] = []
-
-    for index, entity in enumerate(entities):
-        if not cuts.get(index):
-            written.append(entity)
-            continue
-
-        start: int = entity.offset
-
-        for cut in sorted(cuts[index]):
-            if start < cut:
-                piece = _piece(
-                    entity,
-                    start=start,
-                    end=cut,
-                )
-                written.append(piece)
-
-            start = cut + 1
-
-        if start < entity.offset + entity.length:
+    for cut in sorted(cuts):
+        if start < cut:
             piece = _piece(
                 entity,
                 start=start,
-                end=entity.offset + entity.length,
+                end=cut,
             )
-            written.append(piece)
+            pieces.append(piece)
 
-    return written
+        start = cut + 1
+
+    if start < entity.offset + entity.length:
+        piece = _piece(
+            entity,
+            start=start,
+            end=entity.offset + entity.length,
+        )
+        pieces.append(piece)
+
+    return pieces
 
 
-def _misread(markup: str, *, entities: list[types.MessageEntity]) -> set[int]:
-    """The indices of the entities strict `parse` does not give back, by type and span."""
+def _misread(markup: str, *, pieces: list[list[types.MessageEntity]]) -> set[int]:
+    """The indices of the entities with a piece strict `parse` does not give back."""
     read = _build(
         Parser().tokenize(
             utils.add_surrogates(_convert_inline(_wrap_blockquotes(markup, strict=True)))
@@ -816,9 +786,10 @@ def _misread(markup: str, *, entities: list[types.MessageEntity]) -> set[int]:
 
     return {
         index
-        for index, entity in enumerate(entities)
-        if (spec := spec_for_type(entity.type)) is not None
-        and (spec.raw_type.__name__, entity.offset, entity.length) not in got
+        for index, group in enumerate(pieces)
+        for piece in group
+        if (spec := spec_for_type(piece.type)) is not None
+        and (spec.raw_type.__name__, piece.offset, piece.length) not in got
     }
 
 
@@ -826,8 +797,8 @@ def _writable(entities: list[types.MessageEntity], *, text: str) -> list[types.M
     """The entities cut where Markdown has no way to write them, the text left whole.
 
     Each cut is a newline the entity then loses, its pieces keeping every other character.
-    The candidates are the shapes below, and markup written without them that reads back
-    keeps every entity whole; otherwise only the entities read back wrong are cut:
+    Only an entity the markup reads back wrong is cut: at its own candidates below while
+    any is left, then at the newlines already cut from the entities around it:
 
     - a spoiler, a code run or a link running past the end of an expandable quote: a
       spoiler's `||` is read as that end, a code run or a link label swallows it;
@@ -837,8 +808,7 @@ def _writable(entities: list[types.MessageEntity], *, text: str) -> list[types.M
       line there and be read as the end of the quote, so it loses every break it opens
       with, and a spoiler of nothing else is dropped.
 
-    At most two writes and one read; each link in the message also pays a pass over
-    every other entity when a cut is needed.
+    Each round of cuts costs one more write and read, and every round adds a cut.
     """
     quotes = [entity for entity in entities if spec_for_type(entity.type) is BLOCKQUOTE]
     fences = [entity for entity in entities if spec_for_type(entity.type) is PRE]
@@ -852,26 +822,40 @@ def _writable(entities: list[types.MessageEntity], *, text: str) -> list[types.M
         for index, entity in enumerate(entities)
         if spec_for_type(entity.type) not in {BLOCKQUOTE, PRE}
     }
-    candidates: set[int] = set().union(*own.values())
 
-    if not candidates:
+    if not any(own.values()):
         return entities
 
-    misread = _misread(
-        _write(text, entities=entities),
-        entities=entities,
-    )
+    cuts: dict[int, set[int]] = {index: set() for index in own}
 
-    if not misread:
-        return entities
+    while True:
+        pieces = [
+            _pieces(entity, cuts=cuts.get(index, set())) for index, entity in enumerate(entities)
+        ]
+        written = [piece for group in pieces for piece in group]
+        misread: set[int] = own.keys() & _misread(_write(text, entities=written), pieces=pieces)
+        more: dict[int, set[int]] = {index: own[index] - cuts[index] for index in misread}
 
-    blamed: set[int] = set().union(*(own.get(index, set()) for index in misread))
+        if not any(more.values()):
+            positions: set[int] = set().union(*cuts.values())
+            more = {
+                index: {
+                    position
+                    for position in positions - cuts[index]
+                    if entities[index].offset
+                    <= position
+                    < entities[index].offset + entities[index].length
+                }
+                for index in misread
+            }
 
-    return _cut(
-        entities,
-        own=own,
-        positions=blamed,
-    )
+        for index, added in more.items():
+            cuts[index] |= added
+
+        grown = any(more.values())
+
+        if not grown:
+            return written
 
 
 def _write(text: str, *, entities: list[types.MessageEntity]) -> str:
