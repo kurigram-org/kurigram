@@ -705,7 +705,7 @@ def _piece(entity: types.MessageEntity, *, start: int, end: int) -> types.Messag
 
 @dataclass(frozen=True, slots=True)
 class _Boundaries:
-    """The sorted line breaks ending or opening the quotes and fences of one message, and its expandable spans."""
+    """The line breaks ending an expandable quote or opening a block, and the expandable spans."""
 
     expandable_ends: list[int]
     block_starts: list[int]
