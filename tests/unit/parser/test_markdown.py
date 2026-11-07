@@ -2559,6 +2559,72 @@ _ROUND_TRIP_CORPUS: Final[tuple[pytest.ParameterSet, ...]] = (
         id="line-break-spoilers-past-an-expandable-quote-cut-keep-the-quote-whole",
     ),
     pytest.param(
+        "a\na\n\n",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=0,
+                length=5,
+                expandable=True,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.SPOILER,
+                offset=1,
+                length=2,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.CODE,
+                offset=0,
+                length=2,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBlockquote(
+                offset=0,
+                length=4,
+                collapsed=True,
+            ),
+            pyrogram.raw.types.MessageEntityCode(
+                offset=0,
+                length=2,
+            ),
+            pyrogram.raw.types.MessageEntitySpoiler(
+                offset=2,
+                length=1,
+            ),
+        ],
+        id="cut-spoiler-beside-code-in-an-expandable-quote-ending-on-a-break-keeps-the-text",
+    ),
+    pytest.param(
+        "a\n",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=0,
+                length=2,
+                expandable=True,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.SPOILER,
+                offset=1,
+                length=1,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.CODE,
+                offset=1,
+                length=1,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBlockquote(
+                offset=0,
+                length=1,
+                collapsed=True,
+            ),
+        ],
+        id="spoiler-and-code-on-the-break-ending-an-expandable-quote-are-dropped",
+    ),
+    pytest.param(
         "a\nb\nc\nd",
         [
             pyrogram.types.MessageEntity(
