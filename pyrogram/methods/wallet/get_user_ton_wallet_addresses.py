@@ -20,6 +20,7 @@
 
 from __future__ import annotations as _annotations
 
+import asyncio
 
 import pyrogram
 from pyrogram import raw, types
@@ -28,25 +29,25 @@ from pyrogram import raw, types
 class GetUserTonWalletAddresses:
     async def get_user_ton_wallet_addresses(
         self: pyrogram.Client,
-        user_ids: list[int | str],
+        user_ids: int | str | list[int | str],
     ) -> list[types.UserTonWalletAddress]:
         """Returns TON wallet addresses of the specified users.
 
         .. include:: /_includes/usable-by/users.rst
 
         Parameters:
-            user_ids (List of ``int`` | ``str``):
+            user_ids (``int`` | ``str`` | List of ``int`` | ``str``):
                 User identifiers (int) or usernames (str) of the users whose wallet addresses have to be returned.
                 If a user has no TON wallet, it will be skipped in the result.
 
         Returns:
             List of :obj:`~pyrogram.types.UserTonWalletAddress`: The TON wallet addresses of the specified users.
         """
-        r = await self.invoke(
-            raw.functions.wallet.GetUserAddresses(
-                id=[self.resolve_peer(user_id) for user_id in user_ids], addresses=[]
-            )
-        )
+        is_iterable = not isinstance(user_ids, (int, str))
+        user_ids = list(user_ids) if is_iterable else [user_ids]
+        user_ids = await asyncio.gather(*[self.resolve_peer(i) for i in user_ids])
+
+        r = await self.invoke(raw.functions.wallet.GetUserAddresses(id=user_ids, addresses=[]))
 
         users = {i.id: i for i in r.users}
 
