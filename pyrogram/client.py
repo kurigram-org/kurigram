@@ -953,10 +953,16 @@ class Client(Methods):
                                     force=False,
                                 )
                             )
+                        # The difference only fills in the min peers, so the update is
+                        #  dispatched with what is known when it fails. `Session.invoke()`
+                        #  retries a 500 such as `PERSISTENT_TIMESTAMP_OUTDATED` and then
+                        #  raises `TimeoutError` instead, which would otherwise escape and
+                        #  drop this update together with the rest of the batch.
                         except (
                             ChannelPrivate,
                             PersistentTimestampOutdated,
                             PersistentTimestampInvalid,
+                            TimeoutError,
                         ):
                             pass
                         else:
