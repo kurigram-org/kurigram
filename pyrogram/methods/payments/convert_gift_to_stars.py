@@ -49,7 +49,7 @@ class ConvertGiftToStars:
             .. code-block:: python
 
                 # Convert gift
-                await app.convert_gift_to_stars(message_id=123)
+                await app.convert_gift_to_stars(owned_gift_id="123456")
         """
         r = await self.invoke(
             raw.functions.payments.ConvertStarGift(
