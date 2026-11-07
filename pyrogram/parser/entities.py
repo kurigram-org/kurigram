@@ -31,6 +31,7 @@ from __future__ import annotations as _annotations
 import html
 import re
 from dataclasses import dataclass
+from enum import IntEnum
 from typing import Final, TypeAlias
 
 from pyrogram import raw, types
@@ -55,12 +56,30 @@ _MENTION_URL_RE: Final[re.Pattern[str]] = re.compile(re.escape(MENTION_URL) + r"
 _DATE_TIME_FORMAT_RE: Final[re.Pattern[str]] = re.compile(r"r|w?[dD]?[tT]?")
 
 
+class InsertionKind(IntEnum):
+    """What a piece of written markup is, in the order pieces go at one offset.
+
+    A line marker goes first: a close written before `> ` would start the line with
+    its delimiter, and `**> ` read back is an expandable quote. A close goes before
+    an open so that two entities touching at one offset close and reopen rather
+    than cross. The end marker of an expandable quote goes last, since `parse` only
+    reads `||` as one at the very end of the line: written before the close of a
+    bold that ends with the quote, the quote ran on to the end of the message.
+    """
+
+    MARKER = 0
+    CLOSE = 1
+    OPEN = 2
+    END = 3
+
+
 @dataclass(frozen=True, slots=True)
 class Insertion:
     """A piece of markup `unparse` inserts into the message text."""
 
     text: str
     offset: int
+    kind: InsertionKind
 
 
 def link_url(attributes: dict[str, str]) -> str:
@@ -133,10 +152,12 @@ class EntitySpec:
             Insertion(
                 text=self.markdown_open(entity),
                 offset=entity.offset,
+                kind=InsertionKind.OPEN,
             ),
             Insertion(
                 text=self.markdown_close(entity),
                 offset=entity.offset + entity.length,
+                kind=InsertionKind.CLOSE,
             ),
         ]
 
@@ -202,6 +223,7 @@ class BlockquoteSpec(EntitySpec):
                 Insertion(
                     text=f"{marker} ",
                     offset=offset,
+                    kind=InsertionKind.MARKER,
                 )
             )
             offset += len(line) + 1
@@ -211,6 +233,7 @@ class BlockquoteSpec(EntitySpec):
                 Insertion(
                     text=BLOCKQUOTE_EXPANDABLE_END,
                     offset=end,
+                    kind=InsertionKind.END,
                 )
             )
 
@@ -231,7 +254,12 @@ class TextLinkSpec(EntitySpec):
         return "["
 
     def markdown_close(self, entity: types.MessageEntity) -> str:
-        return f"]({entity.url})"
+        # A `)` in the url would end the link early on the way back through `parse`. An
+        #  entity built without a url writes an empty one, as `html_open` does, rather
+        #  than raise `AttributeError` on `None`.
+        url = (entity.url or "").replace("\\", "\\\\").replace(")", "\\)")
+
+        return f"]({url})"
 
 
 @dataclass(frozen=True)
