@@ -104,6 +104,7 @@ class InputMediaVideo(InputMedia):
 
     Raises:
         FileNotFoundError: In case a local ``os.PathLike`` doesn't point to an existing file.
+        MediaEmpty: In case the uploaded video has no audio and no_sound is not set to True.
     """
 
     def __init__(
