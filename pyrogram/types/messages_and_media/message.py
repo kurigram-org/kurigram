@@ -2519,6 +2519,10 @@ class Message(Object, Update):
                 return f"https://t.me/c/{utils.get_channel_id(self.chat.id)}/{self.id}"
 
     @property
+    def sender(self) -> types.User | types.Chat | None:
+        return self.from_user or self.sender_chat
+
+    @property
     def content(self) -> Str:
         return self.text or self.caption or Str("").init([])
 
