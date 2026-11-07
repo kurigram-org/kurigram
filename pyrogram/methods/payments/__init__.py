@@ -21,6 +21,7 @@ from .apply_gift_code import ApplyGiftCode
 from .buy_gift_upgrade import BuyGiftUpgrade
 from .check_gift_code import CheckGiftCode
 from .convert_gift_to_stars import ConvertGiftToStars
+from .delete_gift import DeleteGift
 from .craft_gift import CraftGift
 from .create_gift_collection import CreateGiftCollection
 from .delete_gift_collection import DeleteGiftCollection
@@ -96,6 +97,7 @@ class Payments(
     ReorderGiftCollections,
     ReuseStarSubscription,
     SearchGiftsForResale,
+    DeleteGift,
     SendGiftPurchaseOffer,
     SendGift,
     SendPaymentForm,

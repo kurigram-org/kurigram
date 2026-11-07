@@ -354,6 +354,7 @@ MEGAGROUP_REQUIRED	The request can only be used with a supergroup.
 MESSAGE_EDIT_TIME_EXPIRED	You can't edit this message anymore, too much time has passed since its creation.
 MESSAGE_EMPTY	The message sent is empty or contains invalid characters.
 MESSAGE_IDS_EMPTY	The requested message doesn't exist or you provided no message id.
+MESSAGE_IDS_MISMATCH	The provided message ids don't match the current messages of the quick reply shortcut.
 MESSAGE_ID_INVALID	The provided message id is invalid.
 MESSAGE_NOT_MODIFIED	The message was not modified because you tried to edit it using the same content.
 MESSAGE_NOT_READ_YET	The specified message wasn't read yet.

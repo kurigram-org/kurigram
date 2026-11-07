@@ -30,6 +30,9 @@ if TYPE_CHECKING:
     from pyrogram import raw
 
 
+MISSING = object
+
+
 @dataclass(frozen=True)
 class UpdateState:
     id: int
@@ -174,11 +177,10 @@ class Storage(ABC):
         """
         raise NotImplementedError
 
-    # `object` (the class itself) is the not-specified sentinel on every accessor
-    #  below: `None` is a real value both stored (`user_id(None)` on logout) and
-    #  returned (a fresh session has no row yet), so it cannot mean "read".
+    # `MISSING` is the not-specified sentinel: `None` is a real value both stored
+    #  (`user_id(None)` on logout) and returned (a fresh session has no row yet).
     @abstractmethod
-    async def dc_id(self, value: int | None | type[object] = object) -> int | None:
+    async def dc_id(self, value: int | None | type[object] = MISSING) -> int | None:
         """Get or set the DC ID of the current session.
 
         Parameters:
@@ -188,7 +190,7 @@ class Storage(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def api_id(self, value: int | None | type[object] = object) -> int | None:
+    async def api_id(self, value: int | None | type[object] = MISSING) -> int | None:
         """Get or set the API ID of the current session.
 
         Parameters:
@@ -198,7 +200,7 @@ class Storage(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def server_address(self, value: str | None | type[object] = object) -> str | None:
+    async def server_address(self, value: str | None | type[object] = MISSING) -> str | None:
         """Get or set the server address of the current session.
 
         Parameters:
@@ -208,7 +210,7 @@ class Storage(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def port(self, value: int | None | type[object] = object) -> int | None:
+    async def port(self, value: int | None | type[object] = MISSING) -> int | None:
         """Get or set the server port of the current session.
 
         Parameters:
@@ -218,7 +220,7 @@ class Storage(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def test_mode(self, value: bool | None | type[object] = object) -> bool | None:
+    async def test_mode(self, value: bool | None | type[object] = MISSING) -> bool | None:
         """Get or set the test mode of the current session.
 
         Parameters:
@@ -228,7 +230,7 @@ class Storage(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def auth_key(self, value: bytes | None | type[object] = object) -> bytes | None:
+    async def auth_key(self, value: bytes | None | type[object] = MISSING) -> bytes | None:
         """Get or set the authorization key of the current session.
 
         Parameters:
@@ -238,7 +240,7 @@ class Storage(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def date(self, value: int | None | type[object] = object) -> int | None:
+    async def date(self, value: int | None | type[object] = MISSING) -> int | None:
         """Get or set the date of the current session.
 
         Parameters:
@@ -248,7 +250,7 @@ class Storage(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def user_id(self, value: int | None | type[object] = object) -> int | None:
+    async def user_id(self, value: int | None | type[object] = MISSING) -> int | None:
         """Get or set the user ID of the current session.
 
         Parameters:
@@ -258,7 +260,7 @@ class Storage(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def is_bot(self, value: bool | None | type[object] = object) -> bool | None:
+    async def is_bot(self, value: bool | None | type[object] = MISSING) -> bool | None:
         """Get or set the bot flag of the current session.
 
         Parameters:
