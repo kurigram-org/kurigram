@@ -29,7 +29,7 @@ from typing import TYPE_CHECKING, Any
 from pyrogram import raw
 
 from .. import utils
-from .storage import Storage, UpdateState
+from .storage import MISSING, Storage, UpdateState
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -56,7 +56,7 @@ CREATE TABLE peers
 (
     id             INTEGER PRIMARY KEY,
     access_hash    INTEGER,
-    type           INTEGER NOT NULL,
+    type           TEXT NOT NULL,
     phone_number   TEXT,
     last_update_on INTEGER NOT NULL DEFAULT (CAST(STRFTIME('%s', 'now') AS INTEGER))
 );
@@ -158,6 +158,7 @@ class SQLiteStorage(Storage):
         session_string: str | None = None,
         in_memory: bool = False,
         use_wal: bool = False,
+        do_vacuum: bool = True,
     ):
         self.name = name
         self._conn: sqlite3.Connection | None = None
@@ -165,6 +166,7 @@ class SQLiteStorage(Storage):
         self.session_string = session_string
         self.in_memory = in_memory
         self.use_wal = use_wal
+        self.do_vacuum = do_vacuum
 
         if self.in_memory:
             self.database = ":memory:"
@@ -323,8 +325,9 @@ class SQLiteStorage(Storage):
         else:
             await self.create()
 
-        with self.conn:
-            self.conn.execute("VACUUM")
+        if self.do_vacuum:
+            with self.conn:
+                self.conn.execute("VACUUM")
 
     async def save(self):
         await self.date(int(time.time()))
@@ -460,40 +463,39 @@ class SQLiteStorage(Storage):
         with self.conn:
             self.conn.execute(f"UPDATE {table} SET {attr} = ?", (value,))
 
-    async def _accessor(self, table: str, attr: str, value: Any = object):
+    async def _accessor(self, table: str, attr: str, value: Any = MISSING):
         return (
-            await self._get(table, attr) if value is object else await self._set(table, attr, value)
+            await self._get(table, attr)
+            if value is MISSING
+            else await self._set(table, attr, value)
         )
 
-    # `object` (the class, not an instance) is the sentinel for "no value passed"
-    #  (read the column instead of writing to it), so every accessor's parameter type
-    #  has to include it alongside the column's real type.
-    async def dc_id(self, value: int | None | type[object] = object) -> int | None:
+    async def dc_id(self, value: int | None | type[object] = MISSING) -> int | None:
         return await self._accessor("sessions", "dc_id", value)
 
-    async def server_address(self, value: str | None | type[object] = object) -> str | None:
+    async def server_address(self, value: str | None | type[object] = MISSING) -> str | None:
         return await self._accessor("sessions", "server_address", value)
 
-    async def port(self, value: int | None | type[object] = object) -> int | None:
+    async def port(self, value: int | None | type[object] = MISSING) -> int | None:
         return await self._accessor("sessions", "port", value)
 
-    async def api_id(self, value: int | None | type[object] = object) -> int | None:
+    async def api_id(self, value: int | None | type[object] = MISSING) -> int | None:
         return await self._accessor("sessions", "api_id", value)
 
-    async def test_mode(self, value: bool | None | type[object] = object) -> bool | None:
+    async def test_mode(self, value: bool | None | type[object] = MISSING) -> bool | None:
         return await self._accessor("sessions", "test_mode", value)
 
-    async def auth_key(self, value: bytes | None | type[object] = object) -> bytes | None:
+    async def auth_key(self, value: bytes | None | type[object] = MISSING) -> bytes | None:
         return await self._accessor("sessions", "auth_key", value)
 
-    async def date(self, value: int | None | type[object] = object) -> int | None:
+    async def date(self, value: int | None | type[object] = MISSING) -> int | None:
         return await self._accessor("sessions", "date", value)
 
-    async def user_id(self, value: int | None | type[object] = object) -> int | None:
+    async def user_id(self, value: int | None | type[object] = MISSING) -> int | None:
         return await self._accessor("sessions", "user_id", value)
 
-    async def is_bot(self, value: bool | None | type[object] = object) -> bool | None:
+    async def is_bot(self, value: bool | None | type[object] = MISSING) -> bool | None:
         return await self._accessor("sessions", "is_bot", value)
 
-    async def version(self, value: int | None | type[object] = object) -> int | None:
+    async def version(self, value: int | None | type[object] = MISSING) -> int | None:
         return await self._accessor("version", "number", value)
