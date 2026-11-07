@@ -1,32 +1,30 @@
-#  Pyrogram - Telegram MTProto API Client Library for Python
+#  Kurigram - Telegram MTProto API Client Library for Python
+#
 #  Copyright (C) 2017-present Dan <https://github.com/delivrance>
+#  Copyright (C) 2024-present KurimuzonAkuma <https://github.com/KurimuzonAkuma>
 #
-#  This file is part of Pyrogram.
+#  This file is part of Kurigram.
 #
-#  Pyrogram is free software: you can redistribute it and/or modify
+#  Kurigram is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Lesser General Public License as published
 #  by the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  Pyrogram is distributed in the hope that it will be useful,
+#  Kurigram is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 #  GNU Lesser General Public License for more details.
 #
 #  You should have received a copy of the GNU Lesser General Public License
-#  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
+#  along with Kurigram. If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations as _annotations
 
 import logging
-import os
-import re
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pyrogram
-from pyrogram import enums, raw, types, utils
-from pyrogram.file_id import FileType
+from pyrogram import raw, types, utils
 
 if TYPE_CHECKING:
     from datetime import datetime, timedelta
@@ -56,13 +54,6 @@ class SendMediaGroup:
         business_connection_id: str | None = None,
         allow_paid_broadcast: bool | None = None,
         paid_message_star_count: int | None = None,
-        reply_to_message_id: int | None = None,
-        reply_to_chat_id: int | str | None = None,
-        reply_to_story_id: int | None = None,
-        quote_text: str | None = None,
-        parse_mode: enums.ParseMode | None = None,
-        quote_entities: list[types.MessageEntity] | None = None,
-        quote_offset: int | None = None,
     ) -> list[types.Message]:
         """Send a group of photos or videos as an album.
 
@@ -118,40 +109,6 @@ class SendMediaGroup:
             paid_message_star_count (``int``, *optional*):
                 The number of Telegram Stars the user agreed to pay to send the messages.
 
-            reply_to_message_id (``int``, *optional*):
-                If the message is a reply, ID of the original message.
-                This parameter is deprecated and should not be used.
-                Use `reply_parameters` instead.
-
-            reply_to_chat_id (``int`` | ``str``, *optional*):
-                Unique identifier (int) or username (str) of the chat holding the message that is replied to.
-                This parameter is deprecated and should not be used.
-                Use `reply_parameters` instead.
-
-            reply_to_story_id (``int``, *optional*):
-                If the message is a reply to a story, ID of the story.
-                This parameter is deprecated and should not be used.
-                Use `reply_parameters` instead.
-
-            quote_text (``str``, *optional*):
-                Text of the quoted part of the message that is replied to.
-                This parameter is deprecated and should not be used.
-                Use `reply_parameters` instead.
-
-            parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
-                By default, texts are parsed using both Markdown and HTML styles.
-                You can combine both syntaxes together.
-
-            quote_entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
-                List of special entities that appear in the quote, which can be specified instead of *parse_mode*.
-                This parameter is deprecated and should not be used.
-                Use `reply_parameters` instead.
-
-            quote_offset (``int``, *optional*):
-                Offset for quote in original message.
-                This parameter is deprecated and should not be used.
-                Use `reply_parameters` instead.
-
         Returns:
             List of :obj:`~pyrogram.types.Message`: On success, a list of the sent messages is returned.
 
@@ -172,395 +129,25 @@ class SendMediaGroup:
                     ]
                 )
         """
-        if any(
-            (
-                reply_to_message_id is not None,
-                reply_to_chat_id is not None,
-                reply_to_story_id is not None,
-                quote_text is not None,
-                parse_mode is not None,
-                quote_entities is not None,
-                quote_offset is not None,
-            )
-        ):
-            if reply_to_message_id is not None:
-                log.warning(
-                    "`reply_to_message_id` is deprecated and will be removed in future updates. Use `reply_parameters` instead."
-                )
-
-            if reply_to_chat_id is not None:
-                log.warning(
-                    "`reply_to_chat_id` is deprecated and will be removed in future updates. Use `reply_parameters` instead."
-                )
-
-            if reply_to_story_id is not None:
-                log.warning(
-                    "`reply_to_story_id` is deprecated and will be removed in future updates. Use `reply_parameters` instead."
-                )
-
-            if quote_text is not None:
-                log.warning(
-                    "`quote_text` is deprecated and will be removed in future updates. Use `reply_parameters` instead."
-                )
-
-            if parse_mode is not None:
-                log.warning(
-                    "`parse_mode` is deprecated and will be removed in future updates. Use `reply_parameters` instead."
-                )
-
-            if quote_entities is not None:
-                log.warning(
-                    "`quote_entities` is deprecated and will be removed in future updates. Use `reply_parameters` instead."
-                )
-
-            if quote_offset is not None:
-                log.warning(
-                    "`quote_offset` is deprecated and will be removed in future updates. Use `reply_parameters` instead."
-                )
-
-            reply_parameters = types.ReplyParameters(
-                message_id=reply_to_message_id,
-                chat_id=reply_to_chat_id,
-                story_id=reply_to_story_id,
-                quote=quote_text,
-                quote_parse_mode=parse_mode,
-                quote_entities=quote_entities,
-                quote_position=quote_offset,
-            )
-
         multi_media = []
 
         for i in media:
-            if isinstance(i, types.InputMediaPhoto):
-                if isinstance(i.media, (str, os.PathLike)):
-                    if os.path.isfile(i.media):
-                        media = await self.invoke(
-                            raw.functions.messages.UploadMedia(
-                                peer=await self.resolve_peer(chat_id),
-                                media=raw.types.InputMediaUploadedPhoto(
-                                    file=await self.save_file(i.media), spoiler=i.has_spoiler
-                                ),
-                                business_connection_id=business_connection_id,
-                            )
-                        )
-
-                        media = raw.types.InputMediaPhoto(
-                            id=raw.types.InputPhoto(
-                                id=media.photo.id,
-                                access_hash=media.photo.access_hash,
-                                file_reference=media.photo.file_reference,
-                            ),
-                            spoiler=i.has_spoiler,
-                        )
-                    elif isinstance(i.media, str) and re.match("^https?://", i.media):
-                        media = await self.invoke(
-                            raw.functions.messages.UploadMedia(
-                                peer=await self.resolve_peer(chat_id),
-                                media=raw.types.InputMediaPhotoExternal(
-                                    url=i.media, spoiler=i.has_spoiler
-                                ),
-                                business_connection_id=business_connection_id,
-                            )
-                        )
-
-                        media = raw.types.InputMediaPhoto(
-                            id=raw.types.InputPhoto(
-                                id=media.photo.id,
-                                access_hash=media.photo.access_hash,
-                                file_reference=media.photo.file_reference,
-                            ),
-                            spoiler=i.has_spoiler,
-                        )
-                    elif isinstance(i.media, str):
-                        media = utils.get_input_media_from_file_id(
-                            i.media, FileType.PHOTO, has_spoiler=i.has_spoiler
-                        )
-                    else:
-                        raise FileNotFoundError(f"No such file or directory: {i.media}")
-                else:
-                    media = await self.invoke(
-                        raw.functions.messages.UploadMedia(
-                            peer=await self.resolve_peer(chat_id),
-                            media=raw.types.InputMediaUploadedPhoto(
-                                file=await self.save_file(i.media), spoiler=i.has_spoiler
-                            ),
-                            business_connection_id=business_connection_id,
-                        )
-                    )
-
-                    media = raw.types.InputMediaPhoto(
-                        id=raw.types.InputPhoto(
-                            id=media.photo.id,
-                            access_hash=media.photo.access_hash,
-                            file_reference=media.photo.file_reference,
-                        ),
-                        spoiler=i.has_spoiler,
-                    )
-            elif isinstance(i, types.InputMediaVideo):
-                if isinstance(i.media, (str, os.PathLike)):
-                    if os.path.isfile(i.media):
-                        media = await self.invoke(
-                            raw.functions.messages.UploadMedia(
-                                peer=await self.resolve_peer(chat_id),
-                                media=raw.types.InputMediaUploadedDocument(
-                                    file=await self.save_file(i.media),
-                                    thumb=await self.save_file(i.thumb),
-                                    spoiler=i.has_spoiler,
-                                    mime_type=self.guess_mime_type(i.media) or "video/mp4",
-                                    nosound_video=True,
-                                    attributes=[
-                                        raw.types.DocumentAttributeVideo(
-                                            supports_streaming=i.supports_streaming,
-                                            duration=i.duration,
-                                            w=i.width,
-                                            h=i.height,
-                                        ),
-                                        raw.types.DocumentAttributeFilename(
-                                            file_name=i.file_name or Path(i.media).name
-                                        ),
-                                    ],
-                                ),
-                                business_connection_id=business_connection_id,
-                            )
-                        )
-
-                        media = raw.types.InputMediaDocument(
-                            id=raw.types.InputDocument(
-                                id=media.document.id,
-                                access_hash=media.document.access_hash,
-                                file_reference=media.document.file_reference,
-                            ),
-                            spoiler=i.has_spoiler,
-                        )
-                    elif isinstance(i.media, str) and re.match("^https?://", i.media):
-                        media = await self.invoke(
-                            raw.functions.messages.UploadMedia(
-                                peer=await self.resolve_peer(chat_id),
-                                media=raw.types.InputMediaDocumentExternal(
-                                    url=i.media, spoiler=i.has_spoiler
-                                ),
-                                business_connection_id=business_connection_id,
-                            )
-                        )
-
-                        media = raw.types.InputMediaDocument(
-                            id=raw.types.InputDocument(
-                                id=media.document.id,
-                                access_hash=media.document.access_hash,
-                                file_reference=media.document.file_reference,
-                            ),
-                            spoiler=i.has_spoiler,
-                        )
-                    elif isinstance(i.media, str):
-                        media = utils.get_input_media_from_file_id(
-                            i.media, FileType.VIDEO, has_spoiler=i.has_spoiler
-                        )
-                    else:
-                        raise FileNotFoundError(f"No such file or directory: {i.media}")
-                else:
-                    media = await self.invoke(
-                        raw.functions.messages.UploadMedia(
-                            peer=await self.resolve_peer(chat_id),
-                            media=raw.types.InputMediaUploadedDocument(
-                                file=await self.save_file(i.media),
-                                thumb=await self.save_file(i.thumb),
-                                spoiler=i.has_spoiler,
-                                mime_type=self.guess_mime_type(
-                                    getattr(i.media, "name", "video.mp4")
-                                )
-                                or "video/mp4",
-                                nosound_video=True,
-                                attributes=[
-                                    raw.types.DocumentAttributeVideo(
-                                        supports_streaming=i.supports_streaming,
-                                        duration=i.duration,
-                                        w=i.width,
-                                        h=i.height,
-                                    ),
-                                    raw.types.DocumentAttributeFilename(
-                                        file_name=i.file_name
-                                        or getattr(i.media, "name", "video.mp4")
-                                    ),
-                                ],
-                            ),
-                            business_connection_id=business_connection_id,
-                        )
-                    )
-
-                    media = raw.types.InputMediaDocument(
-                        id=raw.types.InputDocument(
-                            id=media.document.id,
-                            access_hash=media.document.access_hash,
-                            file_reference=media.document.file_reference,
-                        ),
-                        spoiler=i.has_spoiler,
-                    )
-            elif isinstance(i, types.InputMediaAudio):
-                if isinstance(i.media, (str, os.PathLike)):
-                    if os.path.isfile(i.media):
-                        media = await self.invoke(
-                            raw.functions.messages.UploadMedia(
-                                peer=await self.resolve_peer(chat_id),
-                                media=raw.types.InputMediaUploadedDocument(
-                                    mime_type=self.guess_mime_type(i.media) or "audio/mpeg",
-                                    file=await self.save_file(i.media),
-                                    thumb=await self.save_file(i.thumb),
-                                    attributes=[
-                                        raw.types.DocumentAttributeAudio(
-                                            duration=i.duration,
-                                            performer=i.performer,
-                                            title=i.title,
-                                        ),
-                                        raw.types.DocumentAttributeFilename(
-                                            file_name=i.file_name or Path(i.media).name
-                                        ),
-                                    ],
-                                ),
-                                business_connection_id=business_connection_id,
-                            )
-                        )
-
-                        media = raw.types.InputMediaDocument(
-                            id=raw.types.InputDocument(
-                                id=media.document.id,
-                                access_hash=media.document.access_hash,
-                                file_reference=media.document.file_reference,
-                            )
-                        )
-                    elif isinstance(i.media, str) and re.match("^https?://", i.media):
-                        media = await self.invoke(
-                            raw.functions.messages.UploadMedia(
-                                peer=await self.resolve_peer(chat_id),
-                                media=raw.types.InputMediaDocumentExternal(url=i.media),
-                                business_connection_id=business_connection_id,
-                            )
-                        )
-
-                        media = raw.types.InputMediaDocument(
-                            id=raw.types.InputDocument(
-                                id=media.document.id,
-                                access_hash=media.document.access_hash,
-                                file_reference=media.document.file_reference,
-                            )
-                        )
-                    elif isinstance(i.media, str):
-                        media = utils.get_input_media_from_file_id(i.media, FileType.AUDIO)
-                    else:
-                        raise FileNotFoundError(f"No such file or directory: {i.media}")
-                else:
-                    media = await self.invoke(
-                        raw.functions.messages.UploadMedia(
-                            peer=await self.resolve_peer(chat_id),
-                            media=raw.types.InputMediaUploadedDocument(
-                                mime_type=self.guess_mime_type(
-                                    getattr(i.media, "name", "audio.mp3")
-                                )
-                                or "audio/mpeg",
-                                file=await self.save_file(i.media),
-                                thumb=await self.save_file(i.thumb),
-                                attributes=[
-                                    raw.types.DocumentAttributeAudio(
-                                        duration=i.duration, performer=i.performer, title=i.title
-                                    ),
-                                    raw.types.DocumentAttributeFilename(
-                                        file_name=i.file_name
-                                        or getattr(i.media, "name", "audio.mp3")
-                                    ),
-                                ],
-                            ),
-                            business_connection_id=business_connection_id,
-                        )
-                    )
-
-                    media = raw.types.InputMediaDocument(
-                        id=raw.types.InputDocument(
-                            id=media.document.id,
-                            access_hash=media.document.access_hash,
-                            file_reference=media.document.file_reference,
-                        )
-                    )
-            elif isinstance(i, types.InputMediaDocument):
-                if isinstance(i.media, (str, os.PathLike)):
-                    if os.path.isfile(i.media):
-                        media = await self.invoke(
-                            raw.functions.messages.UploadMedia(
-                                peer=await self.resolve_peer(chat_id),
-                                media=raw.types.InputMediaUploadedDocument(
-                                    mime_type=self.guess_mime_type(i.media) or "application/zip",
-                                    file=await self.save_file(i.media),
-                                    thumb=await self.save_file(i.thumb),
-                                    attributes=[
-                                        raw.types.DocumentAttributeFilename(
-                                            file_name=i.file_name or Path(i.media).name
-                                        )
-                                    ],
-                                ),
-                                business_connection_id=business_connection_id,
-                            )
-                        )
-
-                        media = raw.types.InputMediaDocument(
-                            id=raw.types.InputDocument(
-                                id=media.document.id,
-                                access_hash=media.document.access_hash,
-                                file_reference=media.document.file_reference,
-                            )
-                        )
-                    elif isinstance(i.media, str) and re.match("^https?://", i.media):
-                        media = await self.invoke(
-                            raw.functions.messages.UploadMedia(
-                                peer=await self.resolve_peer(chat_id),
-                                media=raw.types.InputMediaDocumentExternal(url=i.media),
-                                business_connection_id=business_connection_id,
-                            )
-                        )
-
-                        media = raw.types.InputMediaDocument(
-                            id=raw.types.InputDocument(
-                                id=media.document.id,
-                                access_hash=media.document.access_hash,
-                                file_reference=media.document.file_reference,
-                            )
-                        )
-                    elif isinstance(i.media, str):
-                        media = utils.get_input_media_from_file_id(i.media, FileType.DOCUMENT)
-                    else:
-                        raise FileNotFoundError(f"No such file or directory: {i.media}")
-                else:
-                    media = await self.invoke(
-                        raw.functions.messages.UploadMedia(
-                            peer=await self.resolve_peer(chat_id),
-                            media=raw.types.InputMediaUploadedDocument(
-                                mime_type=self.guess_mime_type(getattr(i.media, "name", "file.zip"))
-                                or "application/zip",
-                                file=await self.save_file(i.media),
-                                thumb=await self.save_file(i.thumb),
-                                attributes=[
-                                    raw.types.DocumentAttributeFilename(
-                                        file_name=i.file_name
-                                        or getattr(i.media, "name", "file.zip")
-                                    )
-                                ],
-                            ),
-                            business_connection_id=business_connection_id,
-                        )
-                    )
-
-                    media = raw.types.InputMediaDocument(
-                        id=raw.types.InputDocument(
-                            id=media.document.id,
-                            access_hash=media.document.access_hash,
-                            file_reference=media.document.file_reference,
-                        )
-                    )
-            else:
+            if not isinstance(
+                i,
+                (
+                    types.InputMediaPhoto,
+                    types.InputMediaVideo,
+                    types.InputMediaAudio,
+                    types.InputMediaDocument,
+                ),
+            ):
                 raise ValueError(
                     f"{i.__class__.__name__} is not a supported type for send_media_group"
                 )
 
             multi_media.append(
                 raw.types.InputSingleMedia(
-                    media=media,
+                    media=await i.write(client=self, chat_id=chat_id),
                     random_id=self.rnd_id(),
                     **await utils.parse_text_entities(
                         self, i.caption, i.parse_mode, i.caption_entities

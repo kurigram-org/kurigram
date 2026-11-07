@@ -546,6 +546,7 @@ def pyrogram_api():
             buy_gift_upgrade
             check_gift_code
             convert_gift_to_stars
+            delete_gift
             get_available_gifts
             get_chat_gifts
             get_gift_auction_state
