@@ -774,8 +774,21 @@ def _pieces(entity: types.MessageEntity, *, cuts: set[int]) -> list[types.Messag
     return pieces
 
 
-def _misread(markup: str, *, pieces: list[list[types.MessageEntity]]) -> set[int]:
-    """The indices of the entities with a piece strict `parse` does not give back."""
+@dataclass(frozen=True, slots=True)
+class _ReadBack:
+    """What strict `parse` gives back from markup written for a list of pieces."""
+
+    misread: frozenset[int]
+    text_kept: bool
+
+
+def _read_back(
+    markup: str,
+    *,
+    pieces: list[list[types.MessageEntity]],
+    text: str,
+) -> _ReadBack:
+    """The entities with a piece strict `parse` does not give back, and the text kept."""
     read = _build(
         Parser().tokenize(
             utils.add_surrogates(_convert_inline(_wrap_blockquotes(markup, strict=True)))
@@ -783,14 +796,18 @@ def _misread(markup: str, *, pieces: list[list[types.MessageEntity]]) -> set[int
     )
 
     got = {(type(entity).__name__, entity.offset, entity.length) for entity in read.entities}
-
-    return {
+    misread = frozenset(
         index
         for index, group in enumerate(pieces)
         for piece in group
         if (spec := spec_for_type(piece.type)) is not None
         and (spec.raw_type.__name__, piece.offset, piece.length) not in got
-    }
+    )
+
+    return _ReadBack(
+        misread=misread,
+        text_kept=read.message == text,
+    )
 
 
 def _writable(entities: list[types.MessageEntity], *, text: str) -> list[types.MessageEntity]:
@@ -808,6 +825,8 @@ def _writable(entities: list[types.MessageEntity], *, text: str) -> list[types.M
       line there and be read as the end of the quote, so it loses every break it opens
       with, and a spoiler of nothing else is dropped.
 
+    The cut entities are kept only when their markup reads back no worse than the uncut
+    markup, counting every entity read back wrong or cut to nothing and a changed text.
     Each round of cuts costs one more write and read, and every round adds a cut.
     """
     quotes = [entity for entity in entities if spec_for_type(entity.type) is BLOCKQUOTE]
@@ -827,13 +846,24 @@ def _writable(entities: list[types.MessageEntity], *, text: str) -> list[types.M
         return entities
 
     cuts: dict[int, set[int]] = {index: set() for index in own}
+    uncut_wrong: int | None = None
 
     while True:
         pieces = [
             _pieces(entity, cuts=cuts.get(index, set())) for index, entity in enumerate(entities)
         ]
         written = [piece for group in pieces for piece in group]
-        misread: set[int] = own.keys() & _misread(_write(text, entities=written), pieces=pieces)
+        read = _read_back(
+            _write(text, entities=written),
+            pieces=pieces,
+            text=text,
+        )
+        wrong: int = len(read.misread) + sum(not group for group in pieces) + (not read.text_kept)
+
+        if uncut_wrong is None:
+            uncut_wrong = wrong
+
+        misread: set[int] = own.keys() & read.misread
         more: dict[int, set[int]] = {index: own[index] - cuts[index] for index in misread}
 
         if not any(more.values()):
@@ -855,7 +885,7 @@ def _writable(entities: list[types.MessageEntity], *, text: str) -> list[types.M
         grown = any(more.values())
 
         if not grown:
-            return written
+            return entities if wrong > uncut_wrong else written
 
 
 def _write(text: str, *, entities: list[types.MessageEntity]) -> str:
