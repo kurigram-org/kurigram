@@ -2526,6 +2526,39 @@ _ROUND_TRIP_CORPUS: Final[tuple[pytest.ParameterSet, ...]] = (
         id="line-break-spoilers-on-two-lines-dropped-keep-an-expandable-quote-whole",
     ),
     pytest.param(
+        "a\n\nb",
+        [
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.BLOCKQUOTE,
+                offset=0,
+                length=2,
+                expandable=True,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.SPOILER,
+                offset=1,
+                length=2,
+            ),
+            pyrogram.types.MessageEntity(
+                type=pyrogram.enums.MessageEntityType.SPOILER,
+                offset=2,
+                length=2,
+            ),
+        ],
+        [
+            pyrogram.raw.types.MessageEntityBlockquote(
+                offset=0,
+                length=2,
+                collapsed=True,
+            ),
+            pyrogram.raw.types.MessageEntitySpoiler(
+                offset=3,
+                length=1,
+            ),
+        ],
+        id="line-break-spoilers-past-an-expandable-quote-cut-keep-the-quote-whole",
+    ),
+    pytest.param(
         "a\nb\nc\nd",
         [
             pyrogram.types.MessageEntity(
