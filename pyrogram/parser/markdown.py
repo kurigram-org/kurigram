@@ -704,9 +704,7 @@ def _piece(entity: types.MessageEntity, *, start: int, end: int) -> types.Messag
 
 
 def _newline_cuts(positions: Iterable[int], *, text: str) -> set[int]:
-    return {
-        position for position in positions if 0 <= position < len(text) and text[position] == "\n"
-    }
+    return {position for position in positions if position < len(text) and text[position] == "\n"}
 
 
 def _own_cuts(
@@ -723,9 +721,14 @@ def _own_cuts(
     expandable = [quote for quote in quotes if quote.expandable]
 
     if spec is SPOILER:
+        opening: str = text[start:end]
+        breaks: int = len(opening) - len(opening.lstrip("\n"))
         candidates = [quote.offset + quote.length for quote in expandable]
         candidates.extend(
-            start for quote in expandable if quote.offset < start < quote.offset + quote.length
+            position
+            for quote in expandable
+            if quote.offset < start < quote.offset + quote.length
+            for position in range(start, start + breaks)
         )
 
     elif spec is CODE:
@@ -805,11 +808,7 @@ def _misread(markup: str, *, entities: list[types.MessageEntity]) -> set[int]:
         )
     )
 
-    got = {
-        (type(entity).__name__, entity.offset, entity.length)
-        for entity in read.entities
-        if entity.length
-    }
+    got = {(type(entity).__name__, entity.offset, entity.length) for entity in read.entities}
 
     return {
         index
@@ -830,10 +829,12 @@ def _writable(entities: list[types.MessageEntity], *, text: str) -> list[types.M
       spoiler's `||` is read as that end, a code run or a link label swallows it;
     - code holding the newline before a quote or a fence: the marker or the fence must
       open its line, and inside a code run it is text;
-    - a spoiler opening on a line break inside an expandable quote: its `||` can end the
-      line there and be read as the end of the quote.
+    - a spoiler opening on line breaks inside an expandable quote: its `||` can end the
+      line there and be read as the end of the quote, so it loses every break it opens
+      with, and a spoiler of nothing else is dropped.
 
-    At most two writes and one read, so the cost stays linear in the message.
+    At most two writes and one read; a message that needs a cut also pays a pass over
+    every pair of its entities.
     """
     quotes = [entity for entity in entities if spec_for_type(entity.type) is BLOCKQUOTE]
     fences = [entity for entity in entities if spec_for_type(entity.type) is PRE]
