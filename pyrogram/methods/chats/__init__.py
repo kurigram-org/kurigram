@@ -92,6 +92,7 @@ from .set_upgraded_gift_colors import SetUpgradedGiftColors
 from .toggle_folder_tags import ToggleFolderTags
 from .toggle_forum_topics import ToggleForumTopics
 from .reopen_forum_topic import ReopenForumTopic, ReopenGeneralForumTopic
+from .reorder_active_usernames import ReorderActiveUsernames
 from .toggle_join_to_send import ToggleJoinToSend
 from .unhide_general_forum_topic import UnhideGeneralForumTopic
 from .hide_general_forum_topic import HideGeneralForumTopic
@@ -198,5 +199,6 @@ class Chats(
     GetSendAsChats,
     SetSendAsChat,
     SetChatProtectedContent,
+    ReorderActiveUsernames,
 ):
     pass
