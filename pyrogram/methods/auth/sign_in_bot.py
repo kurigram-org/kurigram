@@ -21,7 +21,7 @@ from __future__ import annotations as _annotations
 import logging
 
 import pyrogram
-from pyrogram import raw, types, utils
+from pyrogram import raw, types
 from pyrogram.errors import UserMigrate
 
 log = logging.getLogger(__name__)
@@ -73,4 +73,4 @@ class SignInBot:
                 await self.storage.user_id(r.user.id)
                 await self.storage.is_bot(True)
 
-                return utils.require_parsed(await types.User._parse(self, r.user))
+                return await types.User._parse(self, r.user)

@@ -59,13 +59,17 @@ class FoundContacts(Object):
             peer_id = utils.get_raw_peer_id(result)
             peer = users.get(peer_id) or chats.get(peer_id)
 
-            my_results.append(await types.Chat._parse_chat(client, peer))
+            my_results.append(
+                await types.Chat._parse_chat(client, peer) if peer is not None else None
+            )
 
         for result in found.results:
             peer_id = utils.get_raw_peer_id(result)
             peer = users.get(peer_id) or chats.get(peer_id)
 
-            global_results.append(await types.Chat._parse_chat(client, peer))
+            global_results.append(
+                await types.Chat._parse_chat(client, peer) if peer is not None else None
+            )
 
         return FoundContacts(
             my_results=types.List(my_results) or None,

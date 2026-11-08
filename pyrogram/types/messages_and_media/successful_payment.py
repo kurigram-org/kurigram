@@ -124,7 +124,9 @@ class SuccessfulPayment(Object):
                     name=getattr(payment_info, "name", None),
                     phone_number=getattr(payment_info, "phone", None),
                     email=getattr(payment_info, "email", None),
-                    shipping_address=types.ShippingAddress._parse(payment_info.shipping_address),
+                    shipping_address=types.ShippingAddress._parse(payment_info.shipping_address)
+                    if payment_info.shipping_address is not None
+                    else None,
                 )
 
         return SuccessfulPayment(

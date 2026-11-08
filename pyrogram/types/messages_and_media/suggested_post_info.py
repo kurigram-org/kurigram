@@ -59,10 +59,7 @@ class SuggestedPostInfo(Object):
         self.state = state
 
     @staticmethod
-    def _parse(suggested_post: raw.types.SuggestedPost) -> SuggestedPostInfo | None:
-        if not suggested_post:
-            return None
-
+    def _parse(suggested_post: raw.types.SuggestedPost) -> SuggestedPostInfo:
         state = None
 
         if suggested_post.accepted:
@@ -73,7 +70,9 @@ class SuggestedPostInfo(Object):
             state = enums.SuggestedPostState.PENDING
 
         return SuggestedPostInfo(
-            price=types.SuggestedPostPrice._parse(suggested_post.price),
+            price=types.SuggestedPostPrice._parse(suggested_post.price)
+            if suggested_post.price is not None
+            else None,
             send_date=utils.timestamp_to_datetime(suggested_post.schedule_date),
             state=state,
         )

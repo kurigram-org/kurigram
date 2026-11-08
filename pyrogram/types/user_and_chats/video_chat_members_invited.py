@@ -41,6 +41,9 @@ class VideoChatMembersInvited(Object):
     async def _parse(
         client, action: raw.types.MessageActionInviteToGroupCall, users: dict[int, raw.types.User]
     ) -> VideoChatMembersInvited:
-        users = [await types.User._parse(client, users[i]) for i in action.users]
-
-        return VideoChatMembersInvited(users=users)
+        return VideoChatMembersInvited(
+            users=[
+                await types.User._parse(client, raw_user) if raw_user is not None else None
+                for raw_user in map(users.get, action.users)
+            ]
+        )

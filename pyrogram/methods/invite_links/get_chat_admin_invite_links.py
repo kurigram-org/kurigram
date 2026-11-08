@@ -96,12 +96,10 @@ class GetChatAdminInviteLinks:
             offset_link = r.invites[-1].link
 
             for i in r.invites:
-                invite_link = await types.ChatInviteLink._parse(self, i, users)
-
-                if invite_link is None:
+                if not isinstance(i, raw.types.ChatInviteExported):
                     continue
 
-                yield invite_link
+                yield await types.ChatInviteLink._parse(self, i, users)
 
                 current += 1
 

@@ -161,10 +161,20 @@ async def parse_deleted_messages(client, update, users, chats) -> list[types.Mes
         chat_id = get_raw_peer_id(peer)
         if chat_id:
             if isinstance(peer, raw.types.PeerUser):
-                chat = await types.Chat._parse_user_chat(client, users[chat_id])
+                raw_user = users.get(chat_id)
+                chat = (
+                    await types.Chat._parse_user_chat(client, raw_user)
+                    if raw_user is not None
+                    else None
+                )
 
             elif isinstance(peer, raw.types.PeerChat):
-                chat = await types.Chat._parse_chat_chat(client, chats[chat_id])
+                raw_chat = chats.get(chat_id)
+                chat = (
+                    await types.Chat._parse_chat_chat(client, raw_chat)
+                    if raw_chat is not None
+                    else None
+                )
 
             else:
                 chat = await types.Chat._parse_channel_chat(client, chats[chat_id])

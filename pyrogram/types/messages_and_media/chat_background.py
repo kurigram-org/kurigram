@@ -132,10 +132,7 @@ class ChatBackground(Object):
         background: raw.base.WallPaper,
         is_same: bool | None = None,
         only_for_self: bool | None = None,
-    ) -> ChatBackground | None:
-        if not background:
-            return None
-
+    ) -> ChatBackground:
         settings = getattr(background, "settings", None)
         document = None
 

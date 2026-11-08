@@ -53,7 +53,7 @@ class MyBoost(Object):
         self,
         *,
         slot: int,
-        chat: types.Chat,
+        chat: types.Chat | None,
         date: datetime,
         expire_date: datetime,
         cooldown_until_date: datetime,
@@ -70,10 +70,16 @@ class MyBoost(Object):
     async def _parse(client: pyrogram.Client, my_boost: raw.types.MyBoost, users, chats) -> MyBoost:
         peer_id = utils.get_raw_peer_id(my_boost.peer)
 
+        chat: types.Chat | None = None
+
         if isinstance(my_boost.peer, raw.types.PeerChannel):
-            chat = await types.Chat._parse_channel_chat(client, chats.get(peer_id, None))
+            raw_chat = chats.get(peer_id)
+            if raw_chat is not None:
+                chat = await types.Chat._parse_channel_chat(client, raw_chat)
         else:
-            chat = await types.Chat._parse_user_chat(client, users.get(peer_id, None))
+            raw_user = users.get(peer_id)
+            if raw_user is not None:
+                chat = await types.Chat._parse_user_chat(client, raw_user)
 
         return MyBoost(
             slot=my_boost.slot,

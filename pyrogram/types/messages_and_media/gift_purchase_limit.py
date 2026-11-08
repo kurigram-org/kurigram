@@ -39,8 +39,5 @@ class GiftPurchaseLimit(Object):
         self.remaining_count = remaining_count
 
     @staticmethod
-    def _parse(total: int, remains: int) -> GiftPurchaseLimit | None:
-        if total is None or total <= 0:
-            return None
-
+    def _parse(total: int, *, remains: int | None) -> GiftPurchaseLimit:
         return GiftPurchaseLimit(total_count=total, remaining_count=remains)

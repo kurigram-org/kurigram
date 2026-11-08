@@ -67,14 +67,23 @@ class UpgradedGiftOriginalDetails(Object):
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
     ) -> UpgradedGiftOriginalDetails:
-        sender_id = utils.get_raw_peer_id(attr.sender_id)
-        recipient_id = utils.get_raw_peer_id(attr.recipient_id)
+        # User and channel ids overlap, so only a user peer is looked up among the users.
+        raw_sender = (
+            users.get(attr.sender_id.user_id)
+            if isinstance(attr.sender_id, raw.types.PeerUser)
+            else None
+        )
+        raw_receiver = (
+            users.get(attr.recipient_id.user_id)
+            if isinstance(attr.recipient_id, raw.types.PeerUser)
+            else None
+        )
 
         return UpgradedGiftOriginalDetails(
-            sender=await types.User._parse(client, users.get(sender_id) or chats.get(sender_id)),
-            receiver=await types.User._parse(
-                client, users.get(recipient_id) or chats.get(recipient_id)
-            ),
+            sender=await types.User._parse(client, raw_sender) if raw_sender is not None else None,
+            receiver=await types.User._parse(client, raw_receiver)
+            if raw_receiver is not None
+            else None,
             text=await types.FormattedText._parse(client, attr.message),
             date=utils.timestamp_to_datetime(attr.date),
         )

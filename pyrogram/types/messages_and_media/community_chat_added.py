@@ -43,6 +43,10 @@ class CommunityChatAdded(Object):
         action: raw.types.MessageActionChangeCommunity,
         chats: dict[int, raw.base.Chat],
     ) -> CommunityChatAdded:
+        raw_community = chats.get(action.community_id)
+
         return CommunityChatAdded(
-            community=await types.Community._parse(client, chats.get(action.community_id)),
+            community=await types.Community._parse(client, raw_community)
+            if isinstance(raw_community, (raw.types.Community, raw.types.CommunityForbidden))
+            else None,
         )

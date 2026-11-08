@@ -169,7 +169,7 @@ class Video(Object):
             file_size=video.size,
             date=utils.timestamp_to_datetime(video.date),
             ttl_seconds=ttl_seconds,
-            thumbs=types.Thumbnail._parse(client, video),
+            thumbs=types.Thumbnail._parse(client, video) or None,
             video_cover=types.Photo._parse(client, video_cover),
             video_start_timestamp=video_start_timestamp,
             alternative_videos=_alt_videos or None,

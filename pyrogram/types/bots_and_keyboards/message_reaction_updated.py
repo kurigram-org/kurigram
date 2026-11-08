@@ -93,7 +93,12 @@ class MessageReactionUpdated(Object, Update):
         raw_peer_id = utils.get_raw_peer_id(update.peer)
 
         if peer_id > 0:
-            chat = await types.Chat._parse_user_chat(client, users[raw_peer_id])
+            raw_user_chat = users.get(raw_peer_id)
+            chat = (
+                await types.Chat._parse_user_chat(client, raw_user_chat)
+                if raw_user_chat is not None
+                else None
+            )
         else:
             chat = await types.Chat._parse_chat(client, chats[raw_peer_id])
 
@@ -104,7 +109,8 @@ class MessageReactionUpdated(Object, Update):
         actor_peer_id = utils.get_peer_id(update.actor)
 
         if actor_peer_id > 0:
-            user = await types.User._parse(client, users[raw_actor_peer_id])
+            raw_user = users.get(raw_actor_peer_id)
+            user = await types.User._parse(client, raw_user) if raw_user is not None else None
         else:
             actor_chat = await types.Chat._parse_channel_chat(client, chats[raw_actor_peer_id])
 
@@ -116,9 +122,15 @@ class MessageReactionUpdated(Object, Update):
             actor_chat=actor_chat,
             date=utils.timestamp_to_datetime(update.date),
             old_reaction=[
-                types.Reaction._parse(client, reaction) for reaction in update.old_reactions
+                types.Reaction._parse(client, reaction)
+                if not isinstance(reaction, raw.types.ReactionEmpty)
+                else None
+                for reaction in update.old_reactions
             ],
             new_reaction=[
-                types.Reaction._parse(client, reaction) for reaction in update.new_reactions
+                types.Reaction._parse(client, reaction)
+                if not isinstance(reaction, raw.types.ReactionEmpty)
+                else None
+                for reaction in update.new_reactions
             ],
         )

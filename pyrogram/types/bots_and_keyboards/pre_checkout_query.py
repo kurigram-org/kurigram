@@ -86,9 +86,13 @@ class PreCheckoutQuery(Object, Update):
         except (UnicodeDecodeError, AttributeError):
             invoice_payload = pre_checkout_query.payload
 
+        raw_from_user = users.get(pre_checkout_query.user_id)
+
         return PreCheckoutQuery(
             id=str(pre_checkout_query.query_id),
-            from_user=await types.User._parse(client, users[pre_checkout_query.user_id]),
+            from_user=await types.User._parse(client, raw_from_user)
+            if raw_from_user is not None
+            else None,
             currency=pre_checkout_query.currency,
             total_amount=pre_checkout_query.total_amount,
             invoice_payload=invoice_payload,
@@ -99,7 +103,9 @@ class PreCheckoutQuery(Object, Update):
                 email=pre_checkout_query.info.email,
                 shipping_address=types.ShippingAddress._parse(
                     pre_checkout_query.info.shipping_address
-                ),
+                )
+                if pre_checkout_query.info.shipping_address is not None
+                else None,
             )
             if pre_checkout_query.info
             else None,

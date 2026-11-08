@@ -168,3 +168,428 @@ def test_an_entity_offset_still_indexes_the_text_that_entity_marks() -> None:
     text = Str("😀 bold").init([entity])
 
     assert text[entity.offset : entity.offset + entity.length] == "bold"
+
+
+@pytest.mark.asyncio
+async def test_a_basic_group_message_sent_as_a_channel_names_the_channel() -> None:
+    group_id: int = 5
+    group = raw.types.Chat(
+        id=group_id,
+        title="Group",
+        photo=raw.types.ChatPhotoEmpty(),
+        participants_count=2,
+        date=DATE,
+        version=1,
+    )
+    raw_message = raw.types.Message(
+        id=1,
+        peer_id=raw.types.PeerChat(chat_id=group_id),
+        from_id=raw.types.PeerChannel(channel_id=CHANNEL_ID),
+        date=DATE,
+        message="hi",
+        entities=[],
+        restriction_reason=[],
+    )
+    channel = monoforum_chat()
+    channel.monoforum = False
+
+    parsed = await types.Message._parse(
+        client(),
+        raw_message,
+        users={},
+        chats={group_id: group, CHANNEL_ID: channel},
+    )
+
+    assert (parsed.chat.type, parsed.sender_chat.type) == (
+        enums.ChatType.GROUP,
+        enums.ChatType.CHANNEL,
+    )
+
+
+@pytest.mark.asyncio
+async def test_an_unknown_user_sender_is_not_taken_for_the_group() -> None:
+    # The sender's id was looked up in the map picked by the group's own peer
+    #  type, so a user with the same id as the group named the group as the sender.
+    group_id: int = 5
+    group = raw.types.Chat(
+        id=group_id,
+        title="Group",
+        photo=raw.types.ChatPhotoEmpty(),
+        participants_count=2,
+        date=DATE,
+        version=1,
+    )
+    raw_message = raw.types.Message(
+        id=1,
+        peer_id=raw.types.PeerChat(chat_id=group_id),
+        from_id=raw.types.PeerUser(user_id=group_id),
+        date=DATE,
+        message="hi",
+        entities=[],
+        restriction_reason=[],
+    )
+
+    parsed = await types.Message._parse(
+        client(),
+        raw_message,
+        users={},
+        chats={group_id: group},
+    )
+
+    assert (parsed.chat.type, parsed.sender_chat) == (enums.ChatType.GROUP, None)
+
+
+def broadcast_channel() -> raw.types.Channel:
+    channel = monoforum_chat()
+    channel.monoforum = False
+
+    return channel
+
+
+def raw_message_of_kind(
+    kind: str,
+    *,
+    from_id: raw.base.Peer | None,
+) -> raw.types.Message | raw.types.MessageService | raw.types.EphemeralMessage:
+    peer_id = raw.types.PeerChannel(channel_id=CHANNEL_ID)
+
+    if kind == "message":
+        return raw.types.Message(
+            id=1,
+            peer_id=peer_id,
+            from_id=from_id,
+            date=DATE,
+            message="hi",
+            entities=[],
+            restriction_reason=[],
+        )
+
+    if kind == "service":
+        return raw.types.MessageService(
+            id=1,
+            peer_id=peer_id,
+            from_id=from_id,
+            date=DATE,
+            action=raw.types.MessageActionChatEditTitle(title="Channel"),
+        )
+
+    # An ephemeral message always names its sender.
+    return raw.types.EphemeralMessage(
+        id=1,
+        from_id=from_id or peer_id,
+        peer_id=peer_id,
+        receiver_id=USER_ID,
+        date=DATE,
+        message="hi",
+    )
+
+
+@pytest.mark.parametrize("kind", ["message", "service", "ephemeral"])
+@pytest.mark.parametrize(
+    ("from_id", "expected"),
+    [
+        pytest.param(None, (None, enums.ChatType.CHANNEL), id="channel"),
+        pytest.param(
+            raw.types.PeerUser(user_id=CHANNEL_ID),
+            (CHANNEL_ID, None),
+            id="user",
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_the_sender_is_looked_up_by_its_own_peer_type(
+    kind: str,
+    *,
+    from_id: raw.base.Peer | None,
+    expected: tuple[int | None, enums.ChatType | None],
+) -> None:
+    # User and channel ids overlap, so a lookup by raw id alone took a channel for the user.
+    user = raw.types.User(
+        id=CHANNEL_ID,
+        first_name="User",
+        access_hash=0,
+    )
+
+    parsed = await types.Message._parse(
+        client(),
+        raw_message_of_kind(kind, from_id=from_id),
+        users={CHANNEL_ID: user},
+        chats={CHANNEL_ID: broadcast_channel()},
+    )
+
+    assert (
+        parsed.from_user.id if parsed.from_user else None,
+        parsed.sender_chat.type if parsed.sender_chat else None,
+    ) == expected
+
+
+@pytest.mark.parametrize(
+    "kind",
+    [
+        pytest.param("message", id="message"),
+        pytest.param("service", id="service"),
+        pytest.param("ephemeral", id="ephemeral"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_the_chat_is_the_peer_and_not_the_sender(kind: str) -> None:
+    user = raw.types.User(
+        id=USER_ID,
+        first_name="User",
+        access_hash=0,
+    )
+
+    parsed = await types.Message._parse(
+        client(),
+        raw_message_of_kind(kind, from_id=raw.types.PeerUser(user_id=USER_ID)),
+        users={USER_ID: user},
+        chats={CHANNEL_ID: broadcast_channel()},
+    )
+
+    assert parsed.chat.type == enums.ChatType.CHANNEL
+
+
+@pytest.mark.parametrize(
+    "kind",
+    [
+        pytest.param("message", id="message"),
+        pytest.param("service", id="service"),
+        pytest.param("ephemeral", id="ephemeral"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_a_sender_answered_as_user_empty_is_left_out(kind: str) -> None:
+    # Telegram answers `userEmpty` for a sender with no user behind it.
+    #  The id differs from `USER_ID`, which an ephemeral message names as its receiver.
+    sender_id: int = USER_ID + 1
+
+    parsed = await types.Message._parse(
+        client(),
+        raw_message_of_kind(kind, from_id=raw.types.PeerUser(user_id=sender_id)),
+        users={sender_id: raw.types.UserEmpty(id=sender_id)},
+        chats={CHANNEL_ID: broadcast_channel()},
+    )
+
+    assert (parsed.chat.type, parsed.from_user, parsed.sender_chat) == (
+        enums.ChatType.CHANNEL,
+        None,
+        None,
+    )
+
+
+def raw_private_message_of_kind(
+    kind: str,
+    *,
+    sender_id: int,
+    peer_id: int,
+) -> raw.types.MessageService | raw.types.EphemeralMessage:
+    if kind == "service":
+        return raw.types.MessageService(
+            id=1,
+            peer_id=raw.types.PeerUser(user_id=peer_id),
+            from_id=raw.types.PeerUser(user_id=sender_id),
+            date=DATE,
+            action=raw.types.MessageActionGramTransfer(
+                transaction_id="tx",
+                peer_address="address",
+                amount=1,
+            ),
+        )
+
+    return raw.types.EphemeralMessage(
+        id=1,
+        from_id=raw.types.PeerUser(user_id=sender_id),
+        peer_id=raw.types.PeerUser(user_id=peer_id),
+        receiver_id=sender_id,
+        date=DATE,
+        message="hi",
+    )
+
+
+@pytest.mark.parametrize(
+    "kind",
+    [
+        pytest.param("service", id="ton-wallet-transfer"),
+        pytest.param("ephemeral", id="ephemeral-receiver"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_a_user_fetched_as_user_empty_is_left_out_of_every_field(
+    kind: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The sender is missing from `users`, so the parser asks `users.getUsers`, which answers
+    #  `userEmpty` for it. Fields other than the sender read that entry too.
+    sender_id: int = USER_ID + 1
+    peer = raw.types.User(
+        id=USER_ID,
+        first_name="User",
+        access_hash=0,
+    )
+    app = client()
+
+    async def resolve_peer(peer_id: int) -> raw.types.InputPeerUser:
+        return raw.types.InputPeerUser(
+            user_id=peer_id,
+            access_hash=0,
+        )
+
+    async def invoke(query: raw.functions.users.GetUsers) -> list[raw.base.User]:
+        return [raw.types.UserEmpty(id=sender_id), peer]
+
+    monkeypatch.setattr(app, "resolve_peer", resolve_peer)
+    monkeypatch.setattr(app, "invoke", invoke)
+
+    parsed = await types.Message._parse(
+        app,
+        raw_private_message_of_kind(
+            kind,
+            sender_id=sender_id,
+            peer_id=USER_ID,
+        ),
+        users={USER_ID: peer},
+        chats={},
+    )
+
+    other = parsed.ton_wallet_transfer.sender if kind == "service" else parsed.receiver_user
+    assert (parsed.chat.id, parsed.from_user, other) == (USER_ID, None, None)
+
+
+@pytest.mark.parametrize(
+    ("via", "expected"),
+    [
+        pytest.param(raw.types.PeerUser(user_id=CHANNEL_ID), (CHANNEL_ID, None), id="user"),
+        pytest.param(
+            raw.types.PeerChannel(channel_id=CHANNEL_ID),
+            (None, enums.ChatType.CHANNEL),
+            id="channel",
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_the_guest_bot_caller_is_looked_up_by_its_own_peer_type(
+    *,
+    via: raw.base.Peer,
+    expected: tuple[int | None, enums.ChatType | None],
+) -> None:
+    # The caller's raw id was read from both maps, so a user sharing it with a channel
+    #  named the channel as the calling chat too, and the other way round.
+    user = raw.types.User(
+        id=CHANNEL_ID,
+        first_name="User",
+        access_hash=0,
+    )
+    raw_message = raw.types.Message(
+        id=1,
+        peer_id=raw.types.PeerChannel(channel_id=CHANNEL_ID),
+        date=DATE,
+        message="hi",
+        entities=[],
+        restriction_reason=[],
+        guestchat_via_from=via,
+    )
+
+    parsed = await types.Message._parse(
+        client(),
+        raw_message,
+        users={CHANNEL_ID: user},
+        chats={CHANNEL_ID: broadcast_channel()},
+    )
+
+    assert (
+        parsed.guest_bot_caller_user.id if parsed.guest_bot_caller_user else None,
+        parsed.guest_bot_caller_chat.type if parsed.guest_bot_caller_chat else None,
+    ) == expected
+
+
+@pytest.mark.parametrize(
+    "raw_message",
+    [
+        pytest.param(
+            raw.types.Message(
+                id=1,
+                peer_id=raw.types.PeerChannel(channel_id=CHANNEL_ID),
+                date=DATE,
+                message="see https://example.com/page",
+                entities=[],
+                restriction_reason=[],
+                invert_media=True,
+            ),
+            id="message",
+        ),
+        pytest.param(
+            raw.types.EphemeralMessage(
+                id=1,
+                from_id=raw.types.PeerChannel(channel_id=CHANNEL_ID),
+                peer_id=raw.types.PeerChannel(channel_id=CHANNEL_ID),
+                receiver_id=USER_ID,
+                date=DATE,
+                message="see https://example.com/page",
+            ),
+            id="ephemeral",
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_a_url_without_a_preview_gives_disabled_preview_options(
+    raw_message: raw.types.Message | raw.types.EphemeralMessage,
+) -> None:
+    # `LinkPreviewOptions._parse` maps only a web page, so the message parser builds
+    #  the disabled options for a URL Telegram sent no preview for.
+    parsed = await types.Message._parse(
+        client(),
+        raw_message,
+        users={},
+        chats={CHANNEL_ID: broadcast_channel()},
+    )
+
+    options = parsed.link_preview_options
+    assert (options.is_disabled, options.url, options.show_above_text) == (
+        True,
+        "https://example.com/page",
+        True if isinstance(raw_message, raw.types.Message) else None,
+    )
+
+
+@pytest.mark.parametrize(
+    ("forward_header", "expected"),
+    [
+        pytest.param(
+            raw.types.MessageFwdHeader(
+                date=DATE,
+                imported=True,
+                post_author="Importer",
+            ),
+            (types.MessageOriginImport, "Importer"),
+            id="imported",
+        ),
+        pytest.param(raw.types.MessageFwdHeader(date=DATE), None, id="no-origin"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_a_forward_origin_is_parsed_only_for_a_header_naming_one(
+    *,
+    forward_header: raw.types.MessageFwdHeader,
+    expected: tuple[type[types.MessageOrigin], str] | None,
+) -> None:
+    # `MessageOrigin._parse` falls through to an import, so the caller passes only a
+    #  header with a sender, a sender name or the import flag.
+    raw_message = raw.types.Message(
+        id=1,
+        peer_id=raw.types.PeerChannel(channel_id=CHANNEL_ID),
+        date=DATE,
+        message="hi",
+        entities=[],
+        restriction_reason=[],
+        fwd_from=forward_header,
+    )
+
+    parsed = await types.Message._parse(
+        client(),
+        raw_message,
+        users={},
+        chats={CHANNEL_ID: broadcast_channel()},
+    )
+
+    origin = parsed.forward_origin
+    assert ((type(origin), origin.sender_user_name) if origin is not None else None) == expected

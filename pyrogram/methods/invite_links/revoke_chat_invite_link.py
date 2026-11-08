@@ -64,4 +64,7 @@ class RevokeChatInviteLink:
             else r.invite
         )
 
+        if not isinstance(chat_invite, raw.types.ChatInviteExported):
+            return None
+
         return await types.ChatInviteLink._parse(self, chat_invite, users)

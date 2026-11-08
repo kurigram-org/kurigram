@@ -65,10 +65,10 @@ class GameHighScore(Object):
 
     @staticmethod
     async def _parse_action(client, service: raw.types.MessageService, users: dict):
+        raw_user = users.get(utils.get_raw_peer_id(service.from_id or service.peer_id))
+
         return GameHighScore(
-            user=await types.User._parse(
-                client, users[utils.get_raw_peer_id(service.from_id or service.peer_id)]
-            ),
+            user=await types.User._parse(client, raw_user) if raw_user is not None else None,
             score=service.action.score,
             client=client,
         )

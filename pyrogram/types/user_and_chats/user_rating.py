@@ -65,10 +65,7 @@ class UserRating(Object):
         self.next_level_rating = next_level_rating
 
     @staticmethod
-    def _parse(rating: raw.types.StarsRating) -> UserRating | None:
-        if not rating:
-            return None
-
+    def _parse(rating: raw.types.StarsRating) -> UserRating:
         return UserRating(
             level=rating.level,
             is_maximum_level_reached=rating.next_level_stars == 0 and rating.level > 0,

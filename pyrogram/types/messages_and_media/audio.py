@@ -119,6 +119,6 @@ class Audio(Object):
             file_size=audio.size,
             file_name=file_name,
             date=utils.timestamp_to_datetime(audio.date),
-            thumbs=types.Thumbnail._parse(client, audio),
+            thumbs=types.Thumbnail._parse(client, audio) or None,
             client=client,
         )

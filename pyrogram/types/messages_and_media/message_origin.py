@@ -53,10 +53,7 @@ class MessageOrigin(Object):
         fwd_from: raw.types.MessageFwdHeader,
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
-    ) -> MessageOrigin | None:
-        if not fwd_from:
-            return None
-
+    ) -> MessageOrigin:
         forward_date = utils.timestamp_to_datetime(fwd_from.date)
 
         if fwd_from.from_id:
@@ -65,31 +62,43 @@ class MessageOrigin(Object):
             peer_type = utils.get_peer_type(peer_id)
 
             if peer_type == "user":
+                raw_user = users.get(raw_peer_id)
+
                 return types.MessageOriginUser(
                     date=forward_date,
-                    sender_user=await types.User._parse(client, users.get(raw_peer_id)),
+                    sender_user=await types.User._parse(client, raw_user)
+                    if raw_user is not None
+                    else None,
                 )
             else:
+                raw_chat = chats.get(raw_peer_id)
+                parsed_chat = (
+                    await types.Chat._parse_channel_chat(client, raw_chat)
+                    if raw_chat is not None
+                    else None
+                )
+
                 if fwd_from.channel_post:
                     return types.MessageOriginChannel(
                         date=forward_date,
-                        chat=await types.Chat._parse_channel_chat(client, chats.get(raw_peer_id)),
+                        chat=parsed_chat,
                         message_id=fwd_from.channel_post,
                         author_signature=fwd_from.post_author,
                     )
                 else:
                     return types.MessageOriginChat(
                         date=forward_date,
-                        sender_chat=await types.Chat._parse_channel_chat(
-                            client, chats.get(raw_peer_id)
-                        ),
+                        sender_chat=parsed_chat,
                         author_signature=fwd_from.post_author,
                     )
-        elif fwd_from.from_name:
+
+        if fwd_from.from_name:
             return types.MessageOriginHiddenUser(
                 date=forward_date, sender_user_name=fwd_from.from_name
             )
-        elif fwd_from.imported:
-            return types.MessageOriginImport(
-                date=forward_date, sender_user_name=fwd_from.post_author
-            )
+
+        # Callers pass only a header that names its origin, so what is left is an import.
+        return types.MessageOriginImport(
+            date=forward_date,
+            sender_user_name=fwd_from.post_author,
+        )

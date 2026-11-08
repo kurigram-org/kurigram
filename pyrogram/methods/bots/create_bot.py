@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types, utils
+from pyrogram import raw, types
 
 
 class CreateBot:
@@ -61,4 +61,4 @@ class CreateBot:
             )
         )
 
-        return utils.require_parsed(await types.User._parse(self, r))
+        return await types.User._parse(self, r)

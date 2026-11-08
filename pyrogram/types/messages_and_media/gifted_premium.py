@@ -97,8 +97,8 @@ class GiftedPremium(Object):
     async def _parse(
         client,
         action: raw.types.MessageActionGiftPremium,
-        gifter: raw.base.User,
-        receiver: raw.base.User,
+        gifter: raw.base.User | None,
+        receiver: raw.base.User | None,
         users: dict[int, raw.base.User],
     ) -> GiftedPremium:
         raw_stickers = await client.invoke(
@@ -112,8 +112,8 @@ class GiftedPremium(Object):
         ).values()
 
         return GiftedPremium(
-            gifter=await types.User._parse(client, gifter),
-            receiver=await types.User._parse(client, receiver),
+            gifter=await types.User._parse(client, gifter) if gifter is not None else None,
+            receiver=await types.User._parse(client, receiver) if receiver is not None else None,
             currency=action.currency,
             amount=action.amount,
             cryptocurrency=getattr(action, "crypto_currency", None),

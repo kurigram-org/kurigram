@@ -258,7 +258,9 @@ class RichBlock(Object):
             )
         if isinstance(rich_block, raw.types.PageBlockMap):
             return RichBlockMap(
-                location=types.Location._parse(rich_block.geo),
+                location=types.Location._parse(rich_block.geo)
+                if isinstance(rich_block.geo, raw.types.GeoPoint)
+                else None,
                 zoom=rich_block.zoom,
                 width=rich_block.w,
                 height=rich_block.h,
@@ -418,12 +420,14 @@ class RichBlockCaption(RichBlock):
         self.credit = credit
 
     @staticmethod
-    async def _parse_caption(client, caption: raw.base.PageCaption) -> RichBlockCaption | None:
-        if caption is not None:
-            return RichBlockCaption(
-                text=await types.RichText._parse(client, caption.text),
-                credit=await types.RichText._parse(client, caption.credit),
-            )
+    async def _parse_caption(
+        client: pyrogram.Client,
+        caption: raw.types.PageCaption,
+    ) -> RichBlockCaption:
+        return RichBlockCaption(
+            text=await types.RichText._parse(client, caption.text),
+            credit=await types.RichText._parse(client, caption.credit),
+        )
 
     async def write(self, client: pyrogram.Client) -> raw.types.PageCaption:
         return raw.types.PageCaption(
@@ -566,7 +570,7 @@ class RichBlockListItem(RichBlock):
         documents: dict[int, raw.base.Document] | None = None,
         users: dict[int, raw.base.User] | None = None,
         chats: dict[int, raw.base.Chat] | None = None,
-    ) -> RichBlockListItem | None:
+    ) -> RichBlockListItem:
         if isinstance(list_item, raw.types.PageListItemBlocks):
             blocks = types.List(
                 [
@@ -621,7 +625,7 @@ class RichBlockListItem(RichBlock):
             else:
                 label = list_item.num
         else:
-            return None
+            raise TypeError(f"Unexpected {type(list_item).__name__}")
 
         return RichBlockListItem(
             label=label,

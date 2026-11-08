@@ -62,7 +62,7 @@ class UsersShared(Object):
             if isinstance(action, raw.types.MessageActionRequestedPeer):
                 raw_user = users.get(utils.get_raw_peer_id(peer))
 
-                if raw_user:
+                if raw_user is not None:
                     requested_users.append(await types.User._parse(client, raw_user))
                 else:
                     requested_users.append(types.User(id=peer_id, client=client))

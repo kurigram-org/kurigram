@@ -57,7 +57,10 @@ class ManagedBotUpdated(Object, Update):
         if not isinstance(managed_bot_updated, raw.types.UpdateManagedBot):
             return
 
+        raw_user = users.get(managed_bot_updated.user_id)
+        raw_bot = users.get(managed_bot_updated.bot_id)
+
         return ManagedBotUpdated(
-            user=await types.User._parse(client, users.get(managed_bot_updated.user_id)),
-            bot=await types.User._parse(client, users.get(managed_bot_updated.bot_id)),
+            user=await types.User._parse(client, raw_user) if raw_user is not None else None,
+            bot=await types.User._parse(client, raw_bot) if raw_bot is not None else None,
         )

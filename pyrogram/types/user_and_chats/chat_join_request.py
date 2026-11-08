@@ -85,12 +85,18 @@ class ChatJoinRequest(Object, Update):
     ) -> ChatJoinRequest:
         chat_id = utils.get_raw_peer_id(update.peer)
 
+        raw_from_user = users.get(update.user_id)
+
         return ChatJoinRequest(
             chat=await types.Chat._parse_chat(client, chats[chat_id]),
-            from_user=await types.User._parse(client, users[update.user_id]),
+            from_user=await types.User._parse(client, raw_from_user)
+            if raw_from_user is not None
+            else None,
             date=utils.timestamp_to_datetime(update.date),
             bio=update.about,
-            invite_link=await types.ChatInviteLink._parse(client, update.invite, users),
+            invite_link=await types.ChatInviteLink._parse(client, update.invite, users)
+            if isinstance(update.invite, raw.types.ChatInviteExported)
+            else None,
             query_id=str(update.query_id) if update.query_id else None,
             client=client,
         )

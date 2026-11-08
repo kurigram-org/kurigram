@@ -119,7 +119,7 @@ class CallbackQuery(Object, Update):
                     message = await client.get_messages(chat_id=chat_id, message_ids=message_id)
                 except ChannelPrivate:
                     channel = chats.get(utils.get_raw_peer_id(callback_query.peer), None)
-                    if channel:
+                    if channel is not None:
                         message = types.Message(
                             id=message_id, chat=await types.Chat._parse_chat(client, channel)
                         )
@@ -151,9 +151,13 @@ class CallbackQuery(Object, Update):
             except (UnicodeDecodeError, AttributeError):
                 pass
 
+        raw_from_user = users.get(callback_query.user_id)
+
         return CallbackQuery(
             id=str(callback_query.query_id),
-            from_user=await types.User._parse(client, users[callback_query.user_id]),
+            from_user=await types.User._parse(client, raw_from_user)
+            if raw_from_user is not None
+            else None,
             message=message,
             inline_message_id=inline_message_id,
             chat_instance=str(callback_query.chat_instance)

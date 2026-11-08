@@ -53,8 +53,10 @@ class UserTonWalletAddress(Object):
         address: raw.types.WalletUserAddress,
         users: dict[int, raw.base.User],
     ) -> UserTonWalletAddress:
+        raw_user = users.get(address.user_id)
+
         return UserTonWalletAddress(
             wallet_address=address.address,
             public_key=address.public_key,
-            user=await types.User._parse(client, users.get(address.user_id)),
+            user=await types.User._parse(client, raw_user) if raw_user is not None else None,
         )
