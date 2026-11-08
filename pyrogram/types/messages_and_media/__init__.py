@@ -156,7 +156,6 @@ from .rich_text import (
     RichTextAnchorLink,
     RichTextBankCardNumber,
     RichTextBold,
-    RichTextTonAddress,
     RichTextBotCommand,
     RichTextButton,
     RichTextCashtag,
@@ -177,11 +176,10 @@ from .rich_text import (
     RichTextSubscript,
     RichTextSuperscript,
     RichTextTextMention,
+    RichTextTonAddress,
     RichTextUnderline,
     RichTextUrl,
 )
-from .ton_wallet_transfer import TonWalletTransfer
-from .ton_connect_request import TonConnectRequest
 from .saved_credentials import SavedCredentials
 from .screenshot_taken import ScreenshotTaken
 from .star_amount import StarAmount
@@ -201,6 +199,15 @@ from .suggested_post_price import SuggestedPostPrice, SuggestedPostPriceStar, Su
 from .suggested_post_refunded import SuggestedPostRefunded
 from .text_quote import TextQuote
 from .thumbnail import Thumbnail
+from .ton_connect_request import TonConnectRequest
+from .ton_connect_request_state import (
+    TonConnectRequestState,
+    TonConnectRequestStateAccepted,
+    TonConnectRequestStatePending,
+    TonConnectRequestStateRejected,
+)
+from .ton_wallet_transfer import TonWalletTransfer
+from .unpaid_messages_allowed_by_link import UnpaidMessagesAllowedByLink
 from .upgraded_gift_attribute_id import UpgradedGiftAttributeId
 from .upgraded_gift_attribute_id_backdrop import UpgradedGiftAttributeIdBackdrop
 from .upgraded_gift_attribute_id_model import UpgradedGiftAttributeIdModel
@@ -226,12 +233,6 @@ from .voice import Voice
 from .web_app_data import WebAppData
 from .web_page import WebPage
 from .write_access_allowed import WriteAccessAllowed
-from .ton_connect_request_state import (
-    TonConnectRequestState,
-    TonConnectRequestStatePending,
-    TonConnectRequestStateAccepted,
-    TonConnectRequestStateRejected,
-)
 
 __all__ = [
     "TonConnectRequestState",
@@ -264,6 +265,7 @@ __all__ = [
     "CommunityChatJoined",
     "CommunityChatRemoved",
     "TonWalletTransfer",
+    "UnpaidMessagesAllowedByLink",
     "TonConnectRequest",
     "Contact",
     "StickerSet",

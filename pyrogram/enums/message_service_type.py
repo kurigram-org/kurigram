@@ -250,3 +250,6 @@ class MessageServiceType(AutoName):
 
     TON_CONNECT_REQUEST = auto()
     "A request from a dApp was received through TON Connect"
+
+    UNPAID_MESSAGES_ALLOWED_BY_LINK = auto()
+    "The sender of the message used a link of the other user, which allows sending unpaid messages to the user"

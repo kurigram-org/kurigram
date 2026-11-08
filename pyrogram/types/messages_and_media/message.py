@@ -506,6 +506,9 @@ class Message(Object, Update):
         ton_connect_request (:obj:`~pyrogram.types.TonConnectRequest`, *optional*):
             Service message: a request from a dApp was received through TON Connect.
 
+        unpaid_messages_allowed_by_link (:obj:`~pyrogram.types.UnpaidMessagesAllowedByLink`, *optional*):
+            Service message: the sender of the message used a link of the other user, which allows sending unpaid messages to the user.
+
         premium_gift_code (:obj:`~pyrogram.types.PremiumGiftCode`, *optional*):
             Service message: premium gift code information.
 
@@ -810,6 +813,7 @@ class Message(Object, Update):
         community_chat_joined: types.CommunityChatJoined | None = None,
         ton_wallet_transfer: types.TonWalletTransfer | None = None,
         ton_connect_request: types.TonConnectRequest | None = None,
+        unpaid_messages_allowed_by_link: types.UnpaidMessagesAllowedByLink | None = None,
         premium_gift_code: types.PremiumGiftCode | None = None,
         gifted_premium: types.GiftedPremium | None = None,
         gifted_stars: types.GiftedStars | None = None,
@@ -1002,6 +1006,7 @@ class Message(Object, Update):
         self.community_chat_joined = community_chat_joined
         self.ton_wallet_transfer = ton_wallet_transfer
         self.ton_connect_request = ton_connect_request
+        self.unpaid_messages_allowed_by_link = unpaid_messages_allowed_by_link
         self.premium_gift_code = premium_gift_code
         self.gifted_premium = gifted_premium
         self.gifted_stars = gifted_stars
@@ -1161,6 +1166,7 @@ class Message(Object, Update):
         community_chat_joined = None
         ton_wallet_transfer = None
         ton_connect_request = None
+        unpaid_messages_allowed_by_link = None
 
         service_type = enums.MessageServiceType.UNSUPPORTED
 
@@ -1456,6 +1462,9 @@ class Message(Object, Update):
         elif isinstance(action, raw.types.MessageActionWalletTonConnectRequest):
             service_type = enums.MessageServiceType.TON_CONNECT_REQUEST
             ton_connect_request = await types.TonConnectRequest._parse(action)
+        elif isinstance(action, raw.types.MessageActionNoPaidMessagesTokenUsed):
+            service_type = enums.MessageServiceType.UNPAID_MESSAGES_ALLOWED_BY_LINK
+            unpaid_messages_allowed_by_link = types.UnpaidMessagesAllowedByLink()
 
         parsed_message = Message(
             id=message.id,
@@ -1537,6 +1546,7 @@ class Message(Object, Update):
             community_chat_joined=community_chat_joined,
             ton_wallet_transfer=ton_wallet_transfer,
             ton_connect_request=ton_connect_request,
+            unpaid_messages_allowed_by_link=unpaid_messages_allowed_by_link,
             reactions=await types.MessageReactions._parse(client, message.reactions, users, chats),
             business_connection_id=business_connection_id,
             raw=message,

@@ -1015,6 +1015,7 @@ def pyrogram_api():
             CommunityChatJoined
             CommunityChatRemoved
             TonWalletTransfer
+            UnpaidMessagesAllowedByLink
             TonConnectRequest
             Checklist
             RefundedPayment
