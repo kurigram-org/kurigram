@@ -29,15 +29,23 @@ if TYPE_CHECKING:
 class Bytes(bytes, TLObject):
     @classmethod
     def read(cls, data: BytesIO, *args: Any) -> bytes:
-        length = int.from_bytes(data.read(1), "little")
+        prefix = data.read(1)
 
-        if length <= 253:
-            x = data.read(length)
-            data.read(-(length + 1) % 4)
-        else:
+        if not prefix:
+            return prefix
+
+        length = prefix[0]
+
+        if length > 253:
             length = int.from_bytes(data.read(3), "little")
-            x = data.read(length)
-            data.read(-length % 4)
+            padding = -length % 4
+        else:
+            padding = 3 - length % 4
+
+        x = data.read(length)
+
+        if padding:
+            data.read(padding)
 
         return x
 
