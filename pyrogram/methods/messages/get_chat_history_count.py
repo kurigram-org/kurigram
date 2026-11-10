@@ -54,28 +54,23 @@ class GetChatHistoryCount:
         peer = await self.resolve_peer(chat_id)
 
         # https://t.me/tdlibchat/189410
-        ranges = await self.get_message_split_ranges()
-        total = 0
-
-        for split_range in ranges:
-            r = await self.invoke(
-                raw.functions.InvokeWithMessagesRange(
-                    range=split_range,
-                    query=raw.functions.messages.GetHistory(
-                        peer=peer,
-                        offset_id=0,
-                        offset_date=0,
-                        add_offset=0,
-                        limit=1,
-                        max_id=0,
-                        min_id=0,
-                        hash=0,
-                    ),
-                )
+        # https://t.me/kurigram_chat/3/314520
+        r = await self.invoke(
+            raw.functions.InvokeWithMessagesRange(
+                range=raw.types.MessageRange(min_id=1, max_id=2**31 - 1),
+                query=raw.functions.messages.GetHistory(
+                    peer=peer,
+                    offset_id=0,
+                    offset_date=0,
+                    add_offset=0,
+                    limit=1,
+                    max_id=0,
+                    min_id=0,
+                    hash=0,
+                ),
             )
-            if isinstance(r, raw.types.messages.Messages):
-                total += len(r.messages)
-            else:
-                total += r.count
-
-        return total
+        )
+        if isinstance(r, raw.types.messages.Messages):
+            return len(r.messages)
+        else:
+            return r.count
