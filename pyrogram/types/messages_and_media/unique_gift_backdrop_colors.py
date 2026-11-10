@@ -18,14 +18,34 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Kurigram. If not, see <https://www.gnu.org/licenses/>.
 
+from __future__ import annotations as _annotations
+
 from ..object import Object
 
 
-class UnpaidMessagesAllowedByLink(Object):
-    """A service message about the sender of the message used a link of the other user, which allows sending unpaid messages to the user.
+class UniqueGiftBackdropColors(Object):
+    """This object describes the colors of the backdrop of a unique gift.
 
-    Currently holds no information.
+    Parameters:
+        center_color (``int``):
+            The color in the center of the backdrop in RGB format.
+
+        edge_color (``int``):
+            The color on the edges of the backdrop in RGB format.
+
+        symbol_color (``int``):
+            The color to be applied to the symbol in RGB format.
+
+        text_color (``int``):
+            The color for the text on the backdrop in RGB format.
     """
 
-    def __init__(self):
+    def __init__(
+        self, *, center_color: int, edge_color: int, symbol_color: int, text_color: int
+    ) -> None:
         super().__init__()
+
+        self.center_color = center_color
+        self.edge_color = edge_color
+        self.symbol_color = symbol_color
+        self.text_color = text_color

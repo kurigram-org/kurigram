@@ -37,6 +37,8 @@ class InputMessageContent(Object):
     - :obj:`~pyrogram.types.InputVenueMessageContent`
     - :obj:`~pyrogram.types.InputContactMessageContent`
     - :obj:`~pyrogram.types.InputInvoiceMessageContent`
+    - :obj:`~pyrogram.types.InputWidgetMessageContent`
+    - :obj:`~pyrogram.types.InputSharedWidgetMessageContent`
     """
 
     def __init__(self):

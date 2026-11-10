@@ -337,6 +337,13 @@ class Chat(Object):
             The first audio file added to the user's profile.
             Returned only in :meth:`~pyrogram.Client.get_chat`.
 
+        ton_wallet_card (:obj:`~pyrogram.types.TonWalletCard`, *optional*):
+            For private chats, the TON wallet card of the user, which is shown on their profile page.
+
+        share_theme (:obj:`~pyrogram.types.ChatShareTheme`, *optional*):
+            For private chats, supergroups and channels, the theme of the screen for sharing a link to the user or the chat.
+            Omitted if the default theme is used.
+
         rating (:obj:`~pyrogram.types.UserRating`, *optional*):
             Description of the current rating of the user.
 
@@ -658,6 +665,8 @@ class Chat(Object):
         bot_verification: types.BotVerification | None = None,
         main_profile_tab: enums.ProfileTab | None = None,
         first_profile_audio: types.Audio | None = None,
+        ton_wallet_card: types.TonWalletCard | None = None,
+        share_theme: types.ChatShareTheme | None = None,
         rating: types.UserRating | None = None,
         pending_rating: types.UserRating | None = None,
         pending_rating_date: datetime | None = None,
@@ -806,6 +815,8 @@ class Chat(Object):
         self.bot_verification = bot_verification
         self.main_profile_tab = main_profile_tab
         self.first_profile_audio = first_profile_audio
+        self.ton_wallet_card = ton_wallet_card
+        self.share_theme = share_theme
         self.rating = rating
         self.pending_rating = pending_rating
         self.pending_rating_date = pending_rating_date
@@ -1252,6 +1263,14 @@ class Chat(Object):
         parsed_chat.uses_unofficial_app = user.unofficial_security_risk
         parsed_chat.accepted_gift_types = types.AcceptedGiftTypes._parse(user.disallowed_gifts)
         parsed_chat.note = await types.FormattedText._parse(client, user.note)
+        parsed_chat.share_theme = await types.ChatShareTheme._parse(
+            client, user.share_theme, users, chats
+        )
+
+        if user.wallet_card:
+            parsed_chat.ton_wallet_card = await types.TonWalletCard._parse(
+                client, user.wallet_card, users, chats
+            )
 
         if parsed_chat.community_id:
             parsed_chat.community = await types.Community._parse(
@@ -1433,6 +1452,9 @@ class Chat(Object):
         parsed_chat.is_paid_messages_available = channel.paid_messages_available
         parsed_chat.guard_bot = await types.User._parse(client, users.get(channel.guard_bot_id))
         parsed_chat.has_welcome_messages = channel.has_welcome_messages
+        parsed_chat.share_theme = await types.ChatShareTheme._parse(
+            client, channel.share_theme, users, chats
+        )
 
         if parsed_chat.community_id:
             parsed_chat.community = await types.Community._parse(

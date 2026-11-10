@@ -45,6 +45,7 @@ from .get_chat_members import GetChatMembers
 from .get_chat_members_count import GetChatMembersCount
 from .get_chat_online_count import GetChatOnlineCount
 from .get_chat_settings import GetChatSettings
+from .get_chat_share_theme_backdrops import GetChatShareThemeBackdrops
 from .get_chats_for_folder_invite_link import GetChatsForFolderInviteLink
 from .get_dialogs import GetDialogs
 from .get_dialogs_count import GetDialogsCount
@@ -193,6 +194,7 @@ class Chats(
     GetFolderInviteLinks,
     GetChatOnlineCount,
     GetChatSettings,
+    GetChatShareThemeBackdrops,
     GetSimilarChannels,
     GetSuitableDiscussionChats,
     GetTopChats,

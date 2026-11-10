@@ -316,6 +316,9 @@ class Message(Object, Update):
         video_note (:obj:`~pyrogram.types.VideoNote`, *optional*):
             Message is a video note, information about the video message.
 
+        widget (:obj:`~pyrogram.types.Widget`, *optional*):
+            Message is an HTML widget, information about the widget.
+
         caption (``str``, *optional*):
             Caption for the audio, document, photo, video or voice, 0-1024 characters.
             If the message contains caption entities (bold, italic, ...) you can access *caption.markdown* or
@@ -501,13 +504,13 @@ class Message(Object, Update):
             Service message: chat was joined by a user from a :obj:`~pyrogram.types.Community`.
 
         ton_wallet_transfer (:obj:`~pyrogram.types.TonWalletTransfer`, *optional*):
-            Service message: a transfer with the TON wallet of the current user.
+            Service message: a transfer with a TON wallet.
 
         ton_connect_request (:obj:`~pyrogram.types.TonConnectRequest`, *optional*):
             Service message: a request from a dApp was received through TON Connect.
 
-        unpaid_messages_allowed_by_link (:obj:`~pyrogram.types.UnpaidMessagesAllowedByLink`, *optional*):
-            Service message: the sender of the message used a link of the other user, which allows sending unpaid messages to the user.
+        paid_messages_waived (:obj:`~pyrogram.types.PaidMessagesWaived`, *optional*):
+            Service message: the sender of the message used a link of the other user, which allows sending messages to the user without paying Telegram Stars.
 
         premium_gift_code (:obj:`~pyrogram.types.PremiumGiftCode`, *optional*):
             Service message: premium gift code information.
@@ -681,7 +684,9 @@ class Message(Object, Update):
             The raw message object, as received from the Telegram API.
 
         link (``str``, *property*):
-            Generate a link to this message, only for groups and channels.
+            Generate a link to this message in groups and channels.
+            In private chats with a bot, return a link to the topic if available.
+            Such a link opens the topic only for the user in whose private chat it exists.
 
         content (``str``, *property*):
             The text or caption content of the message.
@@ -759,6 +764,7 @@ class Message(Object, Update):
         video: types.Video | None = None,
         video_processing_pending: bool | None = None,
         voice: types.Voice | None = None,
+        widget: types.Widget | None = None,
         video_note: types.VideoNote | None = None,
         caption: Str | None = None,
         contact: types.Contact | None = None,
@@ -813,7 +819,7 @@ class Message(Object, Update):
         community_chat_joined: types.CommunityChatJoined | None = None,
         ton_wallet_transfer: types.TonWalletTransfer | None = None,
         ton_connect_request: types.TonConnectRequest | None = None,
-        unpaid_messages_allowed_by_link: types.UnpaidMessagesAllowedByLink | None = None,
+        paid_messages_waived: types.PaidMessagesWaived | None = None,
         premium_gift_code: types.PremiumGiftCode | None = None,
         gifted_premium: types.GiftedPremium | None = None,
         gifted_stars: types.GiftedStars | None = None,
@@ -942,6 +948,7 @@ class Message(Object, Update):
         self.video = video
         self.video_processing_pending = video_processing_pending
         self.voice = voice
+        self.widget = widget
         self.video_note = video_note
         self.caption = caption
         self.contact = contact
@@ -1006,7 +1013,7 @@ class Message(Object, Update):
         self.community_chat_joined = community_chat_joined
         self.ton_wallet_transfer = ton_wallet_transfer
         self.ton_connect_request = ton_connect_request
-        self.unpaid_messages_allowed_by_link = unpaid_messages_allowed_by_link
+        self.paid_messages_waived = paid_messages_waived
         self.premium_gift_code = premium_gift_code
         self.gifted_premium = gifted_premium
         self.gifted_stars = gifted_stars
@@ -1166,7 +1173,7 @@ class Message(Object, Update):
         community_chat_joined = None
         ton_wallet_transfer = None
         ton_connect_request = None
-        unpaid_messages_allowed_by_link = None
+        paid_messages_waived = None
 
         service_type = enums.MessageServiceType.UNSUPPORTED
 
@@ -1457,14 +1464,14 @@ class Message(Object, Update):
         elif isinstance(action, raw.types.MessageActionGramTransfer):
             service_type = enums.MessageServiceType.TON_WALLET_TRANSFER
             ton_wallet_transfer = await types.TonWalletTransfer._parse(
-                client, action, from_id or peer_id, users
+                client, action, from_id or peer_id, users, outgoing=message.out
             )
         elif isinstance(action, raw.types.MessageActionWalletTonConnectRequest):
             service_type = enums.MessageServiceType.TON_CONNECT_REQUEST
             ton_connect_request = await types.TonConnectRequest._parse(action)
         elif isinstance(action, raw.types.MessageActionNoPaidMessagesTokenUsed):
-            service_type = enums.MessageServiceType.UNPAID_MESSAGES_ALLOWED_BY_LINK
-            unpaid_messages_allowed_by_link = types.UnpaidMessagesAllowedByLink()
+            service_type = enums.MessageServiceType.PAID_MESSAGES_WAIVED
+            paid_messages_waived = types.PaidMessagesWaived()
 
         parsed_message = Message(
             id=message.id,
@@ -1546,7 +1553,7 @@ class Message(Object, Update):
             community_chat_joined=community_chat_joined,
             ton_wallet_transfer=ton_wallet_transfer,
             ton_connect_request=ton_connect_request,
-            unpaid_messages_allowed_by_link=unpaid_messages_allowed_by_link,
+            paid_messages_waived=paid_messages_waived,
             reactions=await types.MessageReactions._parse(client, message.reactions, users, chats),
             business_connection_id=business_connection_id,
             raw=message,
@@ -1689,6 +1696,7 @@ class Message(Object, Update):
         story = None
         audio = None
         voice = None
+        widget = None
         animation = None
         video = None
         video_note = None
@@ -1835,6 +1843,9 @@ class Message(Object, Update):
             elif isinstance(media, raw.types.MessageMediaPaidMedia):
                 paid_media = types.PaidMediaInfo._parse(client, media)
                 media_type = enums.MessageMediaType.PAID_MEDIA
+            elif isinstance(media, raw.types.MessageMediaWidget):
+                widget = types.Widget._parse(media)
+                media_type = enums.MessageMediaType.WIDGET
             elif isinstance(media, raw.types.MessageMediaToDo):
                 media_type = enums.MessageMediaType.CHECKLIST
                 checklist = await types.Checklist._parse(client, media, users, chats)
@@ -1911,6 +1922,7 @@ class Message(Object, Update):
             venue=venue,
             audio=audio,
             voice=voice,
+            widget=widget,
             animation=animation,
             game=game,
             giveaway=giveaway,
@@ -2110,6 +2122,7 @@ class Message(Object, Update):
         story = None
         audio = None
         voice = None
+        widget = None
         animation = None
         video = None
         video_note = None
@@ -2256,6 +2269,9 @@ class Message(Object, Update):
             elif isinstance(media, raw.types.MessageMediaPaidMedia):
                 paid_media = types.PaidMediaInfo._parse(client, media)
                 media_type = enums.MessageMediaType.PAID_MEDIA
+            elif isinstance(media, raw.types.MessageMediaWidget):
+                widget = types.Widget._parse(media)
+                media_type = enums.MessageMediaType.WIDGET
             elif isinstance(media, raw.types.MessageMediaToDo):
                 media_type = enums.MessageMediaType.CHECKLIST
                 checklist = await types.Checklist._parse(client, media, users, chats)
@@ -2313,6 +2329,7 @@ class Message(Object, Update):
             venue=venue,
             audio=audio,
             voice=voice,
+            widget=widget,
             animation=animation,
             game=game,
             giveaway=giveaway,
@@ -2438,7 +2455,7 @@ class Message(Object, Update):
                 else:
                     parsed_message.message_thread_id = 1
 
-            if message.reply_to.quote:
+            if message.reply_to.quote or message.reply_to.quote_rich:
                 parsed_message.quote = await types.TextQuote._parse(client, users, message.reply_to)
 
             if message.reply_to.reply_from:
@@ -2515,6 +2532,11 @@ class Message(Object, Update):
     @property
     def link(self) -> str:
         if self.chat.type in (enums.ChatType.PRIVATE, enums.ChatType.BOT):
+            if self.message_thread_id:
+                username = self.chat.username if self.chat.type == enums.ChatType.BOT else None
+
+                if username:
+                    return f"https://t.me/{username}/{self.message_thread_id}"
             return ""
 
         if self.chat.username:

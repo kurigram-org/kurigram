@@ -67,7 +67,7 @@ class ChatPermissions(Object):
             Implies can_send_messages
 
         can_send_other_messages (``bool``, *optional*):
-            True, if the user is allowed to send animations, games, stickers and use inline bots.
+            True, if the user is allowed to send animations, games, stickers, widgets and use inline bots.
 
         can_add_web_page_previews (``bool``, *optional*):
             True, if the user is allowed to add web page previews to their messages.
@@ -106,7 +106,8 @@ class ChatPermissions(Object):
         can_send_video_notes: bool | None = None,
         can_send_voice_notes: bool | None = None,
         can_send_polls: bool | None = None,
-        can_send_other_messages: bool | None = None,  # Stickers, animations, games, inline bots
+        can_send_other_messages: bool
+        | None = None,  # Stickers, animations, games, inline bots, widgets
         can_add_web_page_previews: bool | None = None,
         can_react_to_messages: bool | None = None,
         can_edit_tag: bool | None = None,

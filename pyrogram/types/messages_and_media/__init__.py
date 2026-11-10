@@ -62,6 +62,7 @@ from .game import Game
 from .general_forum_topic_hidden import GeneralForumTopicHidden
 from .general_forum_topic_unhidden import GeneralForumTopicUnhidden
 from .gift import Gift
+from .unique_gift_backdrop_colors import UniqueGiftBackdropColors
 from .gift_attribute import GiftAttribute
 from .gift_auction import GiftAuction
 from .gift_auction_state import GiftAuctionState
@@ -103,6 +104,7 @@ from .paid_media_info import PaidMediaInfo
 from .paid_media_preview import PaidMediaPreview
 from .paid_messages_price_changed import PaidMessagesPriceChanged
 from .paid_messages_refunded import PaidMessagesRefunded
+from .paid_messages_waived import PaidMessagesWaived
 from .paid_reactor import PaidReactor
 from .payment_form import PaymentForm
 from .payment_option import PaymentOption
@@ -207,7 +209,6 @@ from .ton_connect_request_state import (
     TonConnectRequestStateRejected,
 )
 from .ton_wallet_transfer import TonWalletTransfer
-from .unpaid_messages_allowed_by_link import UnpaidMessagesAllowedByLink
 from .upgraded_gift_attribute_id import UpgradedGiftAttributeId
 from .upgraded_gift_attribute_id_backdrop import UpgradedGiftAttributeIdBackdrop
 from .upgraded_gift_attribute_id_model import UpgradedGiftAttributeIdModel
@@ -230,6 +231,7 @@ from .venue import Venue
 from .video import Video
 from .video_note import VideoNote
 from .voice import Voice
+from .widget import Widget
 from .web_app_data import WebAppData
 from .web_page import WebPage
 from .write_access_allowed import WriteAccessAllowed
@@ -265,7 +267,7 @@ __all__ = [
     "CommunityChatJoined",
     "CommunityChatRemoved",
     "TonWalletTransfer",
-    "UnpaidMessagesAllowedByLink",
+    "PaidMessagesWaived",
     "TonConnectRequest",
     "Contact",
     "StickerSet",
@@ -291,6 +293,7 @@ __all__ = [
     "GeneralForumTopicHidden",
     "GeneralForumTopicUnhidden",
     "Gift",
+    "UniqueGiftBackdropColors",
     "GiftAttribute",
     "GiftAuction",
     "GiftAuctionState",
@@ -445,6 +448,7 @@ __all__ = [
     "Video",
     "VideoNote",
     "Voice",
+    "Widget",
     "WebAppData",
     "WebPage",
     "WriteAccessAllowed",

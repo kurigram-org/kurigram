@@ -27,26 +27,27 @@ from ..object import Object
 
 
 class TonWalletTransfer(Object):
-    """Represents a transfer with the TON wallet of the current user.
+    """Describes a service message about a transfer with a TON wallet.
 
     Parameters:
         sender (:obj:`~pyrogram.types.User`):
             Sender of the transfer.
 
         transaction_id (``str``):
-            Unique identifier of the transaction.
+            Unique identifier of the transaction. May be empty if the transfer hasn't been sent yet.
 
         peer_address (``str``):
-            Address in the TON blockchain of the transaction peer.
+            Address of the transfer peer in the TON blockchain.
 
-        amount (``int``):
-            The amount of received cryptocurrency, in the smallest units of the cryptocurrency.
+        amount (``str``):
+            The amount of transferred cryptocurrency, in the smallest units of the cryptocurrency, as a decimal number.
+            Negative for outgoing transfers.
 
         comment (``str``, *optional*):
-            Comment added to the transaction.
+            Comment added to the transfer. Omitted if the comment is encrypted.
 
         is_comment_encrypted (``bool``, *optional*):
-            True, if the comment is encrypted and must be decrypted using the receiver's or sender's private key.
+            True, if the comment is encrypted.
     """
 
     def __init__(
@@ -55,7 +56,7 @@ class TonWalletTransfer(Object):
         sender: types.User,
         transaction_id: str,
         peer_address: str,
-        amount: int,
+        amount: str,
         comment: str | None = None,
         is_comment_encrypted: bool | None = None,
     ):
@@ -74,13 +75,15 @@ class TonWalletTransfer(Object):
         action: raw.types.MessageActionGramTransfer,
         sender_id: int,
         users: dict[int, raw.base.User],
+        *,
+        outgoing: bool | None,
     ) -> TonWalletTransfer:
         return TonWalletTransfer(
             sender=await types.User._parse(client, users.get(sender_id)),
             transaction_id=action.transaction_id,
             peer_address=action.peer_address,
-            amount=action.amount,
-            comment=action.comment,
+            amount=str(-abs(action.amount) if outgoing else action.amount),
+            comment=action.comment if not action.comment_encrypted else None,
             is_comment_encrypted=action.comment_encrypted,
         )
 
