@@ -220,21 +220,21 @@ class Client(Methods):
 
         retries (``int``, *optional*):
             Set the maximum number of retries for TCP requests. Useful for when the connection is lost for few minutes.
-            Defaults to 10 attempts.
+            Defaults to Session.MAX_RETRIES.
 
         timeout (``float``, *optional*):
             Set the timeout for TCP requests. Useful for when using a proxy or when the connection is slow.
-            Defaults to 15 seconds.
+            Defaults to Session.TIMEOUT.
 
         sleep_threshold (``float``, *optional*):
             Set a sleep threshold for flood wait exceptions happening globally in this client instance, below which any
             request that raises a flood wait will be automatically invoked again after sleeping for the required amount
             of time. Flood wait exceptions requiring higher waiting times will be raised.
-            Defaults to 10 seconds.
+            Defaults to Session.SLEEP_THRESHOLD.
 
         retry_delay (``float``, *optional*):
             Set the delay between retries for TCP requests.
-            Defaults to 1 second.
+            Defaults to Session.RETRY_DELAY.
 
         hide_password (``bool``, *optional*):
             Pass True to hide the password when typing it during the login.
