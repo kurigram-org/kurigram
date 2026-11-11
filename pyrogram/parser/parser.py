@@ -43,7 +43,7 @@ class Parser:
             return await self.markdown.parse(text)
 
         if mode == enums.ParseMode.MARKDOWN:
-            return await self.markdown.parse(text, True)
+            return await self.markdown.parse(text, strict=True)
 
         if mode == enums.ParseMode.HTML:
             return await self.html.parse(text)
@@ -56,6 +56,6 @@ class Parser:
     @staticmethod
     def unparse(text: str, entities: list, is_html: bool) -> str:
         if is_html:
-            return HTML.unparse(text, entities)
+            return HTML.unparse(text, entities=entities)
         else:
-            return Markdown.unparse(text, entities)
+            return Markdown.unparse(text, entities=entities)
