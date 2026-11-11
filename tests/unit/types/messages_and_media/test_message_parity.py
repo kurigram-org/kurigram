@@ -38,7 +38,7 @@ import pytest
 from pyrogram import Client, types
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Generator
     from types import ModuleType
 
 
@@ -66,7 +66,7 @@ def shortcut_names() -> list[str]:
     return sorted(name for name in vars(types.Message) if name.startswith(("reply_", "answer_")))
 
 
-def shortcuts() -> Iterator[Shortcut]:
+def shortcuts() -> Generator[Shortcut]:
     for name in shortcut_names():
         match = _TARGET.search(inspect.getdoc(vars(types.Message)[name]) or "")
 
@@ -92,7 +92,7 @@ def deprecated_in(module: ModuleType) -> set[str]:
 
 # Read the call rather than the source text: `ruff format` joins a call that fits on one line,
 #  and a regex looking for `name=name` on a line of its own then reports the name as dropped.
-def keywords_of(shortcut: Shortcut) -> Iterator[ast.keyword]:
+def keywords_of(shortcut: Shortcut) -> Generator[ast.keyword]:
     """Every keyword argument of every call the shortcut makes."""
     source = textwrap.dedent(inspect.getsource(getattr(types.Message, shortcut.name)))
 

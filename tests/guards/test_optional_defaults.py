@@ -30,7 +30,7 @@ from tests.guards.name_resolution import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Generator
 
 # A parameter annotated `Optional` and defaulting to something else says two things at once:
 #  the caller may pass `None`, and the caller who passes nothing does not get `None`. Almost
@@ -99,7 +99,7 @@ def defaults_to_none(node: ast.expr) -> bool:
     return isinstance(node, ast.Constant) and node.value is None
 
 
-def parameters_with_defaults(node: ast.AST) -> Iterator[tuple[ast.arg, ast.expr]]:
+def parameters_with_defaults(node: ast.AST) -> Generator[tuple[ast.arg, ast.expr]]:
     arguments = node.args
     positional: list[ast.arg] = arguments.posonlyargs + arguments.args
 

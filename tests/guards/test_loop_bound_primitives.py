@@ -35,7 +35,7 @@ from typing import TYPE_CHECKING, Final
 from tests.guards.name_resolution import REPOSITORY_ROOT, source_of
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Generator
 
 _SWEPT: Final[tuple[str, ...]] = (
     "pyrogram/client.py",
@@ -59,7 +59,7 @@ class Attribute:
         return f"{self.file}:{self.line}: {self.owner}.{self.name}"
 
 
-def assigned_attributes(node: ast.AST) -> Iterator[tuple[str, ast.expr, int]]:
+def assigned_attributes(node: ast.AST) -> Generator[tuple[str, ast.expr, int]]:
     for statement in ast.walk(node):
         if isinstance(statement, ast.AnnAssign):
             targets, value = [statement.target], statement.value
@@ -94,7 +94,7 @@ def builds_a_loop_bound_primitive(value: ast.expr) -> bool:
     )
 
 
-def methods(node: ast.ClassDef) -> Iterator[ast.FunctionDef | ast.AsyncFunctionDef]:
+def methods(node: ast.ClassDef) -> Generator[ast.FunctionDef | ast.AsyncFunctionDef]:
     for statement in node.body:
         if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
             yield statement
@@ -133,7 +133,7 @@ def primitives_never_rebuilt(tree: ast.Module, *, file: str) -> list[Attribute]:
     return found
 
 
-def swept() -> Iterator[tuple[str, ast.Module]]:
+def swept() -> Generator[tuple[str, ast.Module]]:
     for file in _SWEPT:
         yield file, ast.parse(source_of(REPOSITORY_ROOT / file), filename=file)
 

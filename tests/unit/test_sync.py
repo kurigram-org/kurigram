@@ -46,7 +46,7 @@ from pyrogram import Client, sync, types
 from pyrogram.sync import _bridge_loop, async_to_sync
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator, Iterator
+    from collections.abc import AsyncGenerator, Generator
 
 _HANDLED_SIGNALS: Final[tuple[signal.Signals, ...]] = (
     signal.SIGINT,
@@ -117,7 +117,7 @@ def forget_the_sync_caller_loop(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
-def sync_only_loop() -> Iterator[asyncio.AbstractEventLoop]:
+def sync_only_loop() -> Generator[asyncio.AbstractEventLoop]:
     """The loop the bridge builds for a caller that is not inside one."""
     loop = sync._loop_for_sync_callers()
 
@@ -128,7 +128,7 @@ def sync_only_loop() -> Iterator[asyncio.AbstractEventLoop]:
 
 
 @pytest.fixture
-def idle_loop() -> Iterator[asyncio.AbstractEventLoop]:
+def idle_loop() -> Generator[asyncio.AbstractEventLoop]:
     """A loop nothing drives, standing in for a client that was given one of its own."""
     loop = asyncio.new_event_loop()
 
@@ -138,7 +138,7 @@ def idle_loop() -> Iterator[asyncio.AbstractEventLoop]:
 
 
 @pytest.fixture
-def loop_in_another_thread() -> Iterator[LoopInAnotherThread]:
+def loop_in_another_thread() -> Generator[LoopInAnotherThread]:
     """Loops driven by threads of their own, the way a client started off this one is."""
     driven: list[tuple[asyncio.AbstractEventLoop, threading.Thread]] = []
 
@@ -369,7 +369,7 @@ def test_a_client_running_in_another_thread_is_reached_from_the_thread_without_a
 
 
 @pytest.fixture
-def restore_the_signal_handlers() -> Iterator[None]:
+def restore_the_signal_handlers() -> Generator[None]:
     # `idle()` installs its own and never puts the previous ones back, so without this the
     #  rest of the session would run with `Ctrl-C` wired to a loop that has stopped.
     installed = {number: signal.getsignal(number) for number in _HANDLED_SIGNALS}
