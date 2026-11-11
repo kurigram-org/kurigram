@@ -39,11 +39,15 @@ class InputTextMessageContent(InputMessageContent):
             By default, texts are parsed using both Markdown and HTML styles.
             You can combine both syntaxes together.
 
-        entities (List of :obj:`~pyrogram.types.MessageEntity`):
+        entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
             List of special entities that appear in message text, which can be specified instead of *parse_mode*.
 
         link_preview_options (:obj:`~pyrogram.types.LinkPreviewOptions`, *optional*):
             Options used for link preview generation for the message.
+
+        disable_web_page_preview (``bool``, *optional*):
+            Disables link previews for links in this message.
+            This parameter is deprecated and should not be used.
     """
 
     def __init__(

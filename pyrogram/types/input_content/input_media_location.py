@@ -27,10 +27,10 @@ class InputMediaLocation(InputMedia):
     """Represents a location to be sent.
 
     Parameters:
-        latitude (``float``):
+        latitude (``float``, *optional*):
             Latitude of the location.
 
-        longitude (``float``):
+        longitude (``float``, *optional*):
             Longitude of the location.
 
         accuracy_radius (``int``, *optional*):

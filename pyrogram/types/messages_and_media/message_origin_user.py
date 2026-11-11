@@ -32,13 +32,13 @@ class MessageOriginUser(MessageOrigin):
     """The message was originally sent by a known user.
 
     Parameters:
-        type (:obj:`~pyrogram.enums.MessageOriginType`):
+        type (:obj:`~pyrogram.enums.MessageOriginType`, *optional*):
             Type of the message origin.
 
-        date (:py:obj:`~datetime.datetime`):
+        date (:py:obj:`~datetime.datetime`, *optional*):
             Date the message was sent originally.
 
-        sender_user (:obj:`~pyrogram.types.User`):
+        sender_user (:obj:`~pyrogram.types.User`, *optional*):
             User that sent the message originally.
     """
 

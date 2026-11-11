@@ -30,20 +30,20 @@ class CommunityAdministratorRights(Object):
     """Describes rights of the administrator in a community.
 
     Parameters:
-        can_manage_community (``bool``, *optional*):
+        can_manage_community (``bool``):
             True, if the user is an administrator.
             Implied by any other privilege.
 
-        can_change_info (``bool``, *optional*):
+        can_change_info (``bool``):
             True, if the administrator can change the community name, photo, and other settings.
 
-        can_edit_chat_list (``bool``, *optional*):
+        can_edit_chat_list (``bool``):
             True, if the user can change the chats added to the community.
 
-        can_promote_members (``bool``, *optional*):
+        can_promote_members (``bool``):
             True, if the administrator can add new administrators with a subset of their own privileges or demote administrators that were directly or indirectly promoted by them.
 
-        can_ban_members (``bool``, *optional*):
+        can_ban_members (``bool``):
             True, if the administrator can ban, or unban community members.
     """
 

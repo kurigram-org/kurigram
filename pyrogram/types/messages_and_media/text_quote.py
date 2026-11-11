@@ -29,14 +29,14 @@ class TextQuote(Object):
     """Describes manually or automatically chosen quote from another message.
 
     Parameters:
-        text (``str``):
+        text (``str``, *optional*):
             Text of the quoted part of a message that is replied to by the given message.
 
         entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
             Special entities that appear in the quote.
             Currently, only bold, italic, underline, strikethrough, spoiler, and custom_emoji entities are kept in quotes.
 
-        position (``int``):
+        position (``int``, *optional*):
             Approximate quote position in the original message in UTF-16 code units as specified by the sender.
 
         is_manual (``bool``, *optional*):

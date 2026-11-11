@@ -50,6 +50,12 @@ class InputVenueMessageContent(InputMessageContent):
         foursquare_type (``str``, *optional*):
             Foursquare type of the venue, if known.
             (For example, “arts_entertainment/default”, “arts_entertainment/aquarium” or “food/icecream”.)
+
+        google_place_id (``str``, *optional*):
+            Google Places identifier of the venue.
+
+        google_place_type (``str``, *optional*):
+            Google Places type of the venue.
     """
 
     def __init__(

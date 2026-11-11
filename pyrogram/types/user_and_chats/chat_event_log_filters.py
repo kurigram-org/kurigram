@@ -27,49 +27,49 @@ class ChatEventLogFilters(Object):
     """Represents a set of filters used to obtain a chat event log.
 
     Parameters:
-        message_edits (``bool``):
+        message_edits (``bool``, *optional*):
             True, if message edits need to be returned.
 
-        message_deletions (``bool``):
+        message_deletions (``bool``, *optional*):
             True, if message deletions need to be returned.
 
-        message_pins (``bool``):
+        message_pins (``bool``, *optional*):
             True, if pin/unpin events need to be returned.
 
-        member_joins (``bool``):
+        member_joins (``bool``, *optional*):
             True, if members joining events need to be returned.
 
-        member_leaves (``bool``):
+        member_leaves (``bool``, *optional*):
             True, if members leaving events need to be returned.
 
-        member_invites (``bool``):
+        member_invites (``bool``, *optional*):
             True, if invited member events need to be returned.
 
-        member_promotions (``bool``):
+        member_promotions (``bool``, *optional*):
             True, if member promotion/demotion events need to be returned.
 
-        member_restrictions (``bool``):
+        member_restrictions (``bool``, *optional*):
             True, if member restricted/unrestricted/banned/unbanned events need to be returned.
 
-        member_tag_changes (``bool``):
+        member_tag_changes (``bool``, *optional*):
             True, if member tag and custom title change events need to be returned.
 
-        info_changes (``bool``):
+        info_changes (``bool``, *optional*):
             True, if changes in chat information need to be returned.
 
-        setting_changes (``bool``):
+        setting_changes (``bool``, *optional*):
             True, if changes in chat settings need to be returned.
 
-        invite_link_changes (``bool``):
+        invite_link_changes (``bool``, *optional*):
             True, if changes to invite links need to be returned.
 
-        video_chat_changes (``bool``):
+        video_chat_changes (``bool``, *optional*):
             True, if video chat actions need to be returned.
 
-        forum_changes (``bool``):
+        forum_changes (``bool``, *optional*):
             True, if forum-related actions need to be returned.
 
-        subscription_extensions (``bool``):
+        subscription_extensions (``bool``, *optional*):
             True, if subscription extensions need to be returned.
     """
 

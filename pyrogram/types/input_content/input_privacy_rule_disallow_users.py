@@ -34,7 +34,7 @@ class InputPrivacyRuleDisallowUsers(InputPrivacyRule):
     """Disallow only participants of certain users.
 
     Parameters:
-        chat_ids (``int`` | ``str`` | Iterable of ``int`` or ``str``, *optional*):
+        chat_ids (``int`` | ``str`` | Iterable of ``int`` or ``str``):
             Unique identifier (int) or username (str) of the target chat.
     """
 

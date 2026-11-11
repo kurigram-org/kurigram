@@ -30,10 +30,10 @@ class ForumTopicEdited(Object):
     """A service message about a forum topic renamed in the chat.
 
     Parameters:
-        title (``str``):
+        title (``str``, *optional*):
             Name of the topic.
 
-        icon_color (``int``):
+        icon_color (``int``, *optional*):
             Color of the topic icon in decimal format.
 
         custom_emoji_id (``str``, *optional*):

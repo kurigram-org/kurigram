@@ -27,10 +27,10 @@ class ActiveSessions(Object):
     """Contains a list of currently active sessions
 
     Parameters:
-        inactive_session_ttl_days (``int``):
+        inactive_session_ttl_days (``int``, *optional*):
             Number of days of inactivity before sessions will automatically be terminated; 1-366 days.
 
-        active_sessions (List of :obj:`~pyrogram.types.ActiveSession`):
+        active_sessions (List of :obj:`~pyrogram.types.ActiveSession`, *optional*):
             List of sessions.
     """
 

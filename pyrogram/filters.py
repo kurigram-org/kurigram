@@ -1333,7 +1333,7 @@ class user(Filter, set):  # ty: ignore[invalid-method-override]
     users container.
 
     Parameters:
-        users (``int`` | ``str`` | ``list``):
+        users (``int`` | ``str`` | ``list``, *optional*):
             Pass one or more user ids/usernames to filter users.
             For you yourself, "me" or "self" can be used as well.
             Defaults to None (no users).
@@ -1364,7 +1364,7 @@ class chat(Filter, set):  # ty: ignore[invalid-method-override]
     chats container.
 
     Parameters:
-        chats (``int`` | ``str`` | ``list``):
+        chats (``int`` | ``str`` | ``list``, *optional*):
             Pass one or more chat ids/usernames to filter chats.
             For your personal cloud (Saved Messages) you can simply use "me" or "self".
             Defaults to None (no chats).
@@ -1406,7 +1406,7 @@ class topic(Filter, set):  # ty: ignore[invalid-method-override]
     topics container.
 
     Parameters:
-        topics (``int`` | ``list``):
+        topics (``int`` | ``list``, *optional*):
             Pass one or more topic ids to filter updates in specific topics.
             Defaults to None (no topics).
     """
