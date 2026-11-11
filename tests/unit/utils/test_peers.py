@@ -101,10 +101,11 @@ _EMPTY_INPUT_PEER: Final = raw.types.InputPeerEmpty()
         pytest.param(-1000000000030, 30, id="channel-id"),
         pytest.param(-3000000000000, 2000000000000, id="monoforum-id"),
         pytest.param(0, None, id="zero"),
+        pytest.param(None, None, id="none"),
     ],
 )
 def test_get_raw_peer_id(
-    peer: int | raw.base.Peer | raw.base.InputPeer | raw.base.RequestedPeer,
+    peer: int | raw.base.Peer | raw.base.InputPeer | raw.base.RequestedPeer | None,
     *,
     expected: int | None,
 ) -> None:
