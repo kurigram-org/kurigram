@@ -71,11 +71,11 @@ class GiftUpgradePreview(Object):
 
         for attr in gift_preview.sample_attributes:
             if isinstance(attr, raw.types.StarGiftAttributeModel):
-                models.append(await types.GiftAttribute._parse(client, attr, {}, {}))
+                models.append(await types.GiftAttribute._parse(client, attr))
             elif isinstance(attr, raw.types.StarGiftAttributePattern):
-                symbols.append(await types.GiftAttribute._parse(client, attr, {}, {}))
+                symbols.append(await types.GiftAttribute._parse(client, attr))
             elif isinstance(attr, raw.types.StarGiftAttributeBackdrop):
-                backdrops.append(await types.GiftAttribute._parse(client, attr, {}, {}))
+                backdrops.append(await types.GiftAttribute._parse(client, attr))
 
         return GiftUpgradePreview(
             models=models,

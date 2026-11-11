@@ -557,11 +557,11 @@ class Gift(Object):
 
         for attr in star_gift.attributes:
             if isinstance(attr, raw.types.StarGiftAttributeModel):
-                model = await types.GiftAttribute._parse(client, attr, users, chats)
+                model = await types.GiftAttribute._parse(client, attr)
             elif isinstance(attr, raw.types.StarGiftAttributePattern):
-                symbol = await types.GiftAttribute._parse(client, attr, users, chats)
+                symbol = await types.GiftAttribute._parse(client, attr)
             elif isinstance(attr, raw.types.StarGiftAttributeBackdrop):
-                backdrop = await types.GiftAttribute._parse(client, attr, users, chats)
+                backdrop = await types.GiftAttribute._parse(client, attr)
             elif isinstance(attr, raw.types.StarGiftAttributeOriginalDetails):
                 original_details = await types.UpgradedGiftOriginalDetails._parse(
                     client, attr, users, chats
