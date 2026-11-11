@@ -19,13 +19,16 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw
-from pyrogram import types
+from pyrogram import raw, types, utils
 
 
 class GetGameHighScores:
     async def get_game_high_scores(
-        self: pyrogram.Client, user_id: int | str, chat_id: int | str, message_id: int
+        self: pyrogram.Client,
+        user_id: int | str,
+        chat_id: int | str | None = None,
+        message_id: int | None = None,
+        inline_message_id: str | None = None,
     ) -> list[types.GameHighScore]:
         """Get data for high score tables.
 
@@ -37,13 +40,19 @@ class GetGameHighScores:
                 For your personal cloud (Saved Messages) you can simply use "me" or "self".
                 For a contact that exists in your Telegram address book you can use his phone number (str).
 
-            chat_id (``int`` | ``str``):
+            chat_id (``int`` | ``str``, *optional*):
+                Required if *inline_message_id* is not specified.
                 Unique identifier (int) or username (str) of the target chat.
                 For your personal cloud (Saved Messages) you can simply use "me" or "self".
                 For a contact that exists in your Telegram address book you can use his phone number (str).
 
-            message_id (``int``):
+            message_id (``int``, *optional*):
+                Required if *inline_message_id* is not specified.
                 Identifier of the sent message.
+
+            inline_message_id (``str``, *optional*):
+                Required if *chat_id* and *message_id* are not specified.
+                Identifier of the inline message.
 
         Returns:
             List of :obj:`~pyrogram.types.GameHighScore`: On success.
@@ -53,17 +62,37 @@ class GetGameHighScores:
 
                 scores = await app.get_game_high_scores(user_id, chat_id, message_id)
                 print(scores)
-        """
-        # TODO: inline_message_id
 
-        r = await self.invoke(
-            raw.functions.messages.GetGameHighScores(
-                peer=await self.resolve_peer(chat_id),
-                id=message_id,
-                user_id=await self.resolve_peer(user_id),
+                # A game sent via inline mode
+                scores = await app.get_game_high_scores(user_id, inline_message_id=inline_message_id)
+        """
+        if inline_message_id is not None:
+            unpacked = utils.unpack_inline_message_id(inline_message_id)
+
+            session = await self.get_session(unpacked.dc_id, is_media=True)
+
+            high_scores = await session.invoke(
+                raw.functions.messages.GetInlineGameHighScores(
+                    id=unpacked,
+                    user_id=await self.resolve_peer(user_id),
+                ),
+                sleep_threshold=self.sleep_threshold,
             )
-        )
+        else:
+            if chat_id is None or message_id is None:
+                raise ValueError("chat_id and message_id are required")
+
+            high_scores = await self.invoke(
+                raw.functions.messages.GetGameHighScores(
+                    peer=await self.resolve_peer(chat_id),
+                    id=message_id,
+                    user_id=await self.resolve_peer(user_id),
+                )
+            )
 
         return types.List(
-            [await types.GameHighScore._parse(self, score, r.users) for score in r.scores]
+            [
+                await types.GameHighScore._parse(self, score, high_scores.users)
+                for score in high_scores.scores
+            ]
         )
