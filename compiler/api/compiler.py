@@ -207,29 +207,33 @@ def remove_whitespaces(source: str) -> str:
     return "\n".join(lines)
 
 
-def get_docstring_arg_type(t: str):
-    if t in CORE_TYPES:
-        if t == "long":
+def get_docstring_arg_type(tl_type: str) -> str:
+    if tl_type in CORE_TYPES:
+        if tl_type == "long":
             return "``int`` ``64-bit``"
-        elif "int" in t:
-            size = INT_RE.match(t)
+        elif "int" in tl_type:
+            size = INT_RE.match(tl_type)
             return f"``int`` ``{size.group(1)}-bit``" if size else "``int`` ``32-bit``"
-        elif t == "double":
+        elif tl_type == "double":
             return "``float`` ``64-bit``"
-        elif t == "string":
+        elif tl_type == "string":
             return "``str``"
-        elif t == "true":
+        elif tl_type == "true":
             return "``bool``"
         else:
-            return f"``{t.lower()}``"
-    elif t == "TLObject" or t == "X":
+            return f"``{tl_type.lower()}``"
+    # `Object` is the schema's spelling of any TL object (`rpc_result`'s `result:Object`), the
+    #  field `get_type_hint` annotates `TLObject`; no constructor declares a field `TLObject`.
+    elif tl_type in ("Object", "X"):
         return "Any object from :obj:`~pyrogram.raw.types`"
-    elif t == "!X":
+    elif tl_type == "!X":
         return "Any function from :obj:`~pyrogram.raw.functions`"
-    elif t.lower().startswith("vector"):
-        return "List of " + get_docstring_arg_type(t.split("<", 1)[1][:-1])
+    elif tl_type.lower().startswith("vector"):
+        return "List of " + get_docstring_arg_type(tl_type.split("<", 1)[1][:-1])
+    elif tl_type in CORE_RETURN_TYPE_HINTS:
+        return f":obj:`{tl_type} <pyrogram.{CORE_RETURN_TYPE_HINTS[tl_type]}>`"
     else:
-        return f":obj:`{t} <pyrogram.raw.base.{t}>`"
+        return f":obj:`{tl_type} <pyrogram.raw.base.{tl_type}>`"
 
 
 def get_references(t: str, kind: str):

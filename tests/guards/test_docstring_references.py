@@ -32,6 +32,7 @@ from typing import TYPE_CHECKING, Final
 
 from tests.guards.name_resolution import (
     REPOSITORY_ROOT,
+    generated_files,
     hand_written_files,
     resolves,
     source_of,
@@ -39,7 +40,7 @@ from tests.guards.name_resolution import (
 
 if TYPE_CHECKING:
     import pathlib
-    from collections.abc import Iterator
+    from collections.abc import Iterable, Iterator
 
 # `:obj:`Message`` and `:py:obj:`Message`` are the same role, the second one naming the
 #  domain the first one inherits.
@@ -123,10 +124,10 @@ def docstrings_of(path: pathlib.Path) -> Iterator[tuple[str, int]]:
         yield "\n".join(lines[literal.lineno - 1 : literal.end_lineno]), literal.lineno
 
 
-def hand_written_references() -> list[Reference]:
+def references_of(paths: Iterable[pathlib.Path]) -> list[Reference]:
     references: list[Reference] = []
 
-    for path in hand_written_files():
+    for path in paths:
         for docstring, first_line in docstrings_of(path):
             for offset, line in enumerate(docstring.splitlines()):
                 for label, target in references_in(line):
@@ -148,19 +149,42 @@ def test_every_cross_reference_in_a_docstring_resolves() -> None:
     docstring cannot see: `Client.forward_messages` links on a method page and dies on a
     type page.
     """
-    dead = sorted({str(one) for one in hand_written_references() if not resolves(one.target)})
+    references = references_of(hand_written_files())
+    dead = sorted({str(one) for one in references if not resolves(one.target)})
+
+    assert not dead, "{} cross-references point at nothing:\n{}".format(len(dead), "\n".join(dead))
+
+
+def test_every_cross_reference_in_a_generated_docstring_resolves() -> None:
+    """The compiler writes a target per TL type from one table, so a hole there is a dead link.
+
+    The `raw` pages render these docstrings as they are, and a TL type with no module under
+    `pyrogram.raw.base` (`FutureSalts` is hand-written in `pyrogram.raw.core`, `Object` is any
+    TL object) is written as one unless the table names where it really lives.
+    """
+    references = references_of(generated_files())
+    dead = sorted({str(one) for one in references if not resolves(one.target)})
 
     assert not dead, "{} cross-references point at nothing:\n{}".format(len(dead), "\n".join(dead))
 
 
 def test_the_sweep_reads_the_docstrings_it_claims_to() -> None:
-    """A regex that stopped matching would leave the test above passing over nothing."""
-    references = hand_written_references()
+    """A regex that stopped matching would leave the tests above passing over nothing."""
+    references = references_of(hand_written_files())
     targets: set[str] = {one.target for one in references}
 
     assert len(targets) > 500
     assert "pyrogram.types.Message" in targets
     assert any(one.path.name == "get_chat_history.py" for one in references)
+
+
+def test_the_sweep_reads_the_generated_docstrings_it_claims_to() -> None:
+    references = references_of(generated_files())
+    targets: set[str] = {one.target for one in references}
+
+    assert len(targets) > 500
+    assert "pyrogram.raw.core.FutureSalts" in targets
+    assert any(one.path.name == "get_future_salts.py" for one in references)
 
 
 def test_a_target_that_does_not_exist_does_not_resolve() -> None:
@@ -182,7 +206,7 @@ def test_every_label_that_looks_like_a_path_names_the_target_it_points_at() -> N
     disagreeing = sorted(
         {
             str(one)
-            for one in hand_written_references()
+            for one in references_of(hand_written_files())
             if one.label is not None and not label_agrees_with_target(one.label, target=one.target)
         }
     )
@@ -216,6 +240,6 @@ def test_a_reference_carries_the_label_it_was_written_with() -> None:
         ("filters.create()", "pyrogram.filters.create")
     ]
 
-    labelled = [one for one in hand_written_references() if one.label is not None]
+    labelled = [one for one in references_of(hand_written_files()) if one.label is not None]
 
     assert labelled, "the explicit-title form is gone from the tree, and this rule with it"
