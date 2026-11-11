@@ -19,6 +19,8 @@ docs/source/telegram
 docs/source/api/methods/
 docs/source/api/bound-methods/
 docs/source/api/types/
+docs/source/api/enums/
+docs/source/api/decorators.rst
 
 # PyCharm stuff
 .idea/
