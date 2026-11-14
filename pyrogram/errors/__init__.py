@@ -43,6 +43,16 @@ class BadMsgNotification(Exception):
         super().__init__(f"[{code}] {description}")
 
 
+class IncompleteDownload(Exception):
+    """Raised when a download ends with fewer bytes than the file is known to have."""
+
+    def __init__(self, received: int, expected: int):
+        self.received = received
+        self.expected = expected
+
+        super().__init__(f"The download ended after {received} of {expected} bytes.")
+
+
 class SecurityError(Exception):
     """Generic security error."""
 
