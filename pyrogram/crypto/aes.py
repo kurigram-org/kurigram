@@ -87,18 +87,24 @@ else:
         iv_1 = iv[:16]
         iv_2 = iv[16:]
 
-        data = [data[i : i + 16] for i in range(0, len(data), 16)]
+        chunks = (data[i : i + 16] for i in range(0, len(data), 16))
+        if type(data) is not bytes:
+            # Preserve eager slicing for mutable and custom input objects.
+            chunks = list(chunks)
+        out = bytearray()
 
         if encrypt:
-            for i, chunk in enumerate(data):
-                iv_1 = data[i] = utils.xor(cipher.encrypt(utils.xor(chunk, iv_1)), iv_2)
+            for chunk in chunks:
+                iv_1 = utils.xor(cipher.encrypt(utils.xor(chunk, iv_1)), iv_2)
+                out.extend(iv_1)
                 iv_2 = chunk
         else:
-            for i, chunk in enumerate(data):
-                iv_2 = data[i] = utils.xor(cipher.decrypt(utils.xor(chunk, iv_2)), iv_1)
+            for chunk in chunks:
+                iv_2 = utils.xor(cipher.decrypt(utils.xor(chunk, iv_2)), iv_1)
+                out.extend(iv_2)
                 iv_1 = chunk
 
-        return b"".join(data)
+        return bytes(out)
 
     def ctr(data: bytes, key: bytes, iv: bytearray, state: bytearray) -> bytes:
         cipher = pyaes.AES(key)
