@@ -55,7 +55,7 @@ class OnChatBoost:
 
         def decorator(func: HandlerType) -> HandlerType:
             if isinstance(self, pyrogram.Client):
-                self.add_handler(pyrogram.handlers.ShippingQueryHandler(func, filters), group)
+                self.add_handler(pyrogram.handlers.ChatBoostHandler(func, filters), group)
             elif isinstance(self, Filter) or self is None:
                 if not hasattr(func, "handlers"):
                     func.handlers = []
@@ -64,7 +64,7 @@ class OnChatBoost:
 
                 func.handlers.append(
                     (
-                        pyrogram.handlers.ShippingQueryHandler(func, arguments.filters),
+                        pyrogram.handlers.ChatBoostHandler(func, arguments.filters),
                         arguments.group,
                     )
                 )
