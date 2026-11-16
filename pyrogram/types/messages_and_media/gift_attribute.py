@@ -18,15 +18,10 @@
 
 from __future__ import annotations as _annotations
 
-from typing import TYPE_CHECKING
-
 import pyrogram
-from pyrogram import enums, raw, types, utils
+from pyrogram import enums, raw, types
 
 from ..object import Object
-
-if TYPE_CHECKING:
-    from datetime import datetime
 
 
 class GiftAttribute(Object):
@@ -45,26 +40,6 @@ class GiftAttribute(Object):
 
         rarity (:obj:`~pyrogram.types.UpgradedGiftAttributeRarityPerMille` | :obj:`~pyrogram.types.UpgradedGiftAttributeRarityUncommon` | :obj:`~pyrogram.types.UpgradedGiftAttributeRarityRare` | :obj:`~pyrogram.types.UpgradedGiftAttributeRarityEpic` | :obj:`~pyrogram.types.UpgradedGiftAttributeRarityLegendary`, *optional*):
             The rarity of the model.
-
-        date (:py:obj:`~datetime.datetime`, *optional*):
-            Date when the gift was received.
-            Available only if the original details are available.
-
-        caption (``str``, *optional*):
-            Text message.
-            Available only if the original details are available.
-
-        caption_entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
-            For text messages, special entities like usernames, URLs, bot commands, etc. that appear in the text.
-            Available only if the original details are available.
-
-        from_user (:obj:`~pyrogram.types.User`, *optional*):
-            User who sent the gift.
-            Available only if the original details are available.
-
-        to_user (:obj:`~pyrogram.types.User`, *optional*):
-            User who received the gift.
-            Available only if the original details are available.
 
         center_color (``int``, *optional*):
             Center color of the gift in decimal format.
@@ -101,11 +76,6 @@ class GiftAttribute(Object):
             | types.UpgradedGiftAttributeRarityLegendary
             | None
         ) = None,
-        date: datetime | None = None,
-        caption: str | None = None,
-        caption_entities: list[types.MessageEntity] | None = None,
-        from_user: types.User | None = None,
-        to_user: types.User | None = None,
         sticker: types.Sticker | None = None,
         center_color: int | None = None,
         edge_color: int | None = None,
@@ -118,11 +88,6 @@ class GiftAttribute(Object):
         self.backdrop_id = backdrop_id
         self.type = type
         self.rarity = rarity
-        self.date = date
-        self.caption = caption
-        self.caption_entities = caption_entities
-        self.from_user = from_user
-        self.to_user = to_user
         self.sticker = sticker
         self.center_color = center_color
         self.edge_color = edge_color
@@ -133,41 +98,19 @@ class GiftAttribute(Object):
     async def _parse(
         client,
         attr: raw.base.StarGiftAttribute,
-        users: dict[int, raw.base.User],
-        chats: dict[int, raw.base.Chat],
     ) -> GiftAttribute:
-        caption = None
-        caption_entities = None
         sticker = None
-        from_user = None
-        to_user = None
 
         if hasattr(attr, "document"):
             doc = attr.document
             attributes = {type(i): i for i in doc.attributes}
             sticker = await types.Sticker._parse(client, doc, attributes)
 
-        if isinstance(attr, raw.types.StarGiftAttributeOriginalDetails):
-            caption, caption_entities = (
-                await utils.parse_text_with_entities(client, attr.message, users)
-            ).values()
-
-            sender_id = utils.get_raw_peer_id(attr.sender_id)
-            recipient_id = utils.get_raw_peer_id(attr.recipient_id)
-
-            from_user = await types.User._parse(client, users.get(sender_id))
-            to_user = await types.User._parse(client, users.get(recipient_id))
-
         return GiftAttribute(
             name=getattr(attr, "name", None),
             backdrop_id=getattr(attr, "backdrop_id", None),
             type=enums.GiftAttributeType(type(attr)),
             rarity=types.UpgradedGiftAttributeRarity._parse(attr.rarity),
-            date=utils.timestamp_to_datetime(getattr(attr, "date", None)),
-            caption=caption,
-            caption_entities=caption_entities,
-            from_user=from_user,
-            to_user=to_user,
             sticker=sticker,
             center_color=getattr(attr, "center_color", None),
             edge_color=getattr(attr, "edge_color", None),
