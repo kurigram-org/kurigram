@@ -687,7 +687,7 @@ class User(Object, Update):
     # endregion
 
     @staticmethod
-    async def _parse(client, user: raw.base.User) -> User | None:
+    async def _parse(client: pyrogram.Client, user: raw.base.User | None) -> User | None:
         if not isinstance(user, raw.types.User):
             return None
 
