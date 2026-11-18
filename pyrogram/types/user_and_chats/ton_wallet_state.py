@@ -30,7 +30,7 @@ class TonWalletState(Object, Update):
     """Describes state of the wallet of the current user in the TON blockchain.
 
     Parameters:
-        address (``str``, *optional*):
+        wallet_address (``str``, *optional*):
             Address of the wallet.
 
         public_key (``bytes``, *optional*):

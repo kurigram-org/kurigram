@@ -60,7 +60,7 @@ class AuctionStateActive(AuctionState):
         top_bidder_user_ids (List of ``int``):
             User identifiers of at most 3 users with the biggest bids.
 
-        rounds (List of :obj:`~pyrogram.types.AuctionRound`):
+        auction_rounds (List of :obj:`~pyrogram.types.AuctionRound`):
             Rounds of the auction in which their duration or extension rules are changed.
 
         current_round_end_date (:py:obj:`~datetime.datetime`):

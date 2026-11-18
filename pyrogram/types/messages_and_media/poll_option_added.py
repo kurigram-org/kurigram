@@ -34,7 +34,7 @@ class PollOptionAdded(Object):
         option_persistent_id (``str``):
             Unique identifier of the added option.
 
-        text (:obj:`~pyrogram.types.FormattedText`, *optional*):
+        text (:obj:`~pyrogram.types.FormattedText`):
             Option text.
     """
 

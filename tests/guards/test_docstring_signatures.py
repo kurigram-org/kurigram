@@ -40,7 +40,7 @@ from re import Pattern
 from tests.guards.name_resolution import REPOSITORY_ROOT, hand_written_files
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Generator
 
 # An entry reads `    reply_markup (``InlineKeyboardMarkup``, *optional*):`: the name, then
 #  the type and the markers in brackets, then the colon that makes Sphinx render the line as
@@ -51,6 +51,9 @@ _ENTRY: Final[Pattern[str]] = re.compile(r"^(?P<indent> *)\*{0,2}(?P<name>\w+) \
 
 _OPTIONAL_MARKER: Final[str] = "*optional*"
 
+# A class block also lists its properties, marked so; they are attributes, not parameters.
+_PROPERTY_MARKER: Final[str] = "*property*"
+
 _BLOCK_HEADING: Final[str] = "Parameters:"
 
 # An entry sits one level in from the heading; anything deeper is the description under one.
@@ -58,11 +61,53 @@ _ENTRY_INDENT: Final[int] = 4
 
 _RECEIVERS: Final[frozenset[str]] = frozenset({"self", "cls"})
 
-# Whole modules another branch is rewriting. Editing a docstring in one of them conflicts with
-#  work already in review, so their drift is left for that branch to carry. Drop an entry once
-#  its branch lands; `test_every_exemption_still_names_a_module_that_drifts` fails on one that
-#  has nothing left to exempt.
-_HELD_BY_A_PULL_REQUEST: Final[dict[str, str]] = {}
+# Every type takes the client that parsed it, to back its bound methods; no type documents it.
+_CONSTRUCTOR_WIRING: Final[frozenset[str]] = frozenset({"client"})
+
+_PARSE_REWRITE: Final[str] = "in review: every `_parse` raises on an empty constructor"
+_AIOFILES: Final[str] = "in review: local file I/O moves to `aiofiles`"
+_SESSION_HARDENING: Final[str] = "in review: session survives an unknown constructor"
+_CHAT_ACTIONS: Final[str] = "in review: emoji-interaction chat actions"
+
+# Whole modules a docstring edit here cannot fix, each with why: a branch in review rewrites it,
+#  so an edit would conflict, or the fix is a code change. Drop an entry once that lands;
+#  `test_every_exemption_still_names_a_module_that_drifts` fails on one with nothing to exempt.
+_EXEMPT: Final[dict[str, str]] = {
+    "pyrogram/client.py": f"{_AIOFILES}; {_SESSION_HARDENING}",
+    "pyrogram/types/bots_and_keyboards/callback_query.py": _PARSE_REWRITE,
+    "pyrogram/types/bots_and_keyboards/message_reaction_updated.py": _PARSE_REWRITE,
+    "pyrogram/types/inline_mode/inline_query.py": _PARSE_REWRITE,
+    "pyrogram/types/input_content/input_chat_photo.py": _AIOFILES,
+    "pyrogram/types/input_content/input_media_animation.py": _AIOFILES,
+    "pyrogram/types/input_content/input_media_audio.py": _AIOFILES,
+    "pyrogram/types/input_content/input_media_document.py": _AIOFILES,
+    "pyrogram/types/input_content/input_media_live_photo.py": _AIOFILES,
+    "pyrogram/types/input_content/input_media_photo.py": _AIOFILES,
+    "pyrogram/types/input_content/input_media_video.py": _AIOFILES,
+    "pyrogram/types/input_content/input_media_voice_note.py": _AIOFILES,
+    "pyrogram/types/messages_and_media/external_reply_info.py": _PARSE_REWRITE,
+    "pyrogram/types/messages_and_media/forum_topic.py": _PARSE_REWRITE,
+    "pyrogram/types/messages_and_media/gifted_grams.py": _PARSE_REWRITE,
+    "pyrogram/types/messages_and_media/gifted_premium.py": _PARSE_REWRITE,
+    "pyrogram/types/messages_and_media/gifted_stars.py": _PARSE_REWRITE,
+    "pyrogram/types/messages_and_media/giveaway.py": _PARSE_REWRITE,
+    "pyrogram/types/messages_and_media/giveaway_prize_stars.py": _PARSE_REWRITE,
+    "pyrogram/types/messages_and_media/giveaway_winners.py": _PARSE_REWRITE,
+    "pyrogram/types/messages_and_media/media_area.py": _PARSE_REWRITE,
+    "pyrogram/types/messages_and_media/message.py": f"{_AIOFILES}; {_CHAT_ACTIONS}; {_PARSE_REWRITE}",
+    "pyrogram/types/messages_and_media/message_content.py": _PARSE_REWRITE,
+    "pyrogram/types/messages_and_media/message_origin_import.py": (
+        "documents `type`, which its `__init__` does not take: a signature change"
+    ),
+    "pyrogram/types/messages_and_media/story.py": f"{_AIOFILES}; {_PARSE_REWRITE}",
+    "pyrogram/types/messages_and_media/successful_payment.py": _PARSE_REWRITE,
+    "pyrogram/types/messages_and_media/web_page.py": _PARSE_REWRITE,
+    "pyrogram/types/user_and_chats/chat_folder_invite_link_info.py": _PARSE_REWRITE,
+    "pyrogram/types/user_and_chats/chat_invite_link.py": _PARSE_REWRITE,
+    "pyrogram/types/user_and_chats/chat_permissions.py": _PARSE_REWRITE,
+    "pyrogram/types/user_and_chats/community.py": _PARSE_REWRITE,
+    "pyrogram/types/user_and_chats/user.py": _PARSE_REWRITE,
+}
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -74,8 +119,15 @@ class DocumentedParameter:
 
 @dataclasses.dataclass(frozen=True, slots=True)
 class DocumentedFunction:
+    """A `Parameters:` block and the signature it describes.
+
+    A class documents its constructor, so its block is held against `__init__`.
+    """
+
     module: str
-    node: ast.FunctionDef | ast.AsyncFunctionDef
+    name: str
+    line: int
+    omittable: dict[str, bool]
     documented: list[DocumentedParameter]
 
 
@@ -116,6 +168,9 @@ def documented_parameters(*, lines: list[str], first_line: int) -> list[Document
         if entry is None or len(entry["indent"]) != base + _ENTRY_INDENT:
             continue
 
+        if _PROPERTY_MARKER in entry["spec"]:
+            continue
+
         found.append(
             DocumentedParameter(
                 name=entry["name"],
@@ -151,64 +206,122 @@ def signature_parameters(node: ast.FunctionDef | ast.AsyncFunctionDef) -> dict[s
     return omittable
 
 
-def documented_functions() -> Iterator[DocumentedFunction]:
-    """Every function of the package whose docstring carries a `Parameters:` block."""
+def constructor(node: ast.ClassDef) -> ast.FunctionDef | ast.AsyncFunctionDef | None:
+    return next(
+        (
+            statement
+            for statement in node.body
+            if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and statement.name == "__init__"
+        ),
+        None,
+    )
+
+
+def omittable_parameters(
+    *,
+    node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef,
+    module: str,
+) -> dict[str, bool]:
+    """What the block of `node` is held against: its own signature, or its class's `__init__`."""
+    if not isinstance(node, ast.ClassDef):
+        return signature_parameters(node)
+
+    signature = constructor(node)
+
+    # An inherited `__init__` would need the import resolved; no class does this yet.
+    assert signature is not None, (
+        f"{module}:{node.lineno}: {node.name} documents parameters and defines no `__init__`"
+    )
+
+    omittable = signature_parameters(signature)
+
+    for wiring in _CONSTRUCTOR_WIRING:
+        omittable.pop(wiring, None)
+
+    return omittable
+
+
+def documented_blocks(*, module: str, source: list[str]) -> Generator[DocumentedFunction]:
+    """Every function and class in `source` whose docstring carries a `Parameters:` block."""
+    for node in ast.walk(ast.parse("\n".join(source), filename=module)):
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            continue
+
+        if ast.get_docstring(node) is None:
+            continue
+
+        literal = node.body[0].value
+        documented = documented_parameters(
+            lines=source[literal.lineno - 1 : literal.end_lineno],
+            first_line=literal.lineno,
+        )
+
+        if not documented:
+            continue
+
+        yield DocumentedFunction(
+            module=module,
+            name=node.name,
+            line=node.lineno,
+            omittable=omittable_parameters(
+                node=node,
+                module=module,
+            ),
+            documented=documented,
+        )
+
+
+def documented_functions() -> Generator[DocumentedFunction]:
+    """Every `Parameters:` block of the package, with the signature it describes."""
     for path in hand_written_files():
-        module = path.relative_to(REPOSITORY_ROOT).as_posix()
-        source = path.read_text(encoding="utf-8").splitlines()
+        yield from documented_blocks(
+            module=path.relative_to(REPOSITORY_ROOT).as_posix(),
+            source=path.read_text(encoding="utf-8").splitlines(),
+        )
 
-        for node in ast.walk(ast.parse("\n".join(source), filename=module)):
-            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                continue
 
-            if ast.get_docstring(node) is None:
-                continue
+def block_name_drift(found_function: DocumentedFunction) -> list[Drift]:
+    """Every entry naming a non-parameter or a name already documented, and every parameter with none."""
+    omittable = found_function.omittable
+    found: list[Drift] = []
+    written: set[str] = set()
 
-            literal = node.body[0].value
-            lines = source[literal.lineno - 1 : literal.end_lineno]
-            documented = documented_parameters(
-                lines=lines,
-                first_line=literal.lineno,
-            )
+    for parameter in found_function.documented:
+        complaint: str | None = None
 
-            if documented:
-                yield DocumentedFunction(
-                    module=module,
-                    node=node,
-                    documented=documented,
-                )
+        if parameter.name in written:
+            complaint = f"`{parameter.name}` is documented twice"
+        elif parameter.name not in omittable:
+            complaint = f"`{parameter.name}` is not a parameter"
+
+        written.add(parameter.name)
+
+        if complaint is None:
+            continue
+
+        drift = Drift(
+            module=found_function.module,
+            line=parameter.line,
+            function=found_function.name,
+            complaint=complaint,
+        )
+        found.append(drift)
+
+    for name in sorted(set(omittable) - written):
+        drift = Drift(
+            module=found_function.module,
+            line=found_function.line,
+            function=found_function.name,
+            complaint=f"`{name}` has no entry",
+        )
+        found.append(drift)
+
+    return found
 
 
 def name_drift() -> list[Drift]:
-    """Every entry naming something the signature does not have, and every parameter with none."""
-    found: list[Drift] = []
-
-    for found_function in documented_functions():
-        omittable = signature_parameters(found_function.node)
-        written = {parameter.name for parameter in found_function.documented}
-
-        for parameter in found_function.documented:
-            if parameter.name not in omittable:
-                found.append(
-                    Drift(
-                        module=found_function.module,
-                        line=parameter.line,
-                        function=found_function.node.name,
-                        complaint=f"`{parameter.name}` is not a parameter",
-                    )
-                )
-
-        for name in sorted(set(omittable) - written):
-            found.append(
-                Drift(
-                    module=found_function.module,
-                    line=found_function.node.lineno,
-                    function=found_function.node.name,
-                    complaint=f"`{name}` has no entry",
-                )
-            )
-
-    return found
+    return [drift for found in documented_functions() for drift in block_name_drift(found)]
 
 
 def marker_drift() -> list[Drift]:
@@ -216,7 +329,7 @@ def marker_drift() -> list[Drift]:
     found: list[Drift] = []
 
     for found_function in documented_functions():
-        omittable = signature_parameters(found_function.node)
+        omittable = found_function.omittable
 
         for parameter in found_function.documented:
             if parameter.name not in omittable:
@@ -230,24 +343,23 @@ def marker_drift() -> list[Drift]:
                 if parameter.marked_optional
                 else f"`{parameter.name}` has a default and is not marked optional"
             )
-            found.append(
-                Drift(
-                    module=found_function.module,
-                    line=parameter.line,
-                    function=found_function.node.name,
-                    complaint=complaint,
-                )
+            drift = Drift(
+                module=found_function.module,
+                line=parameter.line,
+                function=found_function.name,
+                complaint=complaint,
             )
+            found.append(drift)
 
     return found
 
 
-def free_of_an_open_pull_request(drifts: list[Drift]) -> list[str]:
-    return sorted(str(drift) for drift in drifts if drift.module not in _HELD_BY_A_PULL_REQUEST)
+def not_exempt(drifts: list[Drift]) -> list[str]:
+    return sorted(str(drift) for drift in drifts if drift.module not in _EXEMPT)
 
 
 def test_every_documented_parameter_is_a_parameter_and_every_parameter_is_documented() -> None:
-    disagreeing = free_of_an_open_pull_request(name_drift())
+    disagreeing = not_exempt(name_drift())
 
     assert not disagreeing, "{} documented names disagree with their signature:\n{}".format(
         len(disagreeing),
@@ -256,7 +368,7 @@ def test_every_documented_parameter_is_a_parameter_and_every_parameter_is_docume
 
 
 def test_every_optional_marker_agrees_with_the_default() -> None:
-    disagreeing = free_of_an_open_pull_request(marker_drift())
+    disagreeing = not_exempt(marker_drift())
 
     assert not disagreeing, "{} markers disagree with their default:\n{}".format(
         len(disagreeing),
@@ -267,7 +379,7 @@ def test_every_optional_marker_agrees_with_the_default() -> None:
 def test_every_exemption_still_names_a_module_that_drifts() -> None:
     """An exemption whose pull request has merged silences a file that is now free."""
     drifting = {drift.module for drift in name_drift() + marker_drift()}
-    stale = sorted(set(_HELD_BY_A_PULL_REQUEST) - drifting)
+    stale = sorted(set(_EXEMPT) - drifting)
 
     assert not stale, "{} exemptions have nothing left to exempt:\n{}".format(
         len(stale),
@@ -276,9 +388,7 @@ def test_every_exemption_still_names_a_module_that_drifts() -> None:
 
 
 def test_every_exemption_names_a_module_that_exists() -> None:
-    missing = sorted(
-        module for module in _HELD_BY_A_PULL_REQUEST if not (REPOSITORY_ROOT / module).is_file()
-    )
+    missing = sorted(module for module in _EXEMPT if not (REPOSITORY_ROOT / module).is_file())
 
     assert missing == []
 
@@ -315,6 +425,12 @@ def test_the_sweep_reads_an_entry_and_skips_its_description() -> None:
         "            colon_less (``int``, *optional*)",
         "                Written without the closing colon, so read as absent.",
         "",
+        "            chat_id (``int``):",
+        "                Kept twice by a bad merge, so read twice.",
+        "",
+        "            link (``str``, *property*):",
+        "                An attribute, not a parameter.",
+        "",
         "        Returns:",
         "            not_a_parameter (``int``):",
         '        """',
@@ -329,6 +445,51 @@ def test_the_sweep_reads_an_entry_and_skips_its_description() -> None:
         DocumentedParameter(name="chat_id", line=4, marked_optional=False),
         DocumentedParameter(name="reply_markup", line=8, marked_optional=True),
         DocumentedParameter(name="kwargs", line=11, marked_optional=True),
+        DocumentedParameter(name="chat_id", line=17, marked_optional=False),
+    ]
+
+
+def test_a_class_block_is_held_against_its_constructor() -> None:
+    source = [
+        "class Chat:",
+        '    """A chat.',
+        "",
+        "    Parameters:",
+        "        id (``int``):",
+        "            Unique identifier.",
+        "",
+        "        title (``str``, *optional*):",
+        "            Title.",
+        "",
+        "        id (``int``):",
+        "            Kept twice by a bad merge.",
+        '    """',
+        "",
+        "    def __init__(self, *, client=None, id, title=None, username=None): ...",
+    ]
+
+    drifts = [
+        drift
+        for block in documented_blocks(
+            module="chat.py",
+            source=source,
+        )
+        for drift in block_name_drift(block)
+    ]
+
+    assert drifts == [
+        Drift(
+            module="chat.py",
+            line=11,
+            function="Chat",
+            complaint="`id` is documented twice",
+        ),
+        Drift(
+            module="chat.py",
+            line=1,
+            function="Chat",
+            complaint="`username` has no entry",
+        ),
     ]
 
 

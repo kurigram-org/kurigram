@@ -42,7 +42,7 @@ class InlineQueryResultCachedSticker(InlineQueryResult):
         reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
             An InlineKeyboardMarkup object.
 
-        input_message_content (:obj:`~pyrogram.types.InputMessageContent`):
+        input_message_content (:obj:`~pyrogram.types.InputMessageContent`, *optional*):
             Content of the message to be sent instead of the photo.
     """
 
