@@ -33,6 +33,8 @@ from .error_handler import ErrorHandler
 from .guest_message_handler import GuestMessageHandler
 from .handler import Handler
 from .inline_query_handler import InlineQueryHandler
+from .shared_widget_query_handler import SharedWidgetQueryHandler
+from .widget_query_handler import WidgetQueryHandler
 from .managed_bot_updated_handler import ManagedBotUpdatedHandler
 from .message_handler import MessageHandler
 from .message_reaction_count_handler import MessageReactionCountHandler
@@ -66,6 +68,8 @@ __all__ = [
     "GuestMessageHandler",
     "Handler",
     "InlineQueryHandler",
+    "SharedWidgetQueryHandler",
+    "WidgetQueryHandler",
     "ManagedBotUpdatedHandler",
     "MessageHandler",
     "MessageReactionCountHandler",
