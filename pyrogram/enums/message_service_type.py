@@ -250,3 +250,6 @@ class MessageServiceType(AutoName):
 
     TON_CONNECT_REQUEST = auto()
     "A request from a dApp was received through TON Connect"
+
+    PAID_MESSAGES_WAIVED = auto()
+    "The sender used a link which allows sending messages without paying Telegram Stars"

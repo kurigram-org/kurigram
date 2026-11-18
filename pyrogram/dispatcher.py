@@ -50,10 +50,12 @@ from pyrogram.handlers import (
     PreCheckoutQueryHandler,
     PurchasedPaidMediaHandler,
     RawUpdateHandler,
+    SharedWidgetQueryHandler,
     ShippingQueryHandler,
     StoppedMessageGenerationHandler,
     StoryHandler,
     UserStatusHandler,
+    WidgetQueryHandler,
 )
 from pyrogram.raw.types import (
     UpdateBotBusinessConnect,
@@ -71,6 +73,8 @@ from pyrogram.raw.types import (
     UpdateBotPrecheckoutQuery,
     UpdateBotPurchasedPaidMedia,
     UpdateBotShippingQuery,
+    UpdateBotWidgetCopyQuery,
+    UpdateBotWidgetQuery,
     UpdateBusinessBotCallbackQuery,
     UpdateChannelParticipant,
     UpdateChannelUserTyping,
@@ -84,6 +88,7 @@ from pyrogram.raw.types import (
     UpdateEditMessage,
     UpdateEphemeralBotCallbackQuery,
     UpdateInlineBotCallbackQuery,
+    UpdateInlineBotWidgetQuery,
     UpdateManagedBot,
     UpdateMessagePoll,
     UpdateMessagePollVote,
@@ -121,6 +126,8 @@ class Dispatcher:
     CHAT_MEMBER_UPDATES = (UpdateChatParticipant, UpdateChannelParticipant)
     USER_STATUS_UPDATES = (UpdateUserStatus,)
     BOT_INLINE_QUERY_UPDATES = (UpdateBotInlineQuery,)
+    WIDGET_QUERY_UPDATES = (UpdateBotWidgetQuery, UpdateInlineBotWidgetQuery)
+    SHARED_WIDGET_QUERY_UPDATES = (UpdateBotWidgetCopyQuery,)
     POLL_UPDATES = (UpdateMessagePoll, UpdateMessagePollVote)
     CHOSEN_INLINE_RESULT_UPDATES = (UpdateBotInlineSend,)
     CHAT_JOIN_REQUEST_UPDATES = (UpdateBotChatInviteRequester,)
@@ -200,6 +207,18 @@ class Dispatcher:
             return (
                 await pyrogram.types.InlineQuery._parse(self.client, update, users),
                 InlineQueryHandler,
+            )
+
+        async def widget_query_parser(update, users, chats):
+            return (
+                await pyrogram.types.WidgetQuery._parse(self.client, update, users, chats),
+                WidgetQueryHandler,
+            )
+
+        async def shared_widget_query_parser(update, users, chats):
+            return (
+                await pyrogram.types.SharedWidgetQuery._parse(self.client, update, users, chats),
+                SharedWidgetQueryHandler,
             )
 
         async def poll_parser(update, users, chats):
@@ -340,6 +359,8 @@ class Dispatcher:
             Dispatcher.CALLBACK_QUERY_UPDATES: callback_query_parser,
             Dispatcher.USER_STATUS_UPDATES: user_status_parser,
             Dispatcher.BOT_INLINE_QUERY_UPDATES: inline_query_parser,
+            Dispatcher.WIDGET_QUERY_UPDATES: widget_query_parser,
+            Dispatcher.SHARED_WIDGET_QUERY_UPDATES: shared_widget_query_parser,
             Dispatcher.POLL_UPDATES: poll_parser,
             Dispatcher.CHOSEN_INLINE_RESULT_UPDATES: chosen_inline_result_parser,
             Dispatcher.CHAT_MEMBER_UPDATES: chat_member_updated_parser,

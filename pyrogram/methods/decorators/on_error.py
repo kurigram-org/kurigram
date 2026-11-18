@@ -50,7 +50,7 @@ class OnError:
                 If None, the handler will catch any exception that is a subclass of ``Exception``.
 
             filters (:obj:`~pyrogram.filters`, *optional*):
-                Pass one or more filters to allow only a subset of messages to be passed
+                Pass one or more filters to allow only a subset of errors to be passed
                 in your function.
 
             group (``int``, *optional*):

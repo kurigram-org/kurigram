@@ -38,6 +38,8 @@ from .edit_message_checklist import EditMessageChecklist
 from .edit_message_media import EditMessageMedia
 from .edit_message_reply_markup import EditMessageReplyMarkup
 from .edit_message_text import EditMessageText
+from .edit_message_widget_data import EditMessageWidgetData
+from .edit_shared_widget_data import EditSharedWidgetData
 from .fix_text_with_ai import FixTextWithAI
 from .forward_media_group import ForwardMediaGroup
 from .forward_messages import ForwardMessages
@@ -88,12 +90,14 @@ from .send_reaction import SendReaction
 from .send_rich_message import SendRichMessage
 from .send_rich_message_draft import SendRichMessageDraft
 from .send_screenshot_notification import SendScreenshotNotification
+from .send_shared_widget import SendSharedWidget
 from .send_sticker import SendSticker
 from .send_venue import SendVenue
 from .send_video import SendVideo
 from .send_video_note import SendVideoNote
 from .send_voice import SendVoice
 from .send_web_page import SendWebPage
+from .send_widget import SendWidget
 from .set_direct_messages_chat_topic_is_marked_as_unread import (
     SetDirectMessagesChatTopicIsMarkedAsUnread,
 )
@@ -121,6 +125,8 @@ class Messages(
     EditMessageReplyMarkup,
     EditMessageMedia,
     EditMessageText,
+    EditMessageWidgetData,
+    EditSharedWidgetData,
     FixTextWithAI,
     ForwardMediaGroup,
     ForwardMessages,
@@ -155,6 +161,8 @@ class Messages(
     SendVoice,
     SendPoll,
     SendWebPage,
+    SendWidget,
+    SendSharedWidget,
     SetDirectMessagesChatTopicIsMarkedAsUnread,
     ViewMessages,
     VotePoll,
