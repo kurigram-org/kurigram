@@ -29,7 +29,7 @@ class SetManagedBotAccessSettings:
         is_access_restricted: bool,
         added_user_ids: list[int | str] | None = None,
     ) -> bool:
-        """Use this method to get the access settings of a managed bot.
+        """Use this method to change the access settings of a managed bot.
 
         .. include:: /_includes/usable-by/users-bots.rst
 
