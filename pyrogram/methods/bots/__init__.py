@@ -23,6 +23,7 @@ from .answer_inline_query import AnswerInlineQuery
 from .answer_pre_checkout_query import AnswerPreCheckoutQuery
 from .answer_shipping_query import AnswerShippingQuery
 from .answer_web_app_query import AnswerWebAppQuery
+from .answer_widget_query import AnswerWidgetQuery
 from .check_bot_username import CheckBotUsername
 from .create_bot import CreateBot
 from .create_invoice_link import CreateInvoiceLink
@@ -68,6 +69,7 @@ class Bots(
     AnswerInlineQuery,
     AnswerPreCheckoutQuery,
     AnswerShippingQuery,
+    AnswerWidgetQuery,
     CreateInvoiceLink,
     GetInlineBotResults,
     GetManagedBotAccessSettings,

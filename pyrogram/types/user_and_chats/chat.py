@@ -183,6 +183,9 @@ class Chat(Object):
         has_forum_tabs (``bool``, *optional*):
             True, if the supergroup is a forum, which topics are shown in the same way as in channel direct messages groups.
 
+        has_forum_sidebar (``bool``, *optional*):
+            True, if the supergroup is a forum, which topics are shown in a sidebar.
+
         has_direct_messages_group (``bool``, *optional*):
             True, if the channel has direct messages group.
 
@@ -334,6 +337,13 @@ class Chat(Object):
         first_profile_audio (:obj:`~pyrogram.types.Audio`, *optional*):
             The first audio file added to the user's profile.
             Returned only in :meth:`~pyrogram.Client.get_chat`.
+
+        ton_wallet_card (:obj:`~pyrogram.types.TonWalletCard`, *optional*):
+            For private chats, the TON wallet card of the user, which is shown on their profile page.
+
+        share_theme (:obj:`~pyrogram.types.ChatShareTheme`, *optional*):
+            For private chats, supergroups and channels, the theme of the screen for sharing a link to the user or the chat.
+            Omitted if the default theme is used.
 
         rating (:obj:`~pyrogram.types.UserRating`, *optional*):
             Description of the current rating of the user.
@@ -611,6 +621,7 @@ class Chat(Object):
         has_aggressive_anti_spam_enabled: bool | None = None,
         has_automatic_translation: bool | None = None,
         has_forum_tabs: bool | None = None,
+        has_forum_sidebar: bool | None = None,
         has_direct_messages_group: bool | None = None,
         has_welcome_messages: bool | None = None,
         invite_link: str | None = None,
@@ -655,6 +666,8 @@ class Chat(Object):
         bot_verification: types.BotVerification | None = None,
         main_profile_tab: enums.ProfileTab | None = None,
         first_profile_audio: types.Audio | None = None,
+        ton_wallet_card: types.TonWalletCard | None = None,
+        share_theme: types.ChatShareTheme | None = None,
         rating: types.UserRating | None = None,
         pending_rating: types.UserRating | None = None,
         pending_rating_date: datetime | None = None,
@@ -758,6 +771,7 @@ class Chat(Object):
         self.has_aggressive_anti_spam_enabled = has_aggressive_anti_spam_enabled
         self.has_automatic_translation = has_automatic_translation
         self.has_forum_tabs = has_forum_tabs
+        self.has_forum_sidebar = has_forum_sidebar
         self.has_direct_messages_group = has_direct_messages_group
         self.has_welcome_messages = has_welcome_messages
         self.invite_link = invite_link
@@ -802,6 +816,8 @@ class Chat(Object):
         self.bot_verification = bot_verification
         self.main_profile_tab = main_profile_tab
         self.first_profile_audio = first_profile_audio
+        self.ton_wallet_card = ton_wallet_card
+        self.share_theme = share_theme
         self.rating = rating
         self.pending_rating = pending_rating
         self.pending_rating_date = pending_rating_date
@@ -1096,6 +1112,7 @@ class Chat(Object):
             paid_message_star_count=channel.send_paid_messages_stars,
             has_automatic_translation=channel.autotranslation,
             has_forum_tabs=channel.forum_tabs,
+            has_forum_sidebar=channel.forum_sidebar,
             has_direct_messages_group=channel.broadcast_messages_allowed,
             community_id=utils.get_channel_id(channel.linked_community_id)
             if channel.linked_community_id is not None
@@ -1301,6 +1318,14 @@ class Chat(Object):
             else None
         )
         parsed_chat.note = await types.FormattedText._parse(client, user.note)
+        parsed_chat.share_theme = await types.ChatShareTheme._parse(
+            client, user.share_theme, users, chats
+        )
+
+        if user.wallet_card:
+            parsed_chat.ton_wallet_card = await types.TonWalletCard._parse(
+                client, user.wallet_card, users, chats
+            )
 
         if parsed_chat.community_id:
             raw_community = chats.get(utils.get_raw_peer_id(parsed_chat.community_id))
@@ -1497,6 +1522,9 @@ class Chat(Object):
             parsed_chat.guard_bot = await types.User._parse(client, raw_guard_bot)
 
         parsed_chat.has_welcome_messages = channel.has_welcome_messages
+        parsed_chat.share_theme = await types.ChatShareTheme._parse(
+            client, channel.share_theme, users, chats
+        )
 
         if parsed_chat.community_id:
             raw_community = chats.get(utils.get_raw_peer_id(parsed_chat.community_id))
