@@ -50,11 +50,8 @@ class BusinessWorkingHours(Object):
 
     @staticmethod
     def _parse(
-        work_hours: raw.types.BusinessWorkHours | None = None,
-    ) -> BusinessWorkingHours | None:
-        if not work_hours:
-            return None
-
+        work_hours: raw.types.BusinessWorkHours,
+    ) -> BusinessWorkingHours:
         return BusinessWorkingHours(
             timezone=work_hours.timezone_id,
             working_hours=types.List(

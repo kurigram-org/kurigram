@@ -72,11 +72,19 @@ class CreateForumTopic:
         users = {i.id: i for i in r.users}
         chats = {i.id: i for i in r.chats}
 
-        topic = await types.ForumTopic._parse_message(
-            client=self, message=r.updates[1].message, users=users, chats=chats
-        )
+        message = r.updates[1].message
+
         # The reply always carries the `MessageActionTopicCreate` service message.
-        if topic is None:
+        if not (
+            isinstance(message, raw.types.MessageService)
+            and isinstance(message.action, raw.types.MessageActionTopicCreate)
+        ):
             raise ValueError("The server answered without a topic creation message")
 
-        return topic
+        return await types.ForumTopic._parse_message(
+            client=self,
+            message=message,
+            action=message.action,
+            users=users,
+            chats=chats,
+        )

@@ -128,30 +128,35 @@ class ChatMember(Object):
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
     ) -> ChatMember:
+        async def parse_user(user_id: int) -> types.User | None:
+            raw_user = users.get(user_id)
+
+            return await types.User._parse(client, raw_user) if raw_user is not None else None
+
         # Chat participants
         if isinstance(member, raw.types.ChatParticipant):
             return ChatMember(
                 status=enums.ChatMemberStatus.MEMBER,
                 tag=member.rank,
-                user=await types.User._parse(client, users[member.user_id]),
+                user=await parse_user(member.user_id),
                 joined_date=utils.timestamp_to_datetime(member.date),
-                invited_by=await types.User._parse(client, users[member.inviter_id]),
+                invited_by=await parse_user(member.inviter_id),
                 client=client,
             )
         elif isinstance(member, raw.types.ChatParticipantAdmin):
             return ChatMember(
                 status=enums.ChatMemberStatus.ADMINISTRATOR,
                 tag=member.rank,
-                user=await types.User._parse(client, users[member.user_id]),
+                user=await parse_user(member.user_id),
                 joined_date=utils.timestamp_to_datetime(member.date),
-                invited_by=await types.User._parse(client, users[member.inviter_id]),
+                invited_by=await parse_user(member.inviter_id),
                 client=client,
             )
         elif isinstance(member, raw.types.ChatParticipantCreator):
             return ChatMember(
                 status=enums.ChatMemberStatus.OWNER,
                 tag=member.rank,
-                user=await types.User._parse(client, users[member.user_id]),
+                user=await parse_user(member.user_id),
                 client=client,
             )
 
@@ -160,7 +165,7 @@ class ChatMember(Object):
             return ChatMember(
                 status=enums.ChatMemberStatus.MEMBER,
                 tag=member.rank,
-                user=await types.User._parse(client, users[member.user_id]),
+                user=await parse_user(member.user_id),
                 joined_date=utils.timestamp_to_datetime(member.date),
                 subscription_until_date=utils.timestamp_to_datetime(
                     getattr(member, "subscription_until_date", None)
@@ -171,14 +176,10 @@ class ChatMember(Object):
             return ChatMember(
                 status=enums.ChatMemberStatus.ADMINISTRATOR,
                 tag=member.rank,
-                user=await types.User._parse(client, users[member.user_id]),
+                user=await parse_user(member.user_id),
                 joined_date=utils.timestamp_to_datetime(member.date),
-                promoted_by=await types.User._parse(client, users[member.promoted_by]),
-                invited_by=(
-                    await types.User._parse(client, users[member.inviter_id])
-                    if member.inviter_id
-                    else None
-                ),
+                promoted_by=await parse_user(member.promoted_by),
+                invited_by=await parse_user(member.inviter_id) if member.inviter_id else None,
                 custom_title=member.rank,
                 can_be_edited=member.can_edit,
                 privileges=types.ChatAdministratorRights._parse(member.admin_rights),
@@ -188,11 +189,7 @@ class ChatMember(Object):
             peer = member.peer
             peer_id = utils.get_raw_peer_id(peer)
 
-            user = (
-                await types.User._parse(client, users[peer_id])
-                if isinstance(peer, raw.types.PeerUser)
-                else None
-            )
+            user = await parse_user(peer_id) if isinstance(peer, raw.types.PeerUser) else None
 
             chat = (
                 await types.Chat._parse_chat(client, chats[peer_id])
@@ -212,7 +209,7 @@ class ChatMember(Object):
                 until_date=utils.timestamp_to_datetime(member.banned_rights.until_date),
                 joined_date=utils.timestamp_to_datetime(member.date),
                 is_member=not member.left,
-                restricted_by=await types.User._parse(client, users[member.kicked_by]),
+                restricted_by=await parse_user(member.kicked_by),
                 permissions=types.ChatPermissions._parse(member.banned_rights),
                 client=client,
             )
@@ -220,7 +217,7 @@ class ChatMember(Object):
             return ChatMember(
                 status=enums.ChatMemberStatus.OWNER,
                 tag=member.rank,
-                user=await types.User._parse(client, users[member.user_id]),
+                user=await parse_user(member.user_id),
                 custom_title=member.rank,
                 privileges=types.ChatAdministratorRights._parse(member.admin_rights),
                 client=client,
@@ -229,11 +226,7 @@ class ChatMember(Object):
             peer = member.peer
             peer_id = utils.get_raw_peer_id(peer)
 
-            user = (
-                await types.User._parse(client, users[peer_id])
-                if isinstance(peer, raw.types.PeerUser)
-                else None
-            )
+            user = await parse_user(peer_id) if isinstance(peer, raw.types.PeerUser) else None
 
             chat = (
                 await types.Chat._parse_chat(client, chats[peer_id])
@@ -248,9 +241,9 @@ class ChatMember(Object):
             return ChatMember(
                 status=enums.ChatMemberStatus.MEMBER,
                 tag=member.rank,
-                user=await types.User._parse(client, users[member.user_id]),
+                user=await parse_user(member.user_id),
                 joined_date=utils.timestamp_to_datetime(member.date),
-                invited_by=await types.User._parse(client, users[member.inviter_id]),
+                invited_by=await parse_user(member.inviter_id),
                 subscription_until_date=utils.timestamp_to_datetime(
                     getattr(member, "subscription_until_date", None)
                 ),

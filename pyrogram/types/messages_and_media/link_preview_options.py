@@ -18,9 +18,12 @@
 
 from __future__ import annotations as _annotations
 
-from pyrogram import raw
+from typing import TYPE_CHECKING
 
 from ..object import Object
+
+if TYPE_CHECKING:
+    from pyrogram import raw
 
 
 class LinkPreviewOptions(Object):
@@ -67,23 +70,13 @@ class LinkPreviewOptions(Object):
     @staticmethod
     def _parse(
         media: raw.types.MessageMediaWebPage,
-        url: str | None = None,
+        *,
         invert_media: bool | None = None,
-    ) -> LinkPreviewOptions | None:
-        if isinstance(media, raw.types.MessageMediaWebPage) and not isinstance(
-            media.webpage, raw.types.WebPageNotModified
-        ):
-            return LinkPreviewOptions(
-                is_disabled=False,
-                url=media.webpage.url,
-                prefer_small_media=media.force_small_media,
-                prefer_large_media=media.force_large_media,
-                show_above_text=invert_media,
-            )
-
-        if url:
-            return LinkPreviewOptions(
-                is_disabled=True,
-                url=url,
-                show_above_text=invert_media,
-            )
+    ) -> LinkPreviewOptions:
+        return LinkPreviewOptions(
+            is_disabled=False,
+            url=media.webpage.url,
+            prefer_small_media=media.force_small_media,
+            prefer_large_media=media.force_large_media,
+            show_above_text=invert_media,
+        )

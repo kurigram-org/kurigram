@@ -187,7 +187,9 @@ class MessageContent(Object):
             photo = types.Photo._parse(client, media.photo, media.ttl_seconds)
             media_type = enums.MessageMediaType.PHOTO
         elif isinstance(media, raw.types.MessageMediaGeo):
-            location = types.Location._parse(media.geo)
+            if isinstance(media.geo, raw.types.GeoPoint):
+                location = types.Location._parse(media.geo)
+
             media_type = enums.MessageMediaType.LOCATION
         elif isinstance(media, raw.types.MessageMediaGeoLive):
             location = types.Location._parse(media)
@@ -271,7 +273,9 @@ class MessageContent(Object):
                     media_type = enums.MessageMediaType.DOCUMENT
         elif isinstance(media, raw.types.MessageMediaWebPage):
             media_type = enums.MessageMediaType.WEB_PAGE
-            web_page = types.WebPage._parse(client, media)
+
+            if not isinstance(media.webpage, raw.types.WebPageNotModified):
+                web_page = types.WebPage._parse(client, media)
         elif isinstance(media, raw.types.MessageMediaPoll):
             poll = await types.Poll._parse(
                 client,

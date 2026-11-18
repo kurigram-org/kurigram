@@ -42,4 +42,11 @@ class GetDefaultEmojiStatuses:
         """
         r = await self.invoke(raw.functions.account.GetDefaultEmojiStatuses(hash=0))
 
-        return types.List([types.EmojiStatus._parse(self, i) for i in r.statuses])
+        return types.List(
+            [
+                types.EmojiStatus._parse(self, status)
+                if isinstance(status, (raw.types.EmojiStatus, raw.types.EmojiStatusCollectible))
+                else None
+                for status in r.statuses
+            ]
+        )

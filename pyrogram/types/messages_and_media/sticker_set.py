@@ -159,7 +159,9 @@ class StickerSet(Object):
                     for doc in sticker_set.documents
                 ]
             ),
-            thumbs=types.Thumbnail._parse(client, thumb),
+            thumbs=types.Thumbnail._parse(client, thumb) or None
+            if isinstance(thumb, raw.types.Document)
+            else None,
             is_owned=_set.creator,
             is_installed=bool(_set.installed_date),
             is_archived=_set.archived,

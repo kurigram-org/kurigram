@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types, utils
+from pyrogram import raw, types
 
 
 class GetMe:
@@ -42,4 +42,4 @@ class GetMe:
         users = {u.id: u for u in r.users}
         chats = {c.id: c for c in r.chats}
 
-        return utils.require_parsed(await types.User._parse_full(self, r.full_user, users, chats))
+        return await types.User._parse_full(self, r.full_user, users, chats)
