@@ -45,7 +45,7 @@ class OnShippingQuery:
 
         Parameters:
             filters (:obj:`~pyrogram.filters`, *optional*):
-                Pass one or more filters to allow only a subset of callback queries to be passed
+                Pass one or more filters to allow only a subset of shipping queries to be passed
                 in your function.
 
             group (``int``, *optional*):

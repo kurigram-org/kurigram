@@ -287,6 +287,8 @@ def pyrogram_api():
             send_animation
             send_voice
             send_video_note
+            send_widget
+            send_shared_widget
             send_media_group
             send_message_draft
             send_location
@@ -299,6 +301,8 @@ def pyrogram_api():
             edit_message_text
             fix_text_with_ai
             edit_message_caption
+            edit_message_widget_data
+            edit_shared_widget_data
             edit_message_checklist
             edit_message_media
             edit_message_reply_markup
@@ -419,6 +423,7 @@ def pyrogram_api():
             get_chat_member
             get_chat_members
             get_chat_members_count
+            reorder_active_usernames
             get_dialogs
             get_dialogs_count
             get_direct_messages_topics_by_id
@@ -479,6 +484,7 @@ def pyrogram_api():
             set_chat_ttl
             get_personal_channels
             get_chat_settings
+            get_chat_share_theme_backdrops
             transfer_chat_ownership
             get_suitable_discussion_chats
             get_top_chats
@@ -606,6 +612,7 @@ def pyrogram_api():
             set_managed_bot_access_settings
             send_invoice
             answer_callback_query
+            answer_widget_query
             answer_chat_join_request_query
             send_chat_join_request_web_app
             answer_guest_query
@@ -861,6 +868,13 @@ def pyrogram_api():
             Dialog
             Restriction
             EmojiStatus
+            EmojiType
+            EmojiTypeCustomEmoji
+            EmojiTypeEmoji
+            ChatShareTheme
+            ChatShareThemeBackdrop
+            ChatShareThemeEmoji
+            ChatShareThemeUniqueGift
             FailedToAddMember
             Folder
             GroupCallMember
@@ -976,6 +990,7 @@ def pyrogram_api():
             Animation
             Video
             Voice
+            Widget
             VideoNote
             Contact
             StickerSet
@@ -1094,6 +1109,7 @@ def pyrogram_api():
             CommunityChatJoined
             CommunityChatRemoved
             TonWalletTransfer
+            PaidMessagesWaived
             TonConnectRequest
             Checklist
             RefundedPayment
@@ -1132,6 +1148,7 @@ def pyrogram_api():
             StarAmount
             WriteAccessAllowed
             GiftAttribute
+            UniqueGiftBackdropColors
             StoryView
             GiftedPremium
             ChatBackground
@@ -1176,6 +1193,18 @@ def pyrogram_api():
             LoginUrl
             ForceReply
             CallbackQuery
+            AreaPosition
+            SharedWidgetQuery
+            TonNft
+            TonNftAttribute
+            TonWalletCard
+            TonWalletCardSticker
+            WidgetQuery
+            WidgetQueryType
+            WidgetQueryTypeData
+            WidgetQueryTypeSentTransaction
+            WidgetQueryTypeSignData
+            WidgetQueryWallet
             GameHighScore
             CallbackGame
             WebAppInfo
@@ -1293,6 +1322,8 @@ def pyrogram_api():
             InputTextMessageContent
             InputRichMessageContent
             InputVenueMessageContent
+            InputWidgetMessageContent
+            InputSharedWidgetMessageContent
         """,
         "inline_mode": """
         Inline Mode
