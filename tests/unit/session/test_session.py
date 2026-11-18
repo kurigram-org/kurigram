@@ -28,6 +28,7 @@ import pytest
 
 import pyrogram
 from pyrogram import raw
+from pyrogram.errors import BadMsgNotification
 from pyrogram.crypto import aes, mtproto
 from pyrogram.raw.core import FutureSalt, FutureSalts, Long, Message, MsgContainer, TLObject
 from pyrogram.session.session import Result, Session, SessionState
@@ -55,6 +56,13 @@ _SALT_LEFT: Final[int] = 30
 # `bad_server_salt` error code: "incorrect server salt".
 #  https://core.telegram.org/mtproto/service_messages_about_messages#notice-of-ignored-error-message
 _INCORRECT_SERVER_SALT: Final[int] = 48
+
+# `bad_msg_notification` error codes: "`msg_id` too low", which a re-send with a new
+#  `msg_id` recovers, and "incorrect two lower order `msg_id` bits", a client bug no
+#  re-send can fix.
+#  https://core.telegram.org/mtproto/service_messages_about_messages#notice-of-ignored-error-message
+_MSG_ID_TOO_LOW: Final[int] = 16
+_MSG_ID_NOT_DIVISIBLE_BY_FOUR: Final[int] = 18
 
 # Long enough that a `stop()` which does not wait would have returned several times
 #  over, short enough to keep the suite quick.
@@ -90,6 +98,31 @@ class StubConnection:
 
     async def close(self) -> None:
         self.closed.set()
+
+
+class AnsweringConnection(StubConnection):
+    """Answers every awaited request with the next of `answers`, as the server would"""
+
+    def __init__(self, *, session: Session, answers: list[TLObject]) -> None:
+        super().__init__()
+
+        self._session = session
+        self._answers = answers
+
+    async def send(self, payload: bytes) -> None:
+        await super().send(payload)
+
+        for result in self._session.results.values():
+            result.value = self._answers.pop(0)
+            result.event.set()
+
+
+def _bad_msg_notification(*, error_code: int) -> raw.types.BadMsgNotification:
+    return raw.types.BadMsgNotification(
+        bad_msg_id=0,
+        bad_msg_seqno=0,
+        error_code=error_code,
+    )
 
 
 def _session() -> Session:
@@ -605,3 +638,54 @@ async def test_invoke_on_a_session_that_is_not_running_raises(
 
     # `Session.__str__` carries the state, so this pins the message on both parameters.
     assert str(session) in message
+
+
+async def test_a_bad_msg_notification_answer_is_raised_not_returned() -> None:
+    session = _started_session()
+    session.connection = AnsweringConnection(
+        session=session,
+        answers=[_bad_msg_notification(error_code=_MSG_ID_TOO_LOW)],
+    )
+
+    # Returned, it reached callers as their result: `_update_future_salts()` read
+    #  `.salts` off it and the `AttributeError` killed the ping task.
+    with pytest.raises(BadMsgNotification) as raised:
+        await session.send(raw.functions.Ping(ping_id=0))
+
+    assert raised.value.code == _MSG_ID_TOO_LOW
+
+
+async def test_invoke_resends_a_request_the_server_rejected_for_its_msg_id() -> None:
+    session = _started_session()
+    pong = raw.types.Pong(
+        msg_id=0,
+        ping_id=0,
+    )
+    session.connection = AnsweringConnection(
+        session=session,
+        answers=[_bad_msg_notification(error_code=_MSG_ID_TOO_LOW), pong],
+    )
+
+    result = await session.invoke(
+        raw.functions.Ping(ping_id=0),
+        retry_delay=0,
+    )
+
+    assert result == pong
+
+
+async def test_invoke_raises_a_bad_msg_notification_no_resend_can_fix() -> None:
+    session = _started_session()
+    connection = AnsweringConnection(
+        session=session,
+        answers=[_bad_msg_notification(error_code=_MSG_ID_NOT_DIVISIBLE_BY_FOUR)],
+    )
+    session.connection = connection
+
+    with pytest.raises(BadMsgNotification):
+        await session.invoke(
+            raw.functions.Ping(ping_id=0),
+            retry_delay=0,
+        )
+
+    assert len(connection.sent) == 1

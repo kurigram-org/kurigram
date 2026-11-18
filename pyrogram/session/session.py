@@ -581,7 +581,7 @@ class Session:
             # Only logged: the current salt still has a minute of life, and a
             #  `BadServerSalt` recovers the session anyway. `send` reports an answer
             #  that never came as `TimeoutError`, which is an `OSError`.
-            except (OSError, RPCError) as e:
+            except (OSError, RPCError, BadMsgNotification) as e:
                 log.info("Could not get future salts - %s - %s", e.__class__.__name__, e)
 
         log.info("PingTask stopped")
@@ -683,9 +683,7 @@ class Session:
                 RPCError.raise_it(result, type(data))
 
             if isinstance(result, raw.types.BadMsgNotification):
-                log.warning(
-                    "%s: %s", BadMsgNotification.__name__, BadMsgNotification(result.error_code)
-                )
+                raise BadMsgNotification(result.error_code)
 
             # `handle_packet` has already taken the new salt, so this only re-sends.
             if isinstance(result, raw.types.BadServerSalt):
@@ -736,6 +734,17 @@ class Session:
                 )
 
                 await asyncio.sleep(amount)
+            except BadMsgNotification as e:
+                if e.code not in BadMsgNotification.RESENDABLE_CODES:
+                    raise
+
+                log.warning(
+                    '[%s] Resending "%s" (attempt %s) due to: %s',
+                    self.client.name,
+                    query_name,
+                    attempt,
+                    e,
+                )
             except (OSError, InternalServerError, ServiceUnavailable) as e:
                 # `TCP.send` raises a bare `TimeoutError`, an `OSError` whose `str()` is
                 #  empty, so without the `repr` fallback the line would end at "due to: ".
