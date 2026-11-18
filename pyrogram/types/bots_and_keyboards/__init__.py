@@ -28,6 +28,19 @@ from .bot_command_scope_chat_member import BotCommandScopeChatMember
 from .bot_command_scope_default import BotCommandScopeDefault
 from .callback_game import CallbackGame
 from .callback_query import CallbackQuery
+from .area_position import AreaPosition
+from .ton_nft import TonNft
+from .ton_nft_attribute import TonNftAttribute
+from .ton_wallet_card import TonWalletCard
+from .ton_wallet_card_sticker import TonWalletCardSticker
+from .widget_query import SharedWidgetQuery, WidgetQuery
+from .widget_query_type import (
+    WidgetQueryType,
+    WidgetQueryTypeData,
+    WidgetQueryTypeSentTransaction,
+    WidgetQueryTypeSignData,
+    WidgetQueryWallet,
+)
 from .chat_boost_updated import ChatBoostUpdated
 from .chat_shared import ChatShared
 from .copy_text_button import CopyTextButton
@@ -79,6 +92,18 @@ __all__ = [
     "BotCommandScopeDefault",
     "CallbackGame",
     "CallbackQuery",
+    "AreaPosition",
+    "SharedWidgetQuery",
+    "TonNft",
+    "TonNftAttribute",
+    "TonWalletCard",
+    "TonWalletCardSticker",
+    "WidgetQuery",
+    "WidgetQueryType",
+    "WidgetQueryTypeData",
+    "WidgetQueryTypeSentTransaction",
+    "WidgetQueryTypeSignData",
+    "WidgetQueryWallet",
     "ChatBoostUpdated",
     "ChatShared",
     "CopyTextButton",
