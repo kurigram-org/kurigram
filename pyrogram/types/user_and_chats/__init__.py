@@ -27,6 +27,8 @@ from .business_recipients import BusinessRecipients
 from .business_weekly_open import BusinessWeeklyOpen
 from .business_working_hours import BusinessWorkingHours
 from .chat import Chat
+from .chat_share_theme import ChatShareTheme, ChatShareThemeEmoji, ChatShareThemeUniqueGift
+from .chat_share_theme_backdrop import ChatShareThemeBackdrop
 from .chat_admin_with_invite_links import ChatAdminWithInviteLinks
 from .chat_administrator_rights import ChatAdministratorRights, ChatPrivileges
 from .chat_event import ChatEvent
@@ -62,6 +64,7 @@ from .community_member_status import (
 from .community_permissions import CommunityPermissions
 from .dialog import Dialog
 from .emoji_status import EmojiStatus
+from .emoji_type import EmojiType, EmojiTypeCustomEmoji, EmojiTypeEmoji
 from .failed_to_add_member import FailedToAddMember
 from .folder import Folder
 from .folder_invite_link import FolderInviteLink
@@ -155,6 +158,10 @@ __all__ = [
     "BusinessWeeklyOpen",
     "BusinessWorkingHours",
     "Chat",
+    "ChatShareTheme",
+    "ChatShareThemeBackdrop",
+    "ChatShareThemeEmoji",
+    "ChatShareThemeUniqueGift",
     "ChatAdminWithInviteLinks",
     "ChatAdministratorRights",
     "ChatEvent",
@@ -187,6 +194,9 @@ __all__ = [
     "CommunityPermissions",
     "Dialog",
     "EmojiStatus",
+    "EmojiType",
+    "EmojiTypeCustomEmoji",
+    "EmojiTypeEmoji",
     "FailedToAddMember",
     "Folder",
     "FolderInviteLink",
