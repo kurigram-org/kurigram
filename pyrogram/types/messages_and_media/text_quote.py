@@ -31,13 +31,21 @@ class TextQuote(Object):
     Parameters:
         text (``str``):
             Text of the quoted part of a message that is replied to by the given message.
+            May be empty if the quote was chosen from a rich message.
 
         entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
             Special entities that appear in the quote.
             Currently, only bold, italic, underline, strikethrough, spoiler, and custom_emoji entities are kept in quotes.
 
+        rich_texts (List of :obj:`~pyrogram.types.RichText`, *optional*):
+            Rich text of the quote if it was chosen from a :obj:`~pyrogram.types.RichMessage`.
+            May contain only plain text, bold, italic, underline, strikethrough, spoiler, subscript,
+            superscript, date and time, custom emoji, mathematical expressions, and arrays of them.
+
         position (``int``):
             Approximate quote position in the original message in UTF-16 code units as specified by the sender.
+            For quotes from rich messages, it is the position in the text formed by joining plain texts
+            of all quotable texts of the message, separated by line feeds.
 
         is_manual (``bool``, *optional*):
             True, if the quote was chosen manually by the message sender.
@@ -50,6 +58,7 @@ class TextQuote(Object):
         *,
         text: str | None = None,
         entities: list[types.MessageEntity] | None = None,
+        rich_texts: list[str | list[types.RichText] | types.RichText] | None = None,
         position: int | None = None,
         is_manual: bool | None = None,
     ):
@@ -57,6 +66,7 @@ class TextQuote(Object):
 
         self.text = text
         self.entities = entities
+        self.rich_texts = rich_texts
         self.position = position
         self.is_manual = is_manual
 
@@ -72,7 +82,7 @@ class TextQuote(Object):
                     lambda x: x is not None,
                     [
                         await types.MessageEntity._parse(client, entity, users)
-                        for entity in getattr(reply_to, "quote_entities", [])
+                        for entity in reply_to.quote_entities or []
                     ],
                 )
             )
@@ -80,6 +90,13 @@ class TextQuote(Object):
             return TextQuote(
                 text=Str(reply_to.quote_text).init(entities) or None,
                 entities=entities or None,
+                rich_texts=types.List(
+                    [
+                        await types.RichText._parse(client, rich_text, users)
+                        for rich_text in reply_to.quote_rich or []
+                    ]
+                )
+                or None,
                 position=reply_to.quote_offset or 0,
                 is_manual=reply_to.quote,
             )
