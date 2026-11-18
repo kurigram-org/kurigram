@@ -519,6 +519,32 @@ wheels = [
 ]
 
 [[package]]
+name = "kuricrypt"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/16/a4/6e84d54aef3f4a04bdf1b41b244f7d0a45fc4a2614ae3800dc8ff87f03a9/kuricrypt-0.1.0.tar.gz", hash = "sha256:e9455108260caa40dadbbb088e056f6f73a9f47ecd6864c83613ddd7e3aeadb8", size = 8689, upload-time = "2026-11-08T13:04:42.453Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/23/54/938876893e3e57d1607d806e90df71d0fce369999210a20a7670ccda70d1/kuricrypt-0.1.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:592f07c16935c732d5adfd4ba2b1670fb7d29e02eddc53367744df1578ab5a70", size = 197035, upload-time = "2026-11-08T13:04:24.384Z" },
+    { url = "https://files.pythonhosted.org/packages/c4/aa/4cb6462c198e0fd03bb4577513901c56c1a39cf3a2381e355d8df7523683/kuricrypt-0.1.0-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:f28a4e8cd2d0b977ad0925e6c2a16bc4e3f1c56a2a2c1e8dff6875d1d175eca3", size = 229008, upload-time = "2026-11-08T13:04:25.566Z" },
+    { url = "https://files.pythonhosted.org/packages/c9/61/c3f0c0f0193a03f0a060e291ab120805612cf91d144de7c2c3e6c45cfc22/kuricrypt-0.1.0-cp310-cp310-win_amd64.whl", hash = "sha256:220bf9db28df4eadfa0a70d9af6c0d97ee3dcd36b13c9955e40ca1f8a51b9666", size = 124449, upload-time = "2026-11-08T13:04:26.643Z" },
+    { url = "https://files.pythonhosted.org/packages/6b/13/7eb022e503dc2c4f2790f99ce6228ba6c24856598ac0078e25a07f40adeb/kuricrypt-0.1.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:d38d1129f6894e13135b79ba2390a12e11cb18587e4eb60e5e871d74e31742c2", size = 196827, upload-time = "2026-11-08T13:04:27.751Z" },
+    { url = "https://files.pythonhosted.org/packages/a3/49/9006b316852fdbf96e7325fb22f78b51d0f4e272f55a29f91a09b5a22bd5/kuricrypt-0.1.0-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:4c7f5f9ea3f7ae02d6dc6db017be0156ef6b7ac327eef1be07e7fadebd699e10", size = 228600, upload-time = "2026-11-08T13:04:28.924Z" },
+    { url = "https://files.pythonhosted.org/packages/10/37/def95becf2e9701957664044424351271e4997f061a0d5beb2d202df85c9/kuricrypt-0.1.0-cp311-cp311-win_amd64.whl", hash = "sha256:4866278d20cd5468917e662beda2e1fb919a56b1a966f66f3bddf3d2311b85e3", size = 124264, upload-time = "2026-11-08T13:04:29.886Z" },
+    { url = "https://files.pythonhosted.org/packages/2f/c0/985d528430386d1fd64c209862ae5c81179a66ef2a352b1b1abd52ccd0a6/kuricrypt-0.1.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:0fa5e46686782ca1287f1196ef57bb026b8cb2e4da46c83f368c03346ce0dc57", size = 195107, upload-time = "2026-11-08T13:04:30.714Z" },
+    { url = "https://files.pythonhosted.org/packages/7a/04/8f04ffd0d1234fc6538e8ea2db993f29323cb2ec1c5a949e269476e23fa1/kuricrypt-0.1.0-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:e3fb8eca3ff355abb5e43ab6e71ed765204966624ea95ada65b0ea0eeb143324", size = 228138, upload-time = "2026-11-08T13:04:31.616Z" },
+    { url = "https://files.pythonhosted.org/packages/88/ed/6f6aef0db5957e214538e00eef3e02eb2212d09faba774cddad03c3d72e1/kuricrypt-0.1.0-cp312-cp312-win_amd64.whl", hash = "sha256:d40a9b1d749d0e8eaf0f011dca50777ff0598fda80018e7856f485beb1f8a0f1", size = 122742, upload-time = "2026-11-08T13:04:32.647Z" },
+    { url = "https://files.pythonhosted.org/packages/23/93/9f06572a2465541173ae60f90e18b0bf0cdfe9e819d0aa20295a9cbaa918/kuricrypt-0.1.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:90832716162263bee987d5651ab11e6edffe0af4dd4faa3ee05b4a07158a23c8", size = 195569, upload-time = "2026-11-08T13:04:33.575Z" },
+    { url = "https://files.pythonhosted.org/packages/56/02/3ceed3d474269eb8af3fa8e2a53e2763fba91104381f8949ddd153a082a9/kuricrypt-0.1.0-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:4a5f1922440cfd485e3a4190c49810c3c049344272390539c00b95145491dff9", size = 228673, upload-time = "2026-11-08T13:04:34.536Z" },
+    { url = "https://files.pythonhosted.org/packages/e8/46/b734e071c49b343c70e1a08d7fe5f925c7c68a20ed3d08c5eb270ddb8abe/kuricrypt-0.1.0-cp313-cp313-win_amd64.whl", hash = "sha256:25888bef3d31673ac1a47f534fc5dc69e3410438b04f535d93862c14a5a68230", size = 122961, upload-time = "2026-11-08T13:04:35.632Z" },
+    { url = "https://files.pythonhosted.org/packages/50/3d/b51f3d5eeec3ca1ab4c1e5197789506b5b58d4ec3c81f8ef7e7b696c23a2/kuricrypt-0.1.0-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:f21bfb5673c9dc5bdd9f0df841d0e922d842d268e7634547857b3fb5441eaf6d", size = 195668, upload-time = "2026-11-08T13:04:36.497Z" },
+    { url = "https://files.pythonhosted.org/packages/5b/38/6d90d0d4a38448c6ccf919fa86f0c0031472330cb6f47e002ba6891d6bba/kuricrypt-0.1.0-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:8ca8c1dcf1abc9442a551fa56183d110e2143a848eadf0420517c14663f5aa29", size = 228936, upload-time = "2026-11-08T13:04:37.373Z" },
+    { url = "https://files.pythonhosted.org/packages/14/ef/c97b19401c66295d7cfe5ab177de983f564eff3318d613497207c8dfc0c7/kuricrypt-0.1.0-cp314-cp314-win_amd64.whl", hash = "sha256:b2c9c1fb58174344a31f3331679b62038b3e61cb8ce1022cda263fa7cf6c0ec7", size = 122925, upload-time = "2026-11-08T13:04:38.335Z" },
+    { url = "https://files.pythonhosted.org/packages/46/45/0ac6734b651d03865d034d9bc1a79d0034b435321b35f7fd41968965f193/kuricrypt-0.1.0-cp315-cp315-macosx_11_0_arm64.whl", hash = "sha256:27b6d9d0c8cdb4dd64890320276ac6a07c4afcf79e48084f552c782d55ede646", size = 195853, upload-time = "2026-11-08T13:04:39.274Z" },
+    { url = "https://files.pythonhosted.org/packages/76/f2/d9bbf22a51a00dda71a2254f32a93fc9ce82f9a5fcacecd73dd115e215c7/kuricrypt-0.1.0-cp315-cp315-manylinux_2_28_x86_64.whl", hash = "sha256:73acc0ac27a45dfbbab7de509842035532c5382fc316be0651d675317046dd8c", size = 229163, upload-time = "2026-11-08T13:04:40.192Z" },
+    { url = "https://files.pythonhosted.org/packages/20/b0/76684369a1e5de20fc58a50473498f659f9859702095b350658f4f7837a7/kuricrypt-0.1.0-cp315-cp315-win_amd64.whl", hash = "sha256:a76d49133de05a6c02992bd52804a9c8a1347a8741d1cea024eefa1b6596c3e2", size = 123012, upload-time = "2026-11-08T13:04:41.272Z" },
+]
+
+[[package]]
 name = "kurigram"
 source = { editable = "." }
 dependencies = [
@@ -528,7 +554,7 @@ dependencies = [
 
 [package.optional-dependencies]
 fast = [
-    { name = "tgcrypto" },
+    { name = "kuricrypt" },
     { name = "uvloop", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 ]
 qrcode = [
@@ -574,10 +600,10 @@ test = [
 
 [package.metadata]
 requires-dist = [
+    { name = "kuricrypt", marker = "extra == 'fast'", specifier = ">=0.1.0" },
     { name = "pyaes", specifier = ">=1.2.0" },
     { name = "python-socks", extras = ["asyncio"], specifier = ">=2.4.0" },
     { name = "qrcode", marker = "extra == 'qrcode'", specifier = ">=5.2.2" },
-    { name = "tgcrypto", marker = "extra == 'fast'", specifier = ">=1.2.2" },
     { name = "uvloop", marker = "(sys_platform == 'darwin' and extra == 'fast') or (sys_platform == 'linux' and extra == 'fast')", specifier = ">=0.21.0" },
 ]
 provides-extras = ["fast", "qrcode"]
@@ -1281,32 +1307,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b5/b4/205b0d5241d934e8add0c38aa924c4f9fb7330834ff11e5444db964ec3f9/starlette-1.6.0.tar.gz", hash = "sha256:d4e3ac5e546444960c710297a3c9fc3f7ebae1b7e963f3d36173b49da535be9b", size = 2716969, upload-time = "2026-08-08T18:27:57.512Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c8/cb/6a6a47d5b464bd08695d254f3da6e7986cc70c9fa5d778eda57538edfe56/starlette-1.6.0-py3-none-any.whl", hash = "sha256:a86dd39d14bb45f85a3d18525215a9ef0cfd1f192ac793220e72598c90335f0c", size = 75969, upload-time = "2026-08-08T18:27:56.196Z" },
-]
-
-[[package]]
-name = "tgcrypto"
-version = "1.2.5"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/33/59/7cf5ced989e3139a791d5452d58cb8994de589576b80f9267ba76d794f6c/TgCrypto-1.2.5.tar.gz", hash = "sha256:9bc2cac6fb9a12ef5b08f3dd500174fe374d89b660cce981f57e3138559cb682", size = 37280, upload-time = "2022-11-11T19:55:11.436Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/bc/1e/6e33a82e6f8bbb261c762ab18da67396b05920e4cf0232ca9a8afc933a67/TgCrypto-1.2.5-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:4507102377002966f35f2481830b7529e00c9bbff8c7d1e09634f984af801675", size = 58986, upload-time = "2022-11-11T19:51:20.084Z" },
-    { url = "https://files.pythonhosted.org/packages/74/82/90b8eedd225e66f96ce87936505ea56e289944e022476976601923b74c4b/TgCrypto-1.2.5-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:38fe25c0d79b41d7a89caba2a78dea0358e17ca73b033cefd16abed680685829", size = 43349, upload-time = "2022-11-11T19:51:23.151Z" },
-    { url = "https://files.pythonhosted.org/packages/76/c1/057ff6b2a022e82bf958b9b936647cca452f155ad27f5d3ceb0a6c04520c/TgCrypto-1.2.5-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:c035bf8ef89846f67e77e82ea85c089b6ea30631b32e8ac1a6511b9be52ab065", size = 43125, upload-time = "2022-11-11T19:51:25.213Z" },
-    { url = "https://files.pythonhosted.org/packages/99/02/b48d2e2ef16cad958138e2c48a11f6fce802bb9b42a66b28509cd530fe12/TgCrypto-1.2.5-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f594e2680daf20dbac6bf56862f567ddc3cc8d6a19757ed07faa8320ff7acee4", size = 59895, upload-time = "2022-11-11T19:51:28.068Z" },
-    { url = "https://files.pythonhosted.org/packages/f0/4d/a29fb5a8bcad988f01662445f42231afd9c7518141dc8f745b4358a9c5e9/TgCrypto-1.2.5-cp310-cp310-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:8723a16076e229ffdf537fdb5e638227d10f44ca43e6939db1eab524de6eaed7", size = 59682, upload-time = "2022-11-11T19:51:30.367Z" },
-    { url = "https://files.pythonhosted.org/packages/3e/95/aa3f59e01cd7f9feae058c9b3d0379315e3102f23ac5fd9a8050bb5d7a07/TgCrypto-1.2.5-cp310-cp310-musllinux_1_1_i686.whl", hash = "sha256:c1c8d974b8b2d7132364b6f0f6712b92bfe47ab9c5dcee25c70327ff68d22d95", size = 63566, upload-time = "2022-11-11T19:51:32.627Z" },
-    { url = "https://files.pythonhosted.org/packages/9d/12/1a47a04a22953fb5d48c6b6c70ffc37b84e9a9553e606863a4e5c56478f4/TgCrypto-1.2.5-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:89d9c143a1fcdb2562a4aa887152abbe9253e1979d7bebef2b489148e0bbe086", size = 63617, upload-time = "2022-11-11T19:51:35.306Z" },
-    { url = "https://files.pythonhosted.org/packages/a2/f7/e336feec07fe8b1716498158d7b876354fb68d8ddd17ad81354adf7f7112/TgCrypto-1.2.5-cp310-cp310-win32.whl", hash = "sha256:aa4bc1d11d4a90811c162abd45a5981f171679d1b5bd0322cd7ccd16447366a2", size = 44719, upload-time = "2022-11-11T19:51:37.373Z" },
-    { url = "https://files.pythonhosted.org/packages/29/e0/c81f525860e00d0ec188a2114cebcce2912048d3a82bfdd125b295aa6e92/TgCrypto-1.2.5-cp310-cp310-win_amd64.whl", hash = "sha256:39145103614c5e38fe938549742d355920f4a0778fa8259eb69c0c85ba4b1d28", size = 45072, upload-time = "2022-11-11T19:51:40.043Z" },
-    { url = "https://files.pythonhosted.org/packages/48/e6/07dc413e57f3677e0b887975b174d9cbc8170e92651dd35a784da9571d5f/TgCrypto-1.2.5-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:59597cdb1c87eb1184088563d20b42a8f2e431e9334fed64926079044ad2a4af", size = 58988, upload-time = "2022-11-11T19:51:41.686Z" },
-    { url = "https://files.pythonhosted.org/packages/c1/fe/a418223ff6079184f50f5ad8c2dac37ec40adbb42b886c3ee44fdba2a540/TgCrypto-1.2.5-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:1283337ae75b02406dd700377b8b783e70033b548492517df6e6c4156b0ed69c", size = 43347, upload-time = "2022-11-11T19:51:43.662Z" },
-    { url = "https://files.pythonhosted.org/packages/39/0e/e861a9987c6d9d3ae04d156732311e018558f862490c466c369d73094807/TgCrypto-1.2.5-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:1735437df0023a40e5fdd95e6b09ce806ec8f2cd2f8879023818840dfae60cab", size = 43123, upload-time = "2022-11-11T19:51:45.094Z" },
-    { url = "https://files.pythonhosted.org/packages/0d/ce/d60e249ac4d31d591f4c8ca76e7bd537f4c54f1947b400a14ac3a1678b09/TgCrypto-1.2.5-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:cfa17a20206532c6d2442c9d7a7f6434120bd75896ad9a3e9b9277477afa084f", size = 60713, upload-time = "2022-11-11T19:51:46.411Z" },
-    { url = "https://files.pythonhosted.org/packages/27/55/50f81b1a557bd8f9b73f7fcda2381f8826665858750968394ceec0b01282/TgCrypto-1.2.5-cp311-cp311-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:48da3674474839e5619e7430ff1f98aed9f55369f3cfaef7f65511852869572e", size = 60418, upload-time = "2022-11-11T19:51:47.872Z" },
-    { url = "https://files.pythonhosted.org/packages/f3/55/7f5f5a024b71ef81b07c3fe15e79d03b634eb349b04bc79a62c8c3ed3376/TgCrypto-1.2.5-cp311-cp311-musllinux_1_1_i686.whl", hash = "sha256:b49e982e5b156be821a5235bd9102c00dc506a58607e2c8bd50ac872724a951f", size = 64397, upload-time = "2022-11-11T19:51:49.609Z" },
-    { url = "https://files.pythonhosted.org/packages/76/3e/8f059edce82de8ebbc1e513076c0f65a86fac95887fae21ae087440ef23a/TgCrypto-1.2.5-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:9d9f13586065a6d86d05c16409054033a84be208acee29b49f6f194e27b08642", size = 64436, upload-time = "2022-11-11T19:51:51.414Z" },
-    { url = "https://files.pythonhosted.org/packages/eb/87/fe894eb7c4cce4b6f710223c24e0ca22f4107fe46f3f56091ceabd482de7/TgCrypto-1.2.5-cp311-cp311-win32.whl", hash = "sha256:10dd3870aecb1a783c6eafd3b164b2149dbc93a9ee13feb7e6f5c58f87c24cd0", size = 44723, upload-time = "2022-11-11T19:51:52.982Z" },
-    { url = "https://files.pythonhosted.org/packages/c1/fc/b918235b19b70a45f4a596c773fad2c379d941d2ac5005293e2ee18bdc63/TgCrypto-1.2.5-cp311-cp311-win_amd64.whl", hash = "sha256:a1beec47d6af8b509af7cf266e30f7703208076076594714005b42d2c25225b3", size = 45073, upload-time = "2022-11-11T19:51:54.724Z" },
 ]
 
 [[package]]
