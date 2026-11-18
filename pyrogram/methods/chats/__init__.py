@@ -45,6 +45,7 @@ from .get_chat_members import GetChatMembers
 from .get_chat_members_count import GetChatMembersCount
 from .get_chat_online_count import GetChatOnlineCount
 from .get_chat_settings import GetChatSettings
+from .get_chat_share_theme_backdrops import GetChatShareThemeBackdrops
 from .get_chats import GetChats
 from .get_chats_for_folder_invite_link import GetChatsForFolderInviteLink
 from .get_dialogs import GetDialogs
@@ -93,6 +94,7 @@ from .set_upgraded_gift_colors import SetUpgradedGiftColors
 from .toggle_folder_tags import ToggleFolderTags
 from .toggle_forum_topics import ToggleForumTopics
 from .reopen_forum_topic import ReopenForumTopic, ReopenGeneralForumTopic
+from .reorder_active_usernames import ReorderActiveUsernames
 from .toggle_join_to_send import ToggleJoinToSend
 from .unhide_general_forum_topic import UnhideGeneralForumTopic
 from .hide_general_forum_topic import HideGeneralForumTopic
@@ -194,11 +196,13 @@ class Chats(
     GetFolderInviteLinks,
     GetChatOnlineCount,
     GetChatSettings,
+    GetChatShareThemeBackdrops,
     GetSimilarChannels,
     GetSuitableDiscussionChats,
     GetTopChats,
     GetSendAsChats,
     SetSendAsChat,
     SetChatProtectedContent,
+    ReorderActiveUsernames,
 ):
     pass
