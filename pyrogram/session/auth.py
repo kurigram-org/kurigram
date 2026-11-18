@@ -27,7 +27,7 @@ from os import urandom
 from typing import TYPE_CHECKING
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 from pyrogram.crypto import aes, prime, rsa
 from pyrogram.errors import SecurityCheckMismatch
 from pyrogram.raw.core import Int, Long, TLObject
@@ -281,7 +281,7 @@ class Auth:
                 log.debug("Nonce fields check: OK")
 
                 # Step 9
-                server_salt = aes.xor(new_nonce[:8], server_nonce[:8])
+                server_salt = utils.xor(new_nonce[:8], server_nonce[:8])
 
                 log.debug("Server salt: %s", int.from_bytes(server_salt, "little"))
 
