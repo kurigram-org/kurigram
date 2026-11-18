@@ -1,20 +1,22 @@
-#  Pyrogram - Telegram MTProto API Client Library for Python
+#  Kurigram - Telegram MTProto API Client Library for Python
+#
 #  Copyright (C) 2017-present Dan <https://github.com/delivrance>
+#  Copyright (C) 2024-present KurimuzonAkuma <https://github.com/KurimuzonAkuma>
 #
-#  This file is part of Pyrogram.
+#  This file is part of Kurigram.
 #
-#  Pyrogram is free software: you can redistribute it and/or modify
+#  Kurigram is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Lesser General Public License as published
 #  by the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  Pyrogram is distributed in the hope that it will be useful,
+#  Kurigram is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 #  GNU Lesser General Public License for more details.
 #
 #  You should have received a copy of the GNU Lesser General Public License
-#  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
+#  along with Kurigram. If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations as _annotations
 
@@ -28,6 +30,7 @@ class ToggleForumTopics:
         chat_id: int | str,
         is_forum: bool = False,
         has_forum_tabs: bool = False,
+        has_forum_sidebar: bool = False,
     ) -> bool:
         """Enable or disable forum functionality in a supergroup.
 
@@ -44,6 +47,13 @@ class ToggleForumTopics:
 
             has_forum_tabs (``bool``, *optional*):
                 Whether to enable or disable tabs in the forum.
+                Ignored if is_forum is False.
+                Defaults to False.
+
+            has_forum_sidebar (``bool``, *optional*):
+                Whether to enable or disable sidebar in the forum.
+                Ignored if is_forum is False.
+                Must be False if has_forum_tabs is True.
                 Defaults to False.
 
         Returns:
@@ -64,9 +74,7 @@ class ToggleForumTopics:
                     channel=await self.resolve_peer(chat_id),
                     enabled=is_forum,
                     tabs=has_forum_tabs,
-                    # Undocumented flag from layer 233; Telegram Desktop always sends false.
-                    #  https://github.com/telegramdesktop/tdesktop/blob/7381fb1df75d863eb3463fdddef57a2ac51f1d56/Telegram/SourceFiles/boxes/peers/edit_peer_info_box.cpp#L2899-L2903
-                    sidebar=False,
+                    sidebar=has_forum_sidebar,
                 )
             )
 
