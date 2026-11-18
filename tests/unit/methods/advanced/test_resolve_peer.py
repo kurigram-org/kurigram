@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, Final
 import pytest
 
 import pyrogram
-from pyrogram import raw
+from pyrogram import raw, utils
 from pyrogram.errors import PeerIdInvalid
 from pyrogram.methods.advanced.resolve_peer import ResolvePeer
 
@@ -44,6 +44,7 @@ class Answerer(ResolvePeer):
     CHANNEL_MESSAGE_LINK_RE: Final[re.Pattern[str]] = pyrogram.Client.CHANNEL_MESSAGE_LINK_RE
     is_connected: bool = True
     storage: EmptyStorage = EmptyStorage()
+    message_cache: utils.Cache = utils.Cache(1)
 
     async def invoke(
         self,
