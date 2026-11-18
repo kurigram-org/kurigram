@@ -62,8 +62,26 @@ class ReplyParameters(Object):
         quote_entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
             List of special entities that appear in message text, which can be specified instead of *quote_parse_mode*.
 
+        quote_rich_texts (List of :obj:`~pyrogram.types.RichText`, *optional*):
+            List of quoted parts of the :obj:`~pyrogram.types.RichMessage` to be replied to.
+            Include one element for each quoted text, in the order in which the texts appear in the message.
+            A paragraph, heading, preformatted block, footer, or mathematical expression each has its own text.
+            A block quotation or pull quotation has separate text and credit, and a details block has a summary.
+            A table, collage, slideshow, or map has a caption, and each table cell has its own text.
+            Texts in nested blocks are separate too.
+
+            Only the first and last elements may quote a partial text. Preserve formatting and nesting.
+            Quote mathematical expressions in full. Buttons, anchors and dividers can't be quoted.
+            Up to 32 quoted texts with a total length of up to 1024 characters can be specified.
+            Only plain text, bold, italic, underline, strikethrough, spoiler, subscript, superscript,
+            date and time, custom emoji, mathematical expressions, and arrays of them are kept.
+            Other rich text types are replaced with their text.
+            If non-empty, then *quote*, *quote_parse_mode* and *quote_entities* are ignored.
+
         quote_position (``int``, *optional*):
             Position of the quote in the original message in UTF-16 code units.
+            For quotes from rich messages, it is the position in the text formed by joining plain texts
+            of all quotable texts of the message, separated by line feeds.
 
         checklist_task_id (``int``, *optional*):
             Identifier of the specific checklist task to be replied to.
@@ -82,6 +100,7 @@ class ReplyParameters(Object):
         quote: str | None = None,
         quote_parse_mode: enums.ParseMode | None = None,
         quote_entities: list[types.MessageEntity] | None = None,
+        quote_rich_texts: list[str | list[types.RichText] | types.RichText] | None = None,
         quote_position: int | None = None,
         checklist_task_id: int | None = None,
         poll_option_id: str | None = None,
@@ -95,6 +114,7 @@ class ReplyParameters(Object):
         self.quote = quote
         self.quote_parse_mode = quote_parse_mode
         self.quote_entities = quote_entities
+        self.quote_rich_texts = quote_rich_texts
         self.quote_position = quote_position
         self.checklist_task_id = checklist_task_id
         self.poll_option_id = poll_option_id

@@ -32,6 +32,8 @@ from .on_edited_message import OnEditedMessage
 from .on_error import OnError
 from .on_guest_message import OnGuestMessage
 from .on_inline_query import OnInlineQuery
+from .on_shared_widget_query import OnSharedWidgetQuery
+from .on_widget_query import OnWidgetQuery
 from .on_managed_bot import OnManagedBot
 from .on_message import OnMessage
 from .on_message_reaction import OnMessageReaction
@@ -65,6 +67,8 @@ class Decorators(
     OnError,
     OnGuestMessage,
     OnInlineQuery,
+    OnSharedWidgetQuery,
+    OnWidgetQuery,
     OnManagedBot,
     OnMessage,
     OnMessageReaction,
