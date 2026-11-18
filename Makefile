@@ -66,13 +66,21 @@ api:
 
 # Both docs recipes below build the same tree with the same builder, so the arguments and the
 #  page generator each have one home here rather than a copy per recipe.
-SPHINX_ARGS := -b dirhtml "docs/source" "docs/build/html" -j auto
+#  `-W` fails `docs` on any warning. From Sphinx 8.1 it reports every warning before failing;
+#  `--keep-going` does the same on the 7.x releases the `docs` group still allows, which stop at
+#  the first. https://github.com/sphinx-doc/sphinx/blob/a1510de4777eaa2e569435f95b05f6f3293d7035/CHANGES.rst?plain=1#L84-L88
+#  `sphinx-autobuild` keeps serving on a failed rebuild and prints the exit code instead.
+#  https://github.com/sphinx-doc/sphinx-autobuild/blob/fd726c54b3610e5f3393e7098af972a6cf163e69/sphinx_autobuild/build.py#L51-L58
+SPHINX_ARGS := -b dirhtml "docs/source" "docs/build/html" -j auto -W --keep-going
 
 docs-api:
 	cd compiler/docs && $(PYTHON) compiler.py
 
+# `-E` re-reads every page. Without it a rerun skips the unchanged hand-written pages, does not
+#  repeat their warnings, and passes. `docs-serve` stays incremental, which is its point.
+#  https://github.com/sphinx-doc/sphinx/blob/cc7c6f435ad37bb12264f8118c8461b230e6830c/doc/man/sphinx-build.rst?plain=1#L97-L101
 docs: docs-api
-	$(UV) run --group docs sphinx-build $(SPHINX_ARGS)
+	$(UV) run --group docs sphinx-build -E $(SPHINX_ARGS)
 
 # `sphinx-autobuild` runs that same build, then rebuilds only the pages an edit touched and
 #  reloads the browser, so a docs change costs seconds where `docs` costs minutes.
