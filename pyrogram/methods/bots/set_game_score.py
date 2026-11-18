@@ -95,7 +95,8 @@ class SetGameScore:
                     score=score,
                     edit_message=not disable_edit_message,
                     force=force,
-                )
+                ),
+                sleep_threshold=self.sleep_threshold,
             )
         else:
             if chat_id is None or message_id is None:
