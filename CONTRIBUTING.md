@@ -192,8 +192,10 @@ A few conventions that have come up repeatedly in code review but aren't enforce
   no payload: the flag bit is the value, and the generated writer sets the bit from a plain
   truthiness test, so `False` and `None` write the same bytes and the `or None` reads as a guard
   that guards nothing. `tests/guards/test_flag_only_fields.py` fails on one, naming the file and
-  the field. The other optional types (`flags.N?Bool`, `?string`, `?Vector<T>`) carry their value
-  separately from the bit, so `or None` there is a real choice and stays.
+  the field. `flags.N?Bool` and `?string` carry their value separately from the bit, so `or None`
+  there is a real choice and stays. `?Vector<T>` is between the two: its bit is also a truthiness
+  test, and a vector whose bit is set but which is `None` is written as `[]`, so `[]` and `None`
+  write the same bytes there too.
 
 ## Commit and pull request guidelines
 

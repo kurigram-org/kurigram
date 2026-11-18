@@ -21,7 +21,7 @@ from __future__ import annotations as _annotations
 import logging
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 from .input_message_content import InputMessageContent
 
@@ -164,7 +164,10 @@ class InputInvoiceMessageContent(InputMessageContent):
                 flexible=self.is_flexible,
                 phone_to_provider=self.send_phone_number_to_provider,
                 email_to_provider=self.send_email_to_provider,
-                max_tip_amount=self.max_tip_amount,
+                max_tip_amount=utils.get_max_tip_amount(
+                    self.max_tip_amount,
+                    suggested_tip_amounts=self.suggested_tip_amounts,
+                ),
                 suggested_tip_amounts=self.suggested_tip_amounts,
             ),
             payload=self.payload.encode() if isinstance(self.payload, str) else self.payload,
