@@ -44,7 +44,7 @@ class OnUserStatus:
 
         Parameters:
             filters (:obj:`~pyrogram.filters`, *optional*):
-                Pass one or more filters to allow only a subset of UserStatus updated to be passed in your function.
+                Pass one or more filters to allow only a subset of user status updates to be passed in your function.
 
             group (``int``, *optional*):
                 The group identifier, defaults to 0.
