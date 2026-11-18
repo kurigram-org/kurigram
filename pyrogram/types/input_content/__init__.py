@@ -119,6 +119,8 @@ from .input_rich_message_content import InputRichMessageContent
 from .input_rich_message_media import InputRichMessageMedia
 from .input_text_message_content import InputTextMessageContent
 from .input_venue_message_content import InputVenueMessageContent
+from .input_shared_widget_message_content import InputSharedWidgetMessageContent
+from .input_widget_message_content import InputWidgetMessageContent
 
 __all__ = [
     "ChatAction",
@@ -218,4 +220,6 @@ __all__ = [
     "InputRichMessageMedia",
     "InputTextMessageContent",
     "InputVenueMessageContent",
+    "InputWidgetMessageContent",
+    "InputSharedWidgetMessageContent",
 ]
