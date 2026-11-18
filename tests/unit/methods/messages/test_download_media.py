@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import mimetypes
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, cast
 
@@ -26,7 +27,7 @@ class FakeClient(DownloadMedia):
         self.packet = packet
 
     def guess_extension(self, mime_type: str) -> str:
-        return ""
+        return mimetypes.guess_extension(mime_type) or ""
 
     def rnd_id(self) -> str:
         return "test"
@@ -83,3 +84,30 @@ async def test_download_media_replaces_dot_path_name(
 
     assert packet[1] == tmp_path / "downloads"
     assert packet[2] not in (".", "..")
+
+
+@pytest.mark.asyncio
+async def test_download_media_names_media_without_file_name_mime_type_or_size(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        download_media_module.FileId,
+        "decode",
+        lambda _: SimpleNamespace(file_type=FileType.ANIMATION),
+    )
+    client = FakeClient(tmp_path)
+    media = types.Animation(
+        file_id="id",
+        file_unique_id="unique",
+        width=1,
+        height=1,
+        duration=1,
+    )
+
+    await cast("pyrogram.Client", client).download_media(media)
+    packet = client.captured_packet()
+
+    assert str(packet[2]).startswith("animation_")
+    assert str(packet[2]).endswith("_test.mp4")
+    assert packet[4] == 0
