@@ -45,7 +45,7 @@ class OnChatBoost:
 
         Parameters:
             filters (:obj:`~pyrogram.filters`, *optional*):
-                Pass one or more filters to allow only a subset of callback queries to be passed
+                Pass one or more filters to allow only a subset of chat boosts to be passed
                 in your function.
 
             group (``int``, *optional*):
@@ -55,7 +55,7 @@ class OnChatBoost:
 
         def decorator(func: HandlerType) -> HandlerType:
             if isinstance(self, pyrogram.Client):
-                self.add_handler(pyrogram.handlers.ShippingQueryHandler(func, filters), group)
+                self.add_handler(pyrogram.handlers.ChatBoostHandler(func, filters), group)
             elif isinstance(self, Filter) or self is None:
                 if not hasattr(func, "handlers"):
                     func.handlers = []
@@ -64,7 +64,7 @@ class OnChatBoost:
 
                 func.handlers.append(
                     (
-                        pyrogram.handlers.ShippingQueryHandler(func, arguments.filters),
+                        pyrogram.handlers.ChatBoostHandler(func, arguments.filters),
                         arguments.group,
                     )
                 )

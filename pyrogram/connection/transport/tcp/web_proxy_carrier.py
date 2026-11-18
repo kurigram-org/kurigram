@@ -25,6 +25,7 @@ import hmac
 import json
 import logging
 import ssl
+import struct
 from dataclasses import dataclass
 from enum import IntEnum
 from http import HTTPStatus
@@ -119,29 +120,41 @@ def parse_frames(wire: bytes) -> ParsedFrames:
     frames: list[Frame] = []
     offset = 0
     wire_len = len(wire)
+    # Convert once so each payload slice is already `bytes`; this is a no-op for `bytes` input.
+    #  Input too short for a header is never read, so it is left as is.
+    data = bytes(wire) if wire_len >= FRAME_HEADER_SIZE else wire
+    # The first word packs `type:u8` above `stream_id:u24`; compile its layout once per call.
+    unpack_header = struct.Struct(">II").unpack_from
+    # Local names skip the attribute lookups on every frame.
+    frame_type_of = FrameType._value2member_map_.get
+    append = frames.append
+    # A header fits only while it starts at or before this offset.
+    last_header = wire_len - FRAME_HEADER_SIZE
 
-    while wire_len - offset >= FRAME_HEADER_SIZE:
-        type_byte = wire[offset]
+    while offset <= last_header:
+        head, size = unpack_header(data, offset)
+        type_byte = head >> 24
+        # One map lookup both validates the type and finds its `FrameType` member.
+        frame_type = frame_type_of(type_byte)
 
-        if type_byte not in _KNOWN_FRAME_TYPES:
+        if frame_type is None:
             msg = f"frame: unknown type 0x{type_byte:02x}"
             raise FrameParseError(msg)
 
-        stream_id = (wire[offset + 1] << 16) | (wire[offset + 2] << 8) | wire[offset + 3]
-        size = int.from_bytes(wire[offset + 4 : offset + 8], "big")
+        start = offset + FRAME_HEADER_SIZE
+        end = start + size
 
-        if size > FRAME_MAX_PAYLOAD:
-            msg = f"frame: payload too large ({size} bytes)"
-            raise FrameParseError(msg)
+        # Both rare exits sit behind one test, so a complete legal frame takes a single branch.
+        #  An oversized payload still raises before a truncated one stops the loop.
+        if end > wire_len or size > FRAME_MAX_PAYLOAD:
+            if size > FRAME_MAX_PAYLOAD:
+                msg = f"frame: payload too large ({size} bytes)"
+                raise FrameParseError(msg)
 
-        full = FRAME_HEADER_SIZE + size
-
-        if wire_len - offset < full:
             break
 
-        payload = bytes(wire[offset + FRAME_HEADER_SIZE : offset + full])
-        frames.append(Frame(FrameType(type_byte), stream_id, payload))
-        offset += full
+        append(Frame(frame_type, head & _MAX_STREAM_ID, data[start:end]))
+        offset = end
 
     return ParsedFrames(frames=frames, consumed=offset)
 
