@@ -200,8 +200,14 @@ async def get_reply_to(
         if reply_parameters.message_id:
             message = None
             entities = None
+            quote_rich = None
 
-            if reply_parameters.quote:
+            if reply_parameters.quote_rich_texts:
+                quote_rich = [
+                    await types.RichText._write(client, text)
+                    for text in reply_parameters.quote_rich_texts
+                ]
+            elif reply_parameters.quote:
                 message, entities = (
                     await parse_text_entities(
                         client,
@@ -217,6 +223,7 @@ async def get_reply_to(
                 reply_to_peer_id=await client.resolve_peer(reply_parameters.chat_id),
                 quote_text=message,
                 quote_entities=entities,
+                quote_rich=quote_rich,
                 quote_offset=reply_parameters.quote_position,
                 monoforum_peer_id=await client.resolve_peer(direct_messages_topic_id),
                 todo_item_id=reply_parameters.checklist_task_id,
