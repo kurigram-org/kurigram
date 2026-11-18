@@ -76,8 +76,8 @@ class MessageEntityType(AutoName):
     TEXT_MENTION = raw.types.MessageEntityMentionName
     "for users without usernames (see ``user``)"
 
-    BANK_CARD = raw.types.MessageEntityBankCard
-    "Bank card text"
+    BANK_CARD_NUMBER = raw.types.MessageEntityBankCard
+    "Bank card number"
 
     CUSTOM_EMOJI = raw.types.MessageEntityCustomEmoji
     "Custom emoji"
