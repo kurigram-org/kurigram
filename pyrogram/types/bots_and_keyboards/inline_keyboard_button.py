@@ -269,7 +269,7 @@ class InlineKeyboardButton(Object):
     async def write(self, client: pyrogram.Client) -> raw.types.KeyboardInlineButton:
         if self.style is enums.ButtonStyle.LINK:
             # `keyboardButtonStyle` carries no `link` flag, so the style would go out empty.
-            #  `compiler/api/source/main_api.tl:2188`
+            #  `compiler/api/source/main_api.tl`
             raise ValueError("`ButtonStyle.LINK` is only available on `RichMessageButton`")
 
         style = (

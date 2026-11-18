@@ -105,7 +105,7 @@ async def test_the_link_style_reaches_the_wire() -> None:
 
 
 # `keyboardButtonStyle` carries no `link` flag, so the style used to go out empty.
-#  `compiler/api/source/main_api.tl:2188`
+#  `compiler/api/source/main_api.tl`
 _NO_LINK_FLAG: Final[str] = "only available on `RichMessageButton`"
 
 
