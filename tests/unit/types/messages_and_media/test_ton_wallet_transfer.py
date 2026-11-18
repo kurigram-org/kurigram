@@ -64,6 +64,6 @@ async def test_a_transfer_names_its_sender_only_when_users_has_it(
         in_memory=True,
     )
 
-    parsed = await types.TonWalletTransfer._parse(client, action, _SENDER_ID, users)
+    parsed = await types.TonWalletTransfer._parse(client, action, _SENDER_ID, users, outgoing=False)
 
     assert getattr(parsed.sender, "id", None) == expected
