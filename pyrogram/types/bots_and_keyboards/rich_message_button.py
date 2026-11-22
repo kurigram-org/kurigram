@@ -190,6 +190,15 @@ class RichMessageButton(Object):
                 style=button_style,
             )
 
+        if isinstance(button_type, raw.types.InlineButtonTypeUserProfile):
+            # Rich buttons expose profile links through the URL action, while
+            # received MTProto buttons have a dedicated user-profile constructor.
+            return RichMessageButton(
+                text=button_text,
+                url=f"tg://user?id={button_type.user_id}",
+                style=button_style,
+            )
+
         if isinstance(button_type, raw.types.InlineButtonTypeUrlAuth):
             return RichMessageButton(
                 text=button_text,
@@ -207,7 +216,10 @@ class RichMessageButton(Object):
         # `InlineButtonType` holds constructors a rich button cannot express, `inlineButtonTypeBuy`
         #  and `inlineButtonTypeGame` among them, and the server may add more. Falling through used
         #  to hand a `None` to `RichBlockButtons.buttons`, which then fails wherever it is read.
-        return RichMessageButton(text=button_text, style=button_style)
+        result = RichMessageButton(text=button_text, style=button_style)
+        result.raw = button
+
+        return result
 
     @overload
     async def write(
