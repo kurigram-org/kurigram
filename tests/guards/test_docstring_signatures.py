@@ -23,7 +23,7 @@ A documented parameter the signature does not carry sends the reader to a keywor
 these blocks, so whatever is missing here is missing everywhere. Neither Sphinx nor the type
 checker compares the two, because to both of them a docstring is an opaque string.
 
-On a function, a handler, a filter or a type the library writes, the `*optional*` marker is the
+On a function, a handler, a filter or a type that defines `write()`, the `*optional*` marker is the
 same question asked of one entry: it is this tree's way of saying the caller may leave the
 argument out, so a marker that disagrees with the signature is a promise the caller cannot keep
 either way round. A type under `pyrogram/types/` that defines no `write()` is checked for its
