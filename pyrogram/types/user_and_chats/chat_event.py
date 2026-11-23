@@ -453,14 +453,20 @@ class ChatEvent(Object):
         elif isinstance(action, raw.types.ChannelAdminLogEventActionParticipantJoinByInvite):
             action_type = enums.ChatEventActionType.MEMBER_JOINED_BY_INVITE_LINK
             member_joined_by_invite_link = types.ChatEventActionMemberJoinedByInviteLink(
-                invite_link=await types.ChatInviteLink._parse(client, action.invite, users),
+                invite_link=await types.ChatInviteLink._parse(client, action.invite, users)
+                if isinstance(action.invite, raw.types.ChatInviteExported)
+                else None,
                 via_chat_folder_invite_link=action.via_chatlist,
             )
         elif isinstance(action, raw.types.ChannelAdminLogEventActionParticipantJoinByRequest):
             action_type = enums.ChatEventActionType.MEMBER_JOINED_BY_REQUEST
             member_joined_by_invite_link = types.ChatEventActionMemberJoinedByRequest(
-                approver_user=await types.User._parse(client, users.get(action.approved_by)),
-                invite_link=await types.ChatInviteLink._parse(client, action.invite, users),
+                approver_user=await types.User._parse(client, raw_approver)
+                if (raw_approver := users.get(action.approved_by)) is not None
+                else None,
+                invite_link=await types.ChatInviteLink._parse(client, action.invite, users)
+                if isinstance(action.invite, raw.types.ChatInviteExported)
+                else None,
             )
         elif isinstance(action, raw.types.ChannelAdminLogEventActionParticipantInvite):
             action_type = enums.ChatEventActionType.MEMBER_INVITED
@@ -512,10 +518,14 @@ class ChatEvent(Object):
             available_reactions_changed = types.ChatEventActionAvailableReactionsChanged(
                 old_available_reactions=types.ChatReactions._parse(
                     client=client, chat_reactions=action.prev_value
-                ),
+                )
+                if not isinstance(action.prev_value, raw.types.ChatReactionsNone)
+                else None,
                 new_available_reactions=types.ChatReactions._parse(
                     client=client, chat_reactions=action.new_value
-                ),
+                )
+                if not isinstance(action.new_value, raw.types.ChatReactionsNone)
+                else None,
             )
         elif isinstance(action, raw.types.ChannelAdminLogEventActionChangeWallpaper):
             action_type = enums.ChatEventActionType.BACKGROUND_CHANGED
@@ -537,26 +547,40 @@ class ChatEvent(Object):
             emoji_status_changed = types.ChatEventActionEmojiStatusChanged(
                 old_emoji_status=types.EmojiStatus._parse(
                     client=client, emoji_status=action.prev_value
-                ),
+                )
+                if not isinstance(action.prev_value, raw.types.EmojiStatusEmpty)
+                else None,
                 new_emoji_status=types.EmojiStatus._parse(
                     client=client, emoji_status=action.new_value
-                ),
+                )
+                if not isinstance(action.new_value, raw.types.EmojiStatusEmpty)
+                else None,
             )
         elif isinstance(action, raw.types.ChannelAdminLogEventActionChangeLinkedChat):
             action_type = enums.ChatEventActionType.LINKED_CHAT_CHANGED
             linked_chat_changed = types.ChatEventActionLinkedChatChanged(
                 old_linked_chat=await types.Chat._parse_chat(
-                    client=client, chat=chats.get(action.prev_value)
-                ),
+                    client=client,
+                    chat=raw_old_chat,
+                )
+                if (raw_old_chat := chats.get(action.prev_value)) is not None
+                else None,
                 new_linked_chat=await types.Chat._parse_chat(
-                    client=client, chat=chats.get(action.new_value)
-                ),
+                    client=client,
+                    chat=raw_new_chat,
+                )
+                if (raw_new_chat := chats.get(action.new_value)) is not None
+                else None,
             )
         elif isinstance(action, raw.types.ChannelAdminLogEventActionChangeLocation):
             action_type = enums.ChatEventActionType.LOCATION_CHANGED
             location_changed = types.ChatEventActionLocationChanged(
-                old_location=types.Location._parse(geo_point=action.prev_value),
-                new_location=types.Location._parse(geo_point=action.new_value),
+                old_location=types.Location._parse(geo_point=action.prev_value)
+                if isinstance(action.prev_value, raw.types.ChannelLocation)
+                else None,
+                new_location=types.Location._parse(geo_point=action.new_value)
+                if isinstance(action.new_value, raw.types.ChannelLocation)
+                else None,
             )
         elif isinstance(action, raw.types.ChannelAdminLogEventActionChangeHistoryTTL):
             action_type = enums.ChatEventActionType.MESSAGE_AUTO_DELETE_TIME_CHANGED
@@ -675,25 +699,49 @@ class ChatEvent(Object):
         elif isinstance(action, raw.types.ChannelAdminLogEventActionExportedInviteEdit):
             action_type = enums.ChatEventActionType.INVITE_LINK_EDITED
             invite_link_edited = types.ChatEventActionInviteLinkEdited(
-                old_invite_link=types.ChatInviteLink._parse(
-                    client=client, invite=action.prev_invite, users=users
+                old_invite_link=(
+                    await types.ChatInviteLink._parse(
+                        client=client,
+                        invite=action.prev_invite,
+                        users=users,
+                    )
+                    if isinstance(action.prev_invite, raw.types.ChatInviteExported)
+                    else None
                 ),
-                new_invite_link=types.ChatInviteLink._parse(
-                    client=client, invite=action.new_invite, users=users
+                new_invite_link=(
+                    await types.ChatInviteLink._parse(
+                        client=client,
+                        invite=action.new_invite,
+                        users=users,
+                    )
+                    if isinstance(action.new_invite, raw.types.ChatInviteExported)
+                    else None
                 ),
             )
         elif isinstance(action, raw.types.ChannelAdminLogEventActionExportedInviteRevoke):
             action_type = enums.ChatEventActionType.INVITE_LINK_REVOKED
             invite_link_revoked = types.ChatEventActionInviteLinkRevoked(
-                invite_link=types.ChatInviteLink._parse(
-                    client=client, invite=action.invite, users=users
+                invite_link=(
+                    await types.ChatInviteLink._parse(
+                        client=client,
+                        invite=action.invite,
+                        users=users,
+                    )
+                    if isinstance(action.invite, raw.types.ChatInviteExported)
+                    else None
                 ),
             )
         elif isinstance(action, raw.types.ChannelAdminLogEventActionExportedInviteDelete):
             action_type = enums.ChatEventActionType.INVITE_LINK_DELETED
             invite_link_deleted = types.ChatEventActionInviteLinkDeleted(
-                invite_link=types.ChatInviteLink._parse(
-                    client=client, invite=action.invite, users=users
+                invite_link=(
+                    await types.ChatInviteLink._parse(
+                        client=client,
+                        invite=action.invite,
+                        users=users,
+                    )
+                    if isinstance(action.invite, raw.types.ChatInviteExported)
+                    else None
                 ),
             )
         elif isinstance(action, raw.types.ChannelAdminLogEventActionStartGroupCall):
@@ -719,8 +767,12 @@ class ChatEvent(Object):
             video_chat_participant_is_muted_toggled = (
                 types.ChatEventActionVideoChatParticipantIsMutedToggled(
                     participant=await types.Chat._parse_chat(
-                        client=client, chat=users.get(participant_id) or chats.get(participant_id)
-                    ),
+                        client=client,
+                        chat=raw_participant,
+                    )
+                    if (raw_participant := users.get(participant_id) or chats.get(participant_id))
+                    is not None
+                    else None,
                     is_muted=True,
                 )
             )
@@ -730,8 +782,12 @@ class ChatEvent(Object):
             video_chat_participant_is_muted_toggled = (
                 types.ChatEventActionVideoChatParticipantIsMutedToggled(
                     participant=await types.Chat._parse_chat(
-                        client=client, chat=users.get(participant_id) or chats.get(participant_id)
-                    ),
+                        client=client,
+                        chat=raw_participant,
+                    )
+                    if (raw_participant := users.get(participant_id) or chats.get(participant_id))
+                    is not None
+                    else None,
                     is_muted=False,
                 )
             )
@@ -741,8 +797,12 @@ class ChatEvent(Object):
             video_chat_participant_volume_level_changed = (
                 types.ChatEventActionVideoChatParticipantVolumeLevelChanged(
                     participant=await types.Chat._parse_chat(
-                        client=client, chat=users.get(participant_id) or chats.get(participant_id)
-                    ),
+                        client=client,
+                        chat=raw_participant,
+                    )
+                    if (raw_participant := users.get(participant_id) or chats.get(participant_id))
+                    is not None
+                    else None,
                     volume_level=action.participant.volume,
                 )
             )
@@ -793,18 +853,22 @@ class ChatEvent(Object):
             forum_topic_pinned = types.ChatEventActionForumTopicPinned(
                 old_topic_info=await types.ForumTopic._parse(
                     client, action.prev_topic, users=users, chats=chats
-                ),
+                )
+                if action.prev_topic is not None
+                else None,
                 new_topic_info=await types.ForumTopic._parse(
                     client, action.new_topic, users=users, chats=chats
-                ),
+                )
+                if action.new_topic is not None
+                else None,
             )
 
         return ChatEvent(
             id=event.id,
             date=utils.timestamp_to_datetime(event.date),
-            member=await types.Chat._parse_chat(
-                client, users.get(event.user_id) or chats.get(event.user_id)
-            ),
+            member=await types.Chat._parse_chat(client, raw_member)
+            if (raw_member := users.get(event.user_id) or chats.get(event.user_id)) is not None
+            else None,
             action=action_type,
             message_edited=message_edited,
             message_deleted=message_deleted,

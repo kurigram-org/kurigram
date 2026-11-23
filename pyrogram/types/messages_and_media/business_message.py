@@ -20,6 +20,7 @@ from __future__ import annotations as _annotations
 
 from typing import TYPE_CHECKING
 
+import pyrogram
 from pyrogram import types, enums, raw, utils
 from ..object import Object
 
@@ -84,13 +85,10 @@ class BusinessMessage(Object):
 
     @staticmethod
     async def _parse(
-        client,
-        message: raw.types.BusinessGreetingMessage | raw.types.BusinessAwayMessage | None = None,
-        users: dict | None = None,
-    ) -> BusinessMessage | None:
-        if not message:
-            return None
-
+        client: pyrogram.Client,
+        message: raw.types.BusinessGreetingMessage | raw.types.BusinessAwayMessage,
+        users: dict[int, raw.base.User],
+    ) -> BusinessMessage:
         schedule = None
 
         if isinstance(message, raw.types.BusinessAwayMessage):

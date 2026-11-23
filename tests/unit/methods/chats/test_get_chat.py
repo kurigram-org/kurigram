@@ -68,3 +68,42 @@ async def test_a_sliced_channel_result_is_resolved() -> None:
 
     assert chat.id == -1000000000000 - _CHANNEL_ID
     assert chat.title == "Channel 42"
+
+
+class EmptyPeerClient(GetChat):
+    """A client whose lookups answer with the empty constructor of the peer."""
+
+    INVITE_LINK_RE: Final[re.Pattern[str]] = FakeClient.INVITE_LINK_RE
+
+    def __init__(self, peer: raw.base.InputPeer) -> None:
+        self._peer = peer
+
+    async def resolve_peer(self, peer_id: int | str) -> raw.base.InputPeer:
+        return self._peer
+
+    async def invoke(
+        self,
+        query: raw.core.TLObject,
+    ) -> list[raw.base.User] | raw.types.messages.Chats:
+        if isinstance(query, raw.functions.users.GetUsers):
+            return [raw.types.UserEmpty(id=_CHANNEL_ID)]
+
+        return raw.types.messages.Chats(chats=[raw.types.ChatEmpty(id=_CHANNEL_ID)])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "peer",
+    [
+        raw.types.InputPeerUser(
+            user_id=_CHANNEL_ID,
+            access_hash=0,
+        ),
+        raw.types.InputPeerChat(chat_id=_CHANNEL_ID),
+    ],
+    ids=["user", "group"],
+)
+async def test_an_empty_peer_returns_none(peer: raw.base.InputPeer) -> None:
+    # The docstring promises `None` when the server answers with an empty
+    #  peer; the parser raises `EmptyObjectError` on one instead.
+    assert await EmptyPeerClient(peer).get_chat(_CHANNEL_ID, force_full=False) is None

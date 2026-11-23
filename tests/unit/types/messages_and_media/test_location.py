@@ -16,21 +16,18 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+
 from __future__ import annotations as _annotations
 
-from typing import TypeVar
-
-ParsedType = TypeVar("ParsedType")
+from pyrogram import raw, types
 
 
-def require_parsed(value: ParsedType | None) -> ParsedType:
-    """Unwrap a ``_parse`` result that the calling context guarantees to be present.
+def test_a_chat_location_without_a_point_keeps_its_address() -> None:
+    location = raw.types.ChannelLocation(
+        geo_point=raw.types.GeoPointEmpty(),
+        address="Somewhere",
+    )
 
-    The ``_parse`` helpers return ``None`` for empty raw objects (``UserEmpty``,
-    ``ChatEmpty``, ...). Where Telegram must return the full object, a ``None``
-    means a broken response and is raised instead of leaked to the caller.
-    """
-    if value is None:
-        raise ValueError("Telegram returned an empty object where a full one was expected")
+    parsed = types.Location._parse(location)
 
-    return value
+    assert (parsed.longitude, parsed.latitude, parsed.address) == (None, None, "Somewhere")

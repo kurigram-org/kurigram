@@ -140,7 +140,10 @@ class GiveawayWinners(Object):
             winner_count=giveaway_media.winners_count,
             unclaimed_prize_count=giveaway_media.unclaimed_count,
             winners=types.List(
-                [await types.User._parse(client, users.get(i)) for i in giveaway_media.winners]
+                [
+                    await types.User._parse(client, raw_winner) if raw_winner is not None else None
+                    for raw_winner in map(users.get, giveaway_media.winners)
+                ]
             )
             or None,
             additional_chat_count=getattr(giveaway_media, "additional_peers_count", None),

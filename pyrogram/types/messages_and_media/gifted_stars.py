@@ -98,8 +98,8 @@ class GiftedStars(Object):
         )
 
         return GiftedStars(
-            gifter=await types.User._parse(client, gifter),
-            receiver=await types.User._parse(client, receiver),
+            gifter=await types.User._parse(client, gifter) if gifter is not None else None,
+            receiver=await types.User._parse(client, receiver) if receiver is not None else None,
             currency=action.currency,
             amount=action.amount,
             cryptocurrency=getattr(action, "crypto_currency", None),

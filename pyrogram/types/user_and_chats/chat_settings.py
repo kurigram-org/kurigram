@@ -20,6 +20,7 @@ from __future__ import annotations as _annotations
 
 from typing import TYPE_CHECKING
 
+import pyrogram
 from pyrogram import raw, types, utils
 
 from ..object import Object
@@ -148,9 +149,12 @@ class ChatSettings(Object):
         self.last_photo_change_date = last_photo_change_date
 
     @staticmethod
-    async def _parse(client, chat_settings: raw.types.PeerSettings, users) -> ChatSettings | None:
-        if not chat_settings:
-            return None
+    async def _parse(
+        client: pyrogram.Client,
+        chat_settings: raw.types.PeerSettings,
+        users: dict[int, raw.base.User],
+    ) -> ChatSettings:
+        raw_business_bot = users.get(getattr(chat_settings, "business_bot_id", None))
 
         return ChatSettings(
             can_report_spam=getattr(chat_settings, "report_spam", None),
@@ -169,9 +173,9 @@ class ChatSettings(Object):
             request_chat_date=utils.timestamp_to_datetime(
                 getattr(chat_settings, "request_chat_date", None)
             ),
-            business_bot=await types.User._parse(
-                client, users.get(getattr(chat_settings, "business_bot_id", None))
-            ),
+            business_bot=await types.User._parse(client, raw_business_bot)
+            if raw_business_bot is not None
+            else None,
             business_bot_manage_url=getattr(chat_settings, "business_bot_manage_url", None),
             charge_paid_message_stars=getattr(chat_settings, "charge_paid_message_stars", None),
             registration_date=getattr(chat_settings, "registration_month", None),

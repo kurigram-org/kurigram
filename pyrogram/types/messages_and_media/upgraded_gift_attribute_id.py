@@ -18,8 +18,6 @@
 
 from __future__ import annotations as _annotations
 
-from pyrogram import raw, types
-
 from ..object import Object
 
 
@@ -37,15 +35,3 @@ class UpgradedGiftAttributeId(Object):
         self,
     ):
         super().__init__()
-
-    @staticmethod
-    def _parse(attribute_id: raw.base.StarGiftAttributeId) -> UpgradedGiftAttributeId | None:
-        if not attribute_id:
-            return None
-
-        if isinstance(attribute_id, raw.types.StarGiftAttributeIdModel):
-            return types.UpgradedfGiftAttributeIdModel(sticker_id=attribute_id.document_id)
-        elif isinstance(attribute_id, raw.types.StarGiftAttributeIdPattern):
-            return types.UpgradedfGiftAttributeIdSymbol(sticker_id=attribute_id.document_id)
-        elif isinstance(attribute_id, raw.types.StarGiftAttributeIdBackdrop):
-            return types.UpgradedfGiftAttributeIdBackdrop(backdrop_id=attribute_id.backdrop_id)

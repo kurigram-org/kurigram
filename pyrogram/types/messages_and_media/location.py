@@ -19,6 +19,7 @@
 from __future__ import annotations as _annotations
 
 from pyrogram import raw
+from pyrogram.errors import EmptyObjectError
 
 from ..object import Object
 
@@ -73,10 +74,10 @@ class Location(Object):
     @staticmethod
     def _parse(
         geo_point: raw.base.GeoPoint
-        | raw.base.BusinessLocation
-        | raw.base.MessageMedia
-        | raw.base.ChannelLocation,
-    ) -> Location | None:
+        | raw.types.BusinessLocation
+        | raw.types.MessageMediaGeoLive
+        | raw.types.ChannelLocation,
+    ) -> Location:
         if isinstance(geo_point, raw.types.GeoPoint):
             return Location._parse_geo_point(geo_point)
 
@@ -89,64 +90,71 @@ class Location(Object):
         if isinstance(geo_point, raw.types.ChannelLocation):
             return Location._parse_chat(geo_point)
 
-    @staticmethod
-    def _parse_geo_point(geo_point: raw.types.GeoPoint) -> Location | None:
-        if isinstance(geo_point, raw.types.GeoPoint):
-            return Location(
-                longitude=geo_point.long,
-                latitude=geo_point.lat,
-                accuracy_radius=geo_point.accuracy_radius,
-            )
+        raise EmptyObjectError(geo_point)
 
     @staticmethod
-    def _parse_business(location: raw.types.BusinessLocation) -> Location | None:
-        if isinstance(location, raw.types.BusinessLocation):
-            longitude = None
-            latitude = None
-            accuracy_radius = None
-
-            if isinstance(location.geo_point, raw.types.GeoPoint):
-                longitude = location.geo_point.long
-                latitude = location.geo_point.lat
-                accuracy_radius = location.geo_point.accuracy_radius
-
-            return Location(
-                longitude=longitude,
-                latitude=latitude,
-                accuracy_radius=accuracy_radius,
-                address=location.address,
-            )
+    def _parse_geo_point(geo_point: raw.types.GeoPoint) -> Location:
+        return Location(
+            longitude=geo_point.long,
+            latitude=geo_point.lat,
+            accuracy_radius=geo_point.accuracy_radius,
+        )
 
     @staticmethod
-    def _parse_media(media: raw.types.MessageMediaGeoLive) -> Location | None:
-        if isinstance(media, raw.types.MessageMediaGeoLive):
-            longitude = None
-            latitude = None
-            accuracy_radius = None
+    def _parse_business(location: raw.types.BusinessLocation) -> Location:
+        longitude: float | None = None
+        latitude: float | None = None
+        accuracy_radius: int | None = None
 
-            if isinstance(media.geo, raw.types.GeoPoint):
-                longitude = media.geo.long
-                latitude = media.geo.lat
-                accuracy_radius = media.geo.accuracy_radius
+        if isinstance(location.geo_point, raw.types.GeoPoint):
+            longitude = location.geo_point.long
+            latitude = location.geo_point.lat
+            accuracy_radius = location.geo_point.accuracy_radius
 
-            return Location(
-                longitude=longitude,
-                latitude=latitude,
-                accuracy_radius=accuracy_radius,
-                live_period=media.period,
-                heading=media.heading,
-                proximity_alert_radius=media.proximity_notification_radius,
-            )
+        return Location(
+            longitude=longitude,
+            latitude=latitude,
+            accuracy_radius=accuracy_radius,
+            address=location.address,
+        )
 
     @staticmethod
-    def _parse_chat(location: raw.types.ChannelLocation) -> Location | None:
-        if isinstance(location, raw.types.ChannelLocation):
-            return Location(
-                longitude=location.geo_point.long,
-                latitude=location.geo_point.lat,
-                accuracy_radius=location.geo_point.accuracy_radius,
-                address=location.address,
-            )
+    def _parse_media(media: raw.types.MessageMediaGeoLive) -> Location:
+        longitude: float | None = None
+        latitude: float | None = None
+        accuracy_radius: int | None = None
+
+        if isinstance(media.geo, raw.types.GeoPoint):
+            longitude = media.geo.long
+            latitude = media.geo.lat
+            accuracy_radius = media.geo.accuracy_radius
+
+        return Location(
+            longitude=longitude,
+            latitude=latitude,
+            accuracy_radius=accuracy_radius,
+            live_period=media.period,
+            heading=media.heading,
+            proximity_alert_radius=media.proximity_notification_radius,
+        )
+
+    @staticmethod
+    def _parse_chat(location: raw.types.ChannelLocation) -> Location:
+        longitude: float | None = None
+        latitude: float | None = None
+        accuracy_radius: int | None = None
+
+        if isinstance(location.geo_point, raw.types.GeoPoint):
+            longitude = location.geo_point.long
+            latitude = location.geo_point.lat
+            accuracy_radius = location.geo_point.accuracy_radius
+
+        return Location(
+            longitude=longitude,
+            latitude=latitude,
+            accuracy_radius=accuracy_radius,
+            address=location.address,
+        )
 
     async def write(self, **kwargs) -> raw.types.InputMediaGeoPoint | raw.types.InputMediaGeoLive:
         if self.live_period is not None:

@@ -92,6 +92,8 @@ class SuggestedPostApproved(Object):
         return SuggestedPostApproved(
             suggested_post_message_id=suggested_post_message_id,
             suggested_post_message=suggested_post_message,
-            price=types.SuggestedPostPrice._parse(action.price),
+            price=types.SuggestedPostPrice._parse(action.price)
+            if action.price is not None
+            else None,
             send_date=utils.timestamp_to_datetime(action.schedule_date),
         )

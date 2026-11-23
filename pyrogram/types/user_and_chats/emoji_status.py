@@ -94,7 +94,10 @@ class EmojiStatus(Object):
         self.text_color = text_color
 
     @staticmethod
-    def _parse(client, emoji_status: raw.base.EmojiStatus) -> EmojiStatus | None:
+    def _parse(
+        client: pyrogram.Client,
+        emoji_status: raw.types.EmojiStatus | raw.types.EmojiStatusCollectible,
+    ) -> EmojiStatus:
         if isinstance(emoji_status, raw.types.EmojiStatus):
             return EmojiStatus(
                 client=client,
@@ -102,22 +105,19 @@ class EmojiStatus(Object):
                 until_date=utils.timestamp_to_datetime(getattr(emoji_status, "until", None)),
             )
 
-        if isinstance(emoji_status, raw.types.EmojiStatusCollectible):
-            return EmojiStatus(
-                client=client,
-                custom_emoji_id=str(emoji_status.document_id),
-                gift_id=emoji_status.collectible_id,
-                until_date=utils.timestamp_to_datetime(getattr(emoji_status, "until", None)),
-                title=emoji_status.title,
-                name=emoji_status.slug,
-                pattern_custom_emoji_id=str(emoji_status.pattern_document_id),
-                center_color=emoji_status.center_color,
-                edge_color=emoji_status.edge_color,
-                pattern_color=emoji_status.pattern_color,
-                text_color=emoji_status.text_color,
-            )
-
-        return None
+        return EmojiStatus(
+            client=client,
+            custom_emoji_id=str(emoji_status.document_id),
+            gift_id=emoji_status.collectible_id,
+            until_date=utils.timestamp_to_datetime(getattr(emoji_status, "until", None)),
+            title=emoji_status.title,
+            name=emoji_status.slug,
+            pattern_custom_emoji_id=str(emoji_status.pattern_document_id),
+            center_color=emoji_status.center_color,
+            edge_color=emoji_status.edge_color,
+            pattern_color=emoji_status.pattern_color,
+            text_color=emoji_status.text_color,
+        )
 
     def write(self):
         if self.gift_id:

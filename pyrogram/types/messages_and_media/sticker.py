@@ -190,7 +190,9 @@ class Sticker(Object):
 
             if sticker_attribute.mask:
                 sticker_type = enums.StickerType.MASK
-                mask_position = types.MaskPosition._parse(sticker_attribute.mask_coords)
+
+                if sticker_attribute.mask_coords is not None:
+                    mask_position = types.MaskPosition._parse(sticker_attribute.mask_coords)
         elif document_attributes.get(raw.types.DocumentAttributeCustomEmoji):
             sticker_attribute = document_attributes[raw.types.DocumentAttributeCustomEmoji]
 
@@ -282,6 +284,6 @@ class Sticker(Object):
             mime_type=sticker.mime_type,
             file_name=file_name,
             date=utils.timestamp_to_datetime(sticker.date),
-            thumbs=types.Thumbnail._parse(client, sticker),
+            thumbs=types.Thumbnail._parse(client, sticker) or None,
             raw=sticker,
         )

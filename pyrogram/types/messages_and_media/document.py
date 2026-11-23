@@ -96,6 +96,6 @@ class Document(Object):
             mime_type=document.mime_type,
             file_size=document.size,
             date=utils.timestamp_to_datetime(document.date),
-            thumbs=types.Thumbnail._parse(client, document),
+            thumbs=types.Thumbnail._parse(client, document) or None,
             client=client,
         )

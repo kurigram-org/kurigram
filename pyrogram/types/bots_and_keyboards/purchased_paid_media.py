@@ -45,7 +45,11 @@ class PurchasedPaidMedia(Object, Update):
     async def _parse(
         client, purchased_media: raw.types.UpdateBotPurchasedPaidMedia, users
     ) -> PurchasedPaidMedia:
+        raw_from_user = users.get(purchased_media.user_id)
+
         return PurchasedPaidMedia(
-            from_user=await types.User._parse(client, users.get(purchased_media.user_id)),
+            from_user=await types.User._parse(client, raw_from_user)
+            if raw_from_user is not None
+            else None,
             payload=purchased_media.payload,
         )

@@ -73,7 +73,7 @@ class Dialog(Object):
         self,
         *,
         client: pyrogram.Client | None = None,
-        chat: types.Chat,
+        chat: types.Chat | None,
         top_message: types.Message,
         last_read_inbox_message_id: int,
         last_read_outbox_message_id: int,
@@ -105,8 +105,14 @@ class Dialog(Object):
 
     @staticmethod
     async def _parse(client, dialog: raw.types.Dialog, messages, users, chats) -> Dialog:
+        raw_chat = types.Chat._find_peer_chat(
+            dialog.peer,
+            users=users,
+            chats=chats,
+        )
+
         return Dialog(
-            chat=await types.Chat._parse_dialog(client, dialog.peer, users, chats),
+            chat=await types.Chat._parse_chat(client, raw_chat) if raw_chat is not None else None,
             top_message=messages.get(utils.get_peer_id(dialog.peer)),
             last_read_inbox_message_id=dialog.read_inbox_max_id,
             last_read_outbox_message_id=dialog.read_outbox_max_id,

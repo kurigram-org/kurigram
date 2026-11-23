@@ -50,10 +50,9 @@ class GiftAuction(Object):
         self.start_date = start_date
 
     @staticmethod
-    def _parse(gift: raw.types.StarGift) -> GiftAuction | None:
-        if gift.auction_slug:
-            return GiftAuction(
-                id=gift.auction_slug,
-                gifts_per_round=gift.gifts_per_round,
-                start_date=utils.timestamp_to_datetime(gift.auction_start_date),
-            )
+    def _parse(gift: raw.types.StarGift, *, auction_slug: str) -> GiftAuction:
+        return GiftAuction(
+            id=auction_slug,
+            gifts_per_round=gift.gifts_per_round,
+            start_date=utils.timestamp_to_datetime(gift.auction_start_date),
+        )
