@@ -120,7 +120,7 @@ class ResolvePeer:
             form of an InputPeer object, otherwise, in case *peer_id* is None, None is returned.
 
         Raises:
-            KeyError: In case the peer doesn't exist in the internal database.
+            PeerIdInvalid: In case the peer can't be found. The identifier is on the error's ``value``.
         """
         if not self.is_connected:
             raise ConnectionError("Client has not been started yet")
@@ -175,7 +175,7 @@ class ResolvePeer:
                     if from_message is not None:
                         return from_message
 
-                    raise PeerIdInvalid from e
+                    raise PeerIdInvalid(value=peer_id) from e
         elif isinstance(peer_id, str):
             phone = re.sub(r"[+()\s-]", "", peer_id)
 
@@ -193,7 +193,7 @@ class ResolvePeer:
                         if from_message is not None:
                             return from_message
 
-                        raise PeerIdInvalid from e
+                        raise PeerIdInvalid(value=peer_id) from e
             else:
                 username = None
                 channel_id = None
@@ -219,7 +219,7 @@ class ResolvePeer:
                         if from_message is not None:
                             return from_message
 
-                        raise PeerIdInvalid from e
+                        raise PeerIdInvalid(value=peer_id) from e
                 elif username:
                     try:
                         return await self.storage.get_peer_by_username(username)
@@ -238,8 +238,8 @@ class ResolvePeer:
                             if from_message is not None:
                                 return from_message
 
-                            raise PeerIdInvalid from e
+                            raise PeerIdInvalid(value=peer_id) from e
                 else:
-                    raise PeerIdInvalid
+                    raise PeerIdInvalid(value=peer_id)
         else:
-            raise PeerIdInvalid
+            raise PeerIdInvalid(value=peer_id)
