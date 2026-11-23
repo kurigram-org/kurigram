@@ -282,7 +282,14 @@ class Session:
         except (AuthKeyDuplicated, Unauthorized) as e:
             await self.stop()
             raise e
-        except (OSError, RPCError) as e:
+        except (OSError, RPCError, BadMsgNotification) as e:
+            if (
+                isinstance(e, BadMsgNotification)
+                and e.code not in BadMsgNotification.RESENDABLE_CODES
+            ):
+                await self.stop()
+                raise
+
             log.info("Restarting session due to - %s - %s", e.__class__.__name__, e)
             asyncio.create_task(self.restart())
             return

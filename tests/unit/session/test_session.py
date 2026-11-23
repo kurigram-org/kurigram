@@ -86,6 +86,9 @@ class StubConnection:
         self.sent: list[bytes] = []
         self.protocol = StubProtocol()
 
+    async def connect(self) -> None:
+        pass
+
     async def send(self, payload: bytes) -> None:
         self.sent.append(payload)
 
@@ -689,3 +692,51 @@ async def test_invoke_raises_a_bad_msg_notification_no_resend_can_fix() -> None:
         )
 
     assert len(connection.sent) == 1
+
+
+def _start_answered_with(*, session: Session, error_code: int) -> asyncio.Event:
+    """Make `start()` connect to a server that answers its `Ping` with this notification"""
+    connection = AnsweringConnection(
+        session=session,
+        answers=[_bad_msg_notification(error_code=error_code)],
+    )
+    connection.packets = []
+    session.client.connection_factory = lambda **_: connection
+
+    restarted = asyncio.Event()
+
+    async def restart() -> None:
+        restarted.set()
+
+    session.restart = restart
+
+    return restarted
+
+
+async def test_start_answered_with_a_resendable_bad_msg_notification_restarts() -> None:
+    session = _session()
+    restarted = _start_answered_with(
+        session=session,
+        error_code=_MSG_ID_TOO_LOW,
+    )
+
+    # Was `BadMsgNotification: [16] The msg_id is too low` out of `start()`, with the
+    #  session stopped, so a restart after a clock jump killed it for good.
+    await session.start()
+    await asyncio.wait_for(restarted.wait(), _NOT_DONE_TIMEOUT)
+
+    assert session.state is SessionState.STARTING
+
+
+async def test_start_answered_with_a_bad_msg_notification_no_resend_can_fix_stops() -> None:
+    session = _session()
+    restarted = _start_answered_with(
+        session=session,
+        error_code=_MSG_ID_NOT_DIVISIBLE_BY_FOUR,
+    )
+
+    with pytest.raises(BadMsgNotification):
+        await session.start()
+
+    assert session.state is SessionState.STOPPED
+    assert not restarted.is_set()
