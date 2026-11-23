@@ -671,7 +671,9 @@ async def test_a_bad_msg_notification_answer_is_raised_not_returned() -> None:
         pytest.param(_MSG_SEQNO_TOO_HIGH, id="msg-seqno-too-high"),
     ],
 )
-async def test_invoke_resends_a_request_the_server_rejected_for_its_identity(error_code: int) -> None:
+async def test_invoke_resends_a_request_the_server_rejected_for_its_identity(
+    error_code: int,
+) -> None:
     session = _started_session()
     pong = raw.types.Pong(
         msg_id=0,
