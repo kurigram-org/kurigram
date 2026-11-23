@@ -45,17 +45,17 @@ class InlineQueryResultVideo(InlineQueryResult):
             Unique identifier for this result, 1-64 bytes.
             Defaults to a randomly generated UUID4.
 
-        mime_type (``str``):
+        mime_type (``str``, *optional*):
             Mime type of the content of video url, "text/html" or "video/mp4".
             Defaults to "video/mp4".
 
-        video_width (``int``):
+        video_width (``int``, *optional*):
             Video width.
 
-        video_height (``int``):
+        video_height (``int``, *optional*):
             Video height.
 
-        video_duration (``int``):
+        video_duration (``int``, *optional*):
             Video duration in seconds.
 
         description (``str``, *optional*):
@@ -68,13 +68,13 @@ class InlineQueryResultVideo(InlineQueryResult):
             By default, texts are parsed using both Markdown and HTML styles.
             You can combine both syntaxes together.
 
-        caption_entities (List of :obj:`~pyrogram.types.MessageEntity`):
+        caption_entities (List of :obj:`~pyrogram.types.MessageEntity`, *optional*):
             List of special entities that appear in the caption, which can be specified instead of *parse_mode*.
 
         reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
             Inline keyboard attached to the message
 
-        input_message_content (:obj:`~pyrogram.types.InputMessageContent`):
+        input_message_content (:obj:`~pyrogram.types.InputMessageContent`, *optional*):
             Content of the message to be sent instead of the video. This field is required if InlineQueryResultVideo is
             used to send an HTML-page as a result (e.g., a YouTube video).
     """

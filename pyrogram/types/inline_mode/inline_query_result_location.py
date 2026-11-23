@@ -61,7 +61,7 @@ class InlineQueryResultLocation(InlineQueryResult):
         reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
             Inline keyboard attached to the message.
 
-        input_message_content (:obj:`~pyrogram.types.InputMessageContent`):
+        input_message_content (:obj:`~pyrogram.types.InputMessageContent`, *optional*):
             Content of the message to be sent instead of the file.
 
         thumb_url (``str``, *optional*):
