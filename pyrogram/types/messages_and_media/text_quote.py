@@ -29,7 +29,7 @@ class TextQuote(Object):
     """Describes manually or automatically chosen quote from another message.
 
     Parameters:
-        text (``str``, *optional*):
+        text (``str``):
             Text of the quoted part of a message that is replied to by the given message.
             May be empty if the quote was chosen from a rich message.
 
@@ -42,7 +42,7 @@ class TextQuote(Object):
             May contain only plain text, bold, italic, underline, strikethrough, spoiler, subscript,
             superscript, date and time, custom emoji, mathematical expressions, and arrays of them.
 
-        position (``int``, *optional*):
+        position (``int``):
             Approximate quote position in the original message in UTF-16 code units as specified by the sender.
             For quotes from rich messages, it is the position in the text formed by joining plain texts
             of all quotable texts of the message, separated by line feeds.

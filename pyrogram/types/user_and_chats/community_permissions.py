@@ -27,7 +27,7 @@ class CommunityPermissions(Object):
     """Describes actions that a user is allowed to take in a community.
 
     Parameters:
-        can_edit_chat_list (``bool``):
+        can_edit_chat_list (``bool``, *optional*):
             True, if the user can change the chats added to the community.
     """
 

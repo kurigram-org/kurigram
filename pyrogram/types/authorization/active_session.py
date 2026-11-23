@@ -32,25 +32,25 @@ class ActiveSession(Object):
     """Contains information about one session in a Telegram application used by the current user. Sessions must be shown to the user in the returned order.
 
     Parameters:
-        id (``int``, *optional*):
+        id (``int``):
             Session identifier.
 
-        device_model (``str``, *optional*):
+        device_model (``str``):
             Model of the device the application has been run or is running on, as provided by the application.
 
-        platform (``str``, *optional*):
+        platform (``str``):
             Operating system the application has been run or is running on, as provided by the application.
 
-        system_version (``str``, *optional*):
+        system_version (``str``):
             Version of the operating system the application has been run or is running on, as provided by the application.
 
-        api_id (``int``, *optional*):
+        api_id (``int``):
             Telegram API identifier, as provided by the application.
 
-        application_name (``str``, *optional*):
+        application_name (``str``):
             Name of the application, as provided by the application.
 
-        application_version (``str``, *optional*):
+        application_version (``str``):
             The version of the application, as provided by the application.
 
         log_in_date (:py:obj:`~datetime.datetime`, *optional*):
@@ -59,34 +59,34 @@ class ActiveSession(Object):
         last_active_date (:py:obj:`~datetime.datetime`, *optional*):
             Point in time (Unix timestamp) when the session was last used.
 
-        ip_address (``str``, *optional*):
+        ip_address (``str``):
             IP address from which the session was created, in human-readable format.
 
-        location (``str``, *optional*):
+        location (``str``):
             A human-readable description of the location from which the session was created, based on the IP address.
 
-        country (``str``, *optional*):
+        country (``str``):
             Country determined from IP.
 
-        region (``str``, *optional*):
+        region (``str``):
             Region determined from IP.
 
-        can_accept_secret_chats (``bool``, *optional*):
+        can_accept_secret_chats (``bool``):
             True, if incoming secret chats can be accepted by the session.
 
-        can_accept_calls (``bool``, *optional*):
+        can_accept_calls (``bool``):
             True, if incoming calls can be accepted by the session.
 
-        is_current (``bool``, *optional*):
+        is_current (``bool``):
             True, if this session is the current session.
 
-        is_password_pending (``bool``, *optional*):
+        is_password_pending (``bool``):
             True, if a 2-step verification password is needed to complete authorization of the session.
 
-        is_unconfirmed (``bool``, *optional*):
+        is_unconfirmed (``bool``):
             True, if the session wasn't confirmed from another session.
 
-        is_official_application (``bool``, *optional*):
+        is_official_application (``bool``):
             True, if the application is an official application or uses the api_id of an official application.
 
     """

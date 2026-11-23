@@ -32,16 +32,16 @@ class MessageOriginChannel(MessageOrigin):
     """The message was originally sent to a channel chat.
 
     Parameters:
-        type (:obj:`~pyrogram.enums.MessageOriginType`, *optional*):
+        type (:obj:`~pyrogram.enums.MessageOriginType`):
             Type of the message origin.
 
-        date (:py:obj:`~datetime.datetime`, *optional*):
+        date (:py:obj:`~datetime.datetime`):
             Date the message was sent originally.
 
-        chat (:obj:`~pyrogram.types.Chat`, *optional*):
+        chat (:obj:`~pyrogram.types.Chat`):
             Channel chat to which the message was originally sent.
 
-        message_id (``int``, *optional*):
+        message_id (``int``):
             Unique message identifier inside the chat.
 
         author_signature (``str``, *optional*):

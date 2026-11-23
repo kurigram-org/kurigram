@@ -36,7 +36,7 @@ class ChatJoiner(Object):
         user (:obj:`~pyrogram.types.User`):
             Information about the user.
 
-        date (:py:obj:`~datetime.datetime`, *optional*):
+        date (:py:obj:`~datetime.datetime`):
             Date when the user joined.
 
         bio (``str``, *optional*):

@@ -25,7 +25,7 @@ class KeyboardButtonPollType(Object):
     """Contains information about a poll type.
 
     Parameters:
-        is_quiz (``bool``, *optional*):
+        is_quiz (``bool``):
             If True, the requested poll will be sent as quiz.
     """
 

@@ -32,13 +32,13 @@ class MessageOriginHiddenUser(MessageOrigin):
     """The message was originally sent by an unknown user.
 
     Parameters:
-        type (:obj:`~pyrogram.enums.MessageOriginType`, *optional*):
+        type (:obj:`~pyrogram.enums.MessageOriginType`):
             Type of the message origin.
 
-        date (:py:obj:`~datetime.datetime`, *optional*):
+        date (:py:obj:`~datetime.datetime`):
             Date the message was sent originally.
 
-        sender_user_name (``str``, *optional*):
+        sender_user_name (``str``):
             Name of the user that sent the message originally.
     """
 

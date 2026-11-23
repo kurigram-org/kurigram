@@ -28,19 +28,19 @@ class GiftUpgradePreview(Object):
     """Contains examples of possible upgraded gifts for the given regular gift.
 
     Parameters:
-        models (List of :obj:`~pyrogram.types.GiftAttribute`, *optional*):
+        models (List of :obj:`~pyrogram.types.GiftAttribute`):
             Examples of possible models that can be chosen for the gift after upgrade.
 
-        symbols (List of :obj:`~pyrogram.types.GiftAttribute`, *optional*):
+        symbols (List of :obj:`~pyrogram.types.GiftAttribute`):
             Examples of possible symbols that can be chosen for the gift after upgrade.
 
-        backdrops (List of :obj:`~pyrogram.types.GiftAttribute`, *optional*):
+        backdrops (List of :obj:`~pyrogram.types.GiftAttribute`):
             Examples of possible backdrops that can be chosen for the gift after upgrade.
 
-        prices (List of :obj:`~pyrogram.types.GiftUpgradePrice`, *optional*):
+        prices (List of :obj:`~pyrogram.types.GiftUpgradePrice`):
             Examples of price for gift upgrade from the maximum price to the minimum price.
 
-        next_prices (List of :obj:`~pyrogram.types.GiftUpgradePrice`, *optional*):
+        next_prices (List of :obj:`~pyrogram.types.GiftUpgradePrice`):
             Next changes for the price for gift upgrade with more granularity than in prices.
     """
 

@@ -32,13 +32,13 @@ class MessageOriginChat(MessageOrigin):
     """The message was originally sent on behalf of a chat to a group chat.
 
     Parameters:
-        type (:obj:`~pyrogram.enums.MessageOriginType`, *optional*):
+        type (:obj:`~pyrogram.enums.MessageOriginType`):
             Type of the message origin.
 
-        date (:py:obj:`~datetime.datetime`, *optional*):
+        date (:py:obj:`~datetime.datetime`):
             Date the message was sent originally.
 
-        sender_chat (:obj:`~pyrogram.types.Chat`, *optional*):
+        sender_chat (:obj:`~pyrogram.types.Chat`):
             Chat that sent the message originally.
 
         author_signature (``str``, *optional*):
