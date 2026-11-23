@@ -755,3 +755,36 @@ async def test_a_clock_bad_msg_notification_syncs_the_time_after_the_first_messa
     await session.handle_packet(packet)
 
     assert abs(session.client._server_time_offset) < _SALT_LEFT
+
+
+async def test_the_ping_task_outlives_a_bad_msg_notification_for_its_future_salts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Above zero: at zero `asyncio.wait_for` cancels `Event.wait()` before it runs and
+    #  raises `TimeoutError` on a set event too, so the worker never sees the stop below.
+    #  https://github.com/python/cpython/blob/ebf955df7a89ed0c7968f79faec1de49f61ed7cb/Lib/asyncio/tasks.py#L475-L485
+    monkeypatch.setattr(Session, "PING_INTERVAL", _SHORT_STOP_TIMEOUT / 10)
+
+    session = _started_session()
+    attempts: int = 0
+    retried = asyncio.Event()
+
+    async def update_future_salts() -> None:
+        nonlocal attempts
+
+        attempts += 1
+
+        if attempts > 1:
+            retried.set()
+
+        raise BadMsgNotification(_MSG_ID_TOO_LOW)
+
+    session._update_future_salts = update_future_salts
+    ping_task = asyncio.create_task(session.ping_worker())
+
+    await asyncio.wait_for(retried.wait(), _NOT_DONE_TIMEOUT)
+
+    assert not ping_task.done()
+
+    session.ping_task_event.set()
+    await ping_task
