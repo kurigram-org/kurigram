@@ -1114,13 +1114,16 @@ class Chat(Object):
         chats: dict[int, raw.base.Chat],
         is_chat: bool,
     ) -> Chat | None:
-        from_id = utils.get_raw_peer_id(message.from_id)
-        peer_id = utils.get_raw_peer_id(message.peer_id)
-        chat_id = (peer_id or from_id) if is_chat else (from_id or peer_id)
+        peer = (
+            (message.peer_id or message.from_id)
+            if is_chat
+            else (message.from_id or message.peer_id)
+        )
+        chat_id = utils.get_raw_peer_id(peer)
 
-        if isinstance(message.peer_id, raw.types.PeerUser):
+        if isinstance(peer, raw.types.PeerUser):
             return await Chat._parse_user_chat(client, users.get(chat_id))
-        elif isinstance(message.peer_id, raw.types.PeerChat):
+        elif isinstance(peer, raw.types.PeerChat):
             return await Chat._parse_chat_chat(client, chats.get(chat_id))
         else:
             return await Chat._parse_channel_chat(client, chats.get(chat_id))

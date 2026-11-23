@@ -32,17 +32,26 @@ class MessageOriginImport(MessageOrigin):
     """Contains information about a message imported from a foreign chat service.
 
     Parameters:
-        type (:obj:`~pyrogram.enums.MessageOriginType`):
+        type (:obj:`~pyrogram.enums.MessageOriginType`, *optional*):
             Type of the message origin.
 
-        date (:py:obj:`~datetime.datetime`):
+        date (:py:obj:`~datetime.datetime`, *optional*):
             Date the message was sent originally.
 
-        sender_user_name (``str``):
+        sender_user_name (``str``, *optional*):
             Name of the original sender.
     """
 
-    def __init__(self, *, date: datetime | None = None, sender_user_name: str | None = None):
-        super().__init__(type=enums.MessageOriginType.IMPORT, date=date)
+    def __init__(
+        self,
+        *,
+        type: enums.MessageOriginType = enums.MessageOriginType.IMPORT,
+        date: datetime | None = None,
+        sender_user_name: str | None = None,
+    ) -> None:
+        super().__init__(
+            type=type,
+            date=date,
+        )
 
         self.sender_user_name = sender_user_name

@@ -104,7 +104,7 @@ class StreamMedia:
             file_id_str = media.file_id
 
         file_id_obj = FileId.decode(file_id_str)
-        file_size = getattr(media, "file_size", 0)
+        file_size: int = getattr(media, "file_size", None) or 0
 
         if offset < 0:
             if file_size == 0:
