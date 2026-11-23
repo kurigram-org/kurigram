@@ -19,6 +19,7 @@
 from __future__ import annotations as _annotations
 
 import asyncio
+import time
 from hashlib import sha1, sha256
 from io import BytesIO
 from os import urandom
@@ -28,6 +29,7 @@ import pytest
 
 import pyrogram
 from pyrogram import raw
+from pyrogram.errors import BadMsgNotification
 from pyrogram.crypto import aes, mtproto
 from pyrogram.raw.core import FutureSalt, FutureSalts, Long, Message, MsgContainer, TLObject
 from pyrogram.session.session import Result, Session, SessionState
@@ -56,6 +58,16 @@ _SALT_LEFT: Final[int] = 30
 #  https://core.telegram.org/mtproto/service_messages_about_messages#notice-of-ignored-error-message
 _INCORRECT_SERVER_SALT: Final[int] = 48
 
+# `bad_msg_notification` error codes: `msg_id` too low or too high and `msg_seqno` too
+#  low or too high, which a re-send with a new identity recovers, and "incorrect two
+#  lower order `msg_id` bits", a client bug no re-send can fix.
+#  https://core.telegram.org/mtproto/service_messages_about_messages#notice-of-ignored-error-message
+_MSG_ID_TOO_LOW: Final[int] = 16
+_MSG_ID_TOO_HIGH: Final[int] = 17
+_MSG_ID_NOT_DIVISIBLE_BY_FOUR: Final[int] = 18
+_MSG_SEQNO_TOO_LOW: Final[int] = 32
+_MSG_SEQNO_TOO_HIGH: Final[int] = 33
+
 # Long enough that a `stop()` which does not wait would have returned several times
 #  over, short enough to keep the suite quick.
 _NOT_DONE_TIMEOUT: Final[float] = 0.1
@@ -78,6 +90,9 @@ class StubConnection:
         self.sent: list[bytes] = []
         self.protocol = StubProtocol()
 
+    async def connect(self) -> None:
+        pass
+
     async def send(self, payload: bytes) -> None:
         self.sent.append(payload)
 
@@ -90,6 +105,31 @@ class StubConnection:
 
     async def close(self) -> None:
         self.closed.set()
+
+
+class AnsweringConnection(StubConnection):
+    """Answers every awaited request with the next of `answers`, as the server would"""
+
+    def __init__(self, *, session: Session, answers: list[TLObject]) -> None:
+        super().__init__()
+
+        self._session = session
+        self._answers = answers
+
+    async def send(self, payload: bytes) -> None:
+        await super().send(payload)
+
+        for result in self._session.results.values():
+            result.value = self._answers.pop(0)
+            result.event.set()
+
+
+def _bad_msg_notification(*, error_code: int) -> raw.types.BadMsgNotification:
+    return raw.types.BadMsgNotification(
+        bad_msg_id=0,
+        bad_msg_seqno=0,
+        error_code=error_code,
+    )
 
 
 def _session() -> Session:
@@ -605,3 +645,190 @@ async def test_invoke_on_a_session_that_is_not_running_raises(
 
     # `Session.__str__` carries the state, so this pins the message on both parameters.
     assert str(session) in message
+
+
+async def test_a_bad_msg_notification_answer_is_raised_not_returned() -> None:
+    session = _started_session()
+    session.connection = AnsweringConnection(
+        session=session,
+        answers=[_bad_msg_notification(error_code=_MSG_ID_TOO_LOW)],
+    )
+
+    # Returned, it reached callers as their result: `_update_future_salts()` read
+    #  `.salts` off it and the `AttributeError` killed the ping task.
+    with pytest.raises(BadMsgNotification) as raised:
+        await session.send(raw.functions.Ping(ping_id=0))
+
+    assert raised.value.code == _MSG_ID_TOO_LOW
+
+
+@pytest.mark.parametrize(
+    "error_code",
+    [
+        pytest.param(_MSG_ID_TOO_LOW, id="msg-id-too-low"),
+        pytest.param(_MSG_ID_TOO_HIGH, id="msg-id-too-high"),
+        pytest.param(_MSG_SEQNO_TOO_LOW, id="msg-seqno-too-low"),
+        pytest.param(_MSG_SEQNO_TOO_HIGH, id="msg-seqno-too-high"),
+    ],
+)
+async def test_invoke_resends_a_request_the_server_rejected_for_its_identity(
+    error_code: int,
+) -> None:
+    session = _started_session()
+    pong = raw.types.Pong(
+        msg_id=0,
+        ping_id=0,
+    )
+    session.connection = AnsweringConnection(
+        session=session,
+        answers=[_bad_msg_notification(error_code=error_code), pong],
+    )
+
+    result = await session.invoke(
+        raw.functions.Ping(ping_id=0),
+        retry_delay=0,
+    )
+
+    assert result == pong
+
+
+async def test_invoke_raises_a_bad_msg_notification_no_resend_can_fix() -> None:
+    session = _started_session()
+    connection = AnsweringConnection(
+        session=session,
+        answers=[_bad_msg_notification(error_code=_MSG_ID_NOT_DIVISIBLE_BY_FOUR)],
+    )
+    session.connection = connection
+
+    with pytest.raises(BadMsgNotification):
+        await session.invoke(
+            raw.functions.Ping(ping_id=0),
+            retry_delay=0,
+        )
+
+    assert len(connection.sent) == 1
+
+
+def _start_answered_with(*, session: Session, error_code: int) -> asyncio.Event:
+    """Make `start()` connect to a server that answers its `Ping` with this notification"""
+    connection = AnsweringConnection(
+        session=session,
+        answers=[_bad_msg_notification(error_code=error_code)],
+    )
+    connection.packets = []
+    session.client.connection_factory = lambda **_: connection
+
+    restarted = asyncio.Event()
+
+    async def restart() -> None:
+        restarted.set()
+
+    session.restart = restart
+
+    return restarted
+
+
+async def test_start_answered_with_a_resendable_bad_msg_notification_restarts() -> None:
+    session = _session()
+    restarted = _start_answered_with(
+        session=session,
+        error_code=_MSG_ID_TOO_LOW,
+    )
+
+    # Was `BadMsgNotification: [16] The msg_id is too low` out of `start()`, with the
+    #  session stopped, so a restart after a clock jump killed it for good.
+    await session.start()
+    await asyncio.wait_for(restarted.wait(), _NOT_DONE_TIMEOUT)
+
+    assert session.state is SessionState.STARTING
+
+
+async def test_start_answered_with_a_bad_msg_notification_no_resend_can_fix_stops() -> None:
+    session = _session()
+    restarted = _start_answered_with(
+        session=session,
+        error_code=_MSG_ID_NOT_DIVISIBLE_BY_FOUR,
+    )
+
+    with pytest.raises(BadMsgNotification):
+        await session.start()
+
+    assert session.state is SessionState.STOPPED
+    assert not restarted.is_set()
+
+
+@pytest.mark.parametrize(
+    ("error_code", "clock_offset"),
+    [
+        pytest.param(_MSG_ID_TOO_LOW, -_SALT_LIFETIME, id="clock-behind"),
+        pytest.param(_MSG_ID_TOO_HIGH, _SALT_LIFETIME, id="clock-ahead"),
+    ],
+)
+async def test_a_clock_bad_msg_notification_syncs_the_time_after_the_first_message(
+    *,
+    error_code: int,
+    clock_offset: int,
+) -> None:
+    session = _started_session()
+    packet = await _server_packet(
+        session=session,
+        body=_bad_msg_notification(error_code=error_code),
+    )
+
+    # A clock this far off is what makes the server answer this code.
+    session.client._server_time_offset = clock_offset
+
+    await session.handle_packet(packet)
+
+    assert abs(session.client._server_time_offset) < _SALT_LEFT
+
+
+async def test_the_resend_after_a_msg_id_too_high_follows_the_corrected_clock() -> None:
+    session = _started_session()
+    packet = await _server_packet(
+        session=session,
+        body=_bad_msg_notification(error_code=_MSG_ID_TOO_HIGH),
+    )
+
+    session.client._server_time_offset = _SALT_LIFETIME
+    await session.msg_factory.allocate_message_identity()
+
+    await session.handle_packet(packet)
+
+    resent_msg_id = await session.msg_factory.allocate_message_identity()
+
+    # Was 1800 seconds ahead: the factory went on from the rejected `msg_id`.
+    assert resent_msg_id / 2**32 - time.time() < _SALT_LEFT
+
+
+async def test_the_ping_task_outlives_a_bad_msg_notification_for_its_future_salts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Above zero: at zero `asyncio.wait_for` cancels `Event.wait()` before it runs and
+    #  raises `TimeoutError` on a set event too, so the worker never sees the stop below.
+    #  https://github.com/python/cpython/blob/ebf955df7a89ed0c7968f79faec1de49f61ed7cb/Lib/asyncio/tasks.py#L475-L485
+    monkeypatch.setattr(Session, "PING_INTERVAL", _SHORT_STOP_TIMEOUT / 10)
+
+    session = _started_session()
+    attempts: int = 0
+    retried = asyncio.Event()
+
+    async def update_future_salts() -> None:
+        nonlocal attempts
+
+        attempts += 1
+
+        if attempts > 1:
+            retried.set()
+
+        raise BadMsgNotification(_MSG_ID_TOO_LOW)
+
+    session._update_future_salts = update_future_salts
+    ping_task = asyncio.create_task(session.ping_worker())
+
+    await asyncio.wait_for(retried.wait(), _NOT_DONE_TIMEOUT)
+
+    assert not ping_task.done()
+
+    session.ping_task_event.set()
+    await ping_task

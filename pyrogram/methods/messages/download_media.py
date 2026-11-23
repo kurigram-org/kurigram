@@ -396,11 +396,11 @@ class DownloadMedia:
         file_id_obj = FileId.decode(file_id_str)
 
         file_type = file_id_obj.file_type
-        media_file_name = ntpath.basename(getattr(media, "file_name", ""))
+        media_file_name = ntpath.basename(getattr(media, "file_name", None) or "")
         if media_file_name in (".", ".."):
             media_file_name = ""
-        file_size = getattr(media, "file_size", 0)
-        mime_type = getattr(media, "mime_type", "")
+        file_size: int = getattr(media, "file_size", None) or 0
+        mime_type: str = getattr(media, "mime_type", None) or ""
         date = getattr(media, "date", None)
 
         directory, file_name = os.path.split(file_name)
