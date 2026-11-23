@@ -26,8 +26,10 @@ checker compares the two, because to both of them a docstring is an opaque strin
 On a function, a handler, a filter or a type the library writes, the `*optional*` marker is the
 same question asked of one entry: it is this tree's way of saying the caller may leave the
 argument out, so a marker that disagrees with the signature is a promise the caller cannot keep
-either way round. On a type the library only receives it says a parsed object may carry `None`,
-which the TL flags decide and no signature shows, so such a block is checked for its names only.
+either way round. A type under `pyrogram/types/` that defines no `write()` is checked for its
+names only: most such types are parsed from what the library receives, where the marker says a
+field may be `None`, which the TL flags decide and no signature shows, and many of them are also
+passed in by callers, so the signature cannot settle which meaning an entry carries.
 """
 
 from __future__ import annotations as _annotations
@@ -111,7 +113,7 @@ class DocumentedFunction:
     module: str
     name: str
     line: int
-    is_received_type: bool
+    is_unwritten_type: bool
     omittable: dict[str, bool]
     documented: list[DocumentedParameter]
 
@@ -227,12 +229,12 @@ def omittable_parameters(
     return omittable
 
 
-def is_received_type(
+def is_unwritten_type(
     node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef,
     *,
     module: str,
 ) -> bool:
-    """Whether `node` is a type the library builds from what it receives and never writes."""
+    """Whether `node` is a type under `pyrogram/types/` that defines no `write()`."""
     if not isinstance(node, ast.ClassDef) or not module.startswith("pyrogram/types/"):
         return False
 
@@ -264,7 +266,7 @@ def documented_blocks(*, module: str, source: list[str]) -> Generator[Documented
             module=module,
             name=node.name,
             line=node.lineno,
-            is_received_type=is_received_type(node, module=module),
+            is_unwritten_type=is_unwritten_type(node, module=module),
             omittable=omittable_parameters(
                 node=node,
                 module=module,
@@ -327,7 +329,7 @@ def name_drift() -> list[Drift]:
 
 def block_marker_drift(found_function: DocumentedFunction) -> list[Drift]:
     """Every `*optional*` marker that disagrees with whether the parameter has a default."""
-    if found_function.is_received_type:
+    if found_function.is_unwritten_type:
         return []
 
     omittable = found_function.omittable
@@ -499,7 +501,7 @@ def test_a_class_block_is_held_against_its_constructor() -> None:
     ]
 
 
-def test_a_marker_is_held_against_the_default_except_on_a_received_type() -> None:
+def test_a_marker_is_held_against_the_default_except_on_a_type_without_write() -> None:
     block = [
         '    """Do it.',
         "",
@@ -565,6 +567,17 @@ def test_a_marker_is_held_against_the_default_except_on_a_received_type() -> Non
             complaint="`title` has a default and is not marked optional",
         ),
     ]
+
+    handler_drifts = [
+        drift
+        for found in documented_blocks(
+            module="pyrogram/handlers/origin.py",
+            source=source[:12],
+        )
+        for drift in block_marker_drift(found)
+    ]
+
+    assert [drift.function for drift in handler_drifts] == ["Origin", "Origin"]
 
 
 def test_the_sweep_reads_the_defaults_it_claims_to() -> None:
