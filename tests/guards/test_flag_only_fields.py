@@ -22,10 +22,11 @@ Such a field has no payload at all: the flag bit IS the value, and the generated
 decides the bit with a plain truthiness test, so `False` and `None` are indistinguishable
 on the wire. The `or None` then reads as a guard and guards nothing.
 
-Every other optional field is the opposite case and must keep passing. `flags.N?Bool`,
-`flags.N?string` and `flags.N?Vector<T>` carry their value separately from the bit, so
-`or None` there decides what reaches the server - an explicit `BoolFalse` or an omitted
-field, an empty string or no string at all.
+Every other optional field is the opposite case and must keep passing. `flags.N?Bool` and
+`flags.N?string` carry their value separately from the bit, so `or None` there decides what
+reaches the server - an explicit `BoolFalse` or an omitted field, an empty string or no
+string at all. `flags.N?Vector<T>` is not flagged either, although its `[]` and `None` now
+write the same bytes: the bit is a truthiness test and a set bit writes `None` as `[]`.
 
 Which of the two a call site is cannot be read off the call site. It is read off the
 schema, by the constructor's name, which is why this walks the tree and `main_api.tl`
