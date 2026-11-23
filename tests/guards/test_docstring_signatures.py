@@ -23,9 +23,10 @@ A documented parameter the signature does not carry sends the reader to a keywor
 these blocks, so whatever is missing here is missing everywhere. Neither Sphinx nor the type
 checker compares the two, because to both of them a docstring is an opaque string.
 
-The `*optional*` marker is the same question asked of one entry: it is this tree's way of saying
-the parameter has a default, so a marker that disagrees with the signature is a promise the
-caller cannot keep either way round.
+On a function the `*optional*` marker is the same question asked of one entry: it is this tree's
+way of saying the parameter has a default, so a marker that disagrees with the signature is a
+promise the caller cannot keep either way round. On a type it says a received object may carry
+`None`, which no signature shows, so a class block is checked for its names only.
 """
 
 from __future__ import annotations as _annotations
@@ -74,36 +75,11 @@ _CHAT_ACTIONS: Final[str] = "in review: emoji-interaction chat actions"
 #  `test_every_exemption_still_names_a_module_that_drifts` fails on one with nothing to exempt.
 _EXEMPT: Final[dict[str, str]] = {
     "pyrogram/client.py": f"{_AIOFILES}; {_SESSION_HARDENING}",
-    "pyrogram/types/bots_and_keyboards/callback_query.py": _PARSE_REWRITE,
-    "pyrogram/types/bots_and_keyboards/message_reaction_updated.py": _PARSE_REWRITE,
-    "pyrogram/types/inline_mode/inline_query.py": _PARSE_REWRITE,
-    "pyrogram/types/input_content/input_chat_photo.py": _AIOFILES,
-    "pyrogram/types/input_content/input_media_animation.py": _AIOFILES,
-    "pyrogram/types/input_content/input_media_audio.py": _AIOFILES,
-    "pyrogram/types/input_content/input_media_document.py": _AIOFILES,
     "pyrogram/types/input_content/input_media_live_photo.py": _AIOFILES,
-    "pyrogram/types/input_content/input_media_photo.py": _AIOFILES,
-    "pyrogram/types/input_content/input_media_video.py": _AIOFILES,
-    "pyrogram/types/input_content/input_media_voice_note.py": _AIOFILES,
     "pyrogram/types/messages_and_media/external_reply_info.py": _PARSE_REWRITE,
-    "pyrogram/types/messages_and_media/forum_topic.py": _PARSE_REWRITE,
-    "pyrogram/types/messages_and_media/gifted_grams.py": _PARSE_REWRITE,
-    "pyrogram/types/messages_and_media/gifted_premium.py": _PARSE_REWRITE,
-    "pyrogram/types/messages_and_media/gifted_stars.py": _PARSE_REWRITE,
-    "pyrogram/types/messages_and_media/giveaway.py": _PARSE_REWRITE,
-    "pyrogram/types/messages_and_media/giveaway_prize_stars.py": _PARSE_REWRITE,
-    "pyrogram/types/messages_and_media/giveaway_winners.py": _PARSE_REWRITE,
     "pyrogram/types/messages_and_media/media_area.py": _PARSE_REWRITE,
     "pyrogram/types/messages_and_media/message.py": f"{_AIOFILES}; {_CHAT_ACTIONS}; {_PARSE_REWRITE}",
-    "pyrogram/types/messages_and_media/message_content.py": _PARSE_REWRITE,
-    "pyrogram/types/messages_and_media/message_origin_import.py": (
-        "documents `type`, which its `__init__` does not take: a signature change"
-    ),
-    "pyrogram/types/messages_and_media/story.py": f"{_AIOFILES}; {_PARSE_REWRITE}",
     "pyrogram/types/messages_and_media/successful_payment.py": _PARSE_REWRITE,
-    "pyrogram/types/messages_and_media/web_page.py": _PARSE_REWRITE,
-    "pyrogram/types/user_and_chats/chat_folder_invite_link_info.py": _PARSE_REWRITE,
-    "pyrogram/types/user_and_chats/chat_invite_link.py": _PARSE_REWRITE,
     "pyrogram/types/user_and_chats/chat_permissions.py": _PARSE_REWRITE,
     "pyrogram/types/user_and_chats/community.py": _PARSE_REWRITE,
     "pyrogram/types/user_and_chats/user.py": _PARSE_REWRITE,
@@ -127,6 +103,7 @@ class DocumentedFunction:
     module: str
     name: str
     line: int
+    is_class: bool
     omittable: dict[str, bool]
     documented: list[DocumentedParameter]
 
@@ -264,6 +241,7 @@ def documented_blocks(*, module: str, source: list[str]) -> Generator[Documented
             module=module,
             name=node.name,
             line=node.lineno,
+            is_class=isinstance(node, ast.ClassDef),
             omittable=omittable_parameters(
                 node=node,
                 module=module,
@@ -324,34 +302,41 @@ def name_drift() -> list[Drift]:
     return [drift for found in documented_functions() for drift in block_name_drift(found)]
 
 
-def marker_drift() -> list[Drift]:
-    """Every `*optional*` marker that disagrees with whether the parameter has a default."""
+def block_marker_drift(found_function: DocumentedFunction) -> list[Drift]:
+    """Every `*optional*` marker on a function that disagrees with whether the parameter has a default."""
+    # On a type the marker says a received object may carry `None`, which the TL flags decide;
+    #  every `__init__` defaults every field, so the default proves nothing there.
+    if found_function.is_class:
+        return []
+
+    omittable = found_function.omittable
     found: list[Drift] = []
 
-    for found_function in documented_functions():
-        omittable = found_function.omittable
+    for parameter in found_function.documented:
+        if parameter.name not in omittable:
+            continue
 
-        for parameter in found_function.documented:
-            if parameter.name not in omittable:
-                continue
+        if parameter.marked_optional == omittable[parameter.name]:
+            continue
 
-            if parameter.marked_optional == omittable[parameter.name]:
-                continue
-
-            complaint = (
-                f"`{parameter.name}` is marked optional and has no default"
-                if parameter.marked_optional
-                else f"`{parameter.name}` has a default and is not marked optional"
-            )
-            drift = Drift(
-                module=found_function.module,
-                line=parameter.line,
-                function=found_function.name,
-                complaint=complaint,
-            )
-            found.append(drift)
+        complaint = (
+            f"`{parameter.name}` is marked optional and has no default"
+            if parameter.marked_optional
+            else f"`{parameter.name}` has a default and is not marked optional"
+        )
+        drift = Drift(
+            module=found_function.module,
+            line=parameter.line,
+            function=found_function.name,
+            complaint=complaint,
+        )
+        found.append(drift)
 
     return found
+
+
+def marker_drift() -> list[Drift]:
+    return [drift for found in documented_functions() for drift in block_marker_drift(found)]
 
 
 def not_exempt(drifts: list[Drift]) -> list[str]:
@@ -489,6 +474,54 @@ def test_a_class_block_is_held_against_its_constructor() -> None:
             line=1,
             function="Chat",
             complaint="`username` has no entry",
+        ),
+    ]
+
+
+def test_a_marker_is_held_against_the_default_on_a_function_only() -> None:
+    block = [
+        '    """Do it.',
+        "",
+        "    Parameters:",
+        "        kind (``str``, *optional*):",
+        "            Always set.",
+        "",
+        "        title (``str``):",
+        "            Set when known.",
+        '    """',
+    ]
+    source = [
+        "class Origin:",
+        *block,
+        "",
+        "    def __init__(self, *, kind, title=None): ...",
+        "",
+        "",
+        "def send(*, kind, title=None):",
+        *block,
+    ]
+
+    drifts = [
+        drift
+        for found in documented_blocks(
+            module="origin.py",
+            source=source,
+        )
+        for drift in block_marker_drift(found)
+    ]
+
+    assert drifts == [
+        Drift(
+            module="origin.py",
+            line=19,
+            function="send",
+            complaint="`kind` is marked optional and has no default",
+        ),
+        Drift(
+            module="origin.py",
+            line=22,
+            function="send",
+            complaint="`title` has a default and is not marked optional",
         ),
     ]
 
