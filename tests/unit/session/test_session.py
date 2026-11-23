@@ -19,6 +19,7 @@
 from __future__ import annotations as _annotations
 
 import asyncio
+import time
 from hashlib import sha1, sha256
 from io import BytesIO
 from os import urandom
@@ -57,11 +58,12 @@ _SALT_LEFT: Final[int] = 30
 #  https://core.telegram.org/mtproto/service_messages_about_messages#notice-of-ignored-error-message
 _INCORRECT_SERVER_SALT: Final[int] = 48
 
-# `bad_msg_notification` error codes: "`msg_id` too low", which a re-send with a new
-#  `msg_id` recovers, and "incorrect two lower order `msg_id` bits", a client bug no
-#  re-send can fix.
+# `bad_msg_notification` error codes: `msg_id` too low or too high, which a re-send
+#  with a new `msg_id` recovers, and "incorrect two lower order `msg_id` bits", a client
+#  bug no re-send can fix.
 #  https://core.telegram.org/mtproto/service_messages_about_messages#notice-of-ignored-error-message
 _MSG_ID_TOO_LOW: Final[int] = 16
+_MSG_ID_TOO_HIGH: Final[int] = 17
 _MSG_ID_NOT_DIVISIBLE_BY_FOUR: Final[int] = 18
 
 # Long enough that a `stop()` which does not wait would have returned several times
@@ -755,6 +757,24 @@ async def test_a_clock_bad_msg_notification_syncs_the_time_after_the_first_messa
     await session.handle_packet(packet)
 
     assert abs(session.client._server_time_offset) < _SALT_LEFT
+
+
+async def test_the_resend_after_a_msg_id_too_high_follows_the_corrected_clock() -> None:
+    session = _started_session()
+    packet = await _server_packet(
+        session=session,
+        body=_bad_msg_notification(error_code=_MSG_ID_TOO_HIGH),
+    )
+
+    session.client._server_time_offset = _SALT_LIFETIME
+    await session.msg_factory.allocate_message_identity()
+
+    await session.handle_packet(packet)
+
+    resent_msg_id = await session.msg_factory.allocate_message_identity()
+
+    # Was 1800 seconds ahead: the factory went on from the rejected `msg_id`.
+    assert resent_msg_id / 2**32 - time.time() < _SALT_LEFT
 
 
 async def test_the_ping_task_outlives_a_bad_msg_notification_for_its_future_salts(

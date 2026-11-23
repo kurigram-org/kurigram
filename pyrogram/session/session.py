@@ -430,6 +430,12 @@ class Session:
             if msg.seq_no == 0 or clock_is_off:
                 self.client._set_server_time(msg.msg_id)
 
+            # The factory never goes below the rejected `msg_id`, so after code 17 the
+            #  resend stays as far ahead as the clock was.
+            #  https://github.com/LonamiWebs/Telethon/blob/afe900f45d74221df03e7fe6f176a1472f16afb4/telethon/network/mtprotostate.py#L254-L267
+            if clock_is_off:
+                self.msg_factory.reset_message_identity()
+
             if msg.seq_no % 2 != 0:
                 if msg.msg_id in self.pending_acks:
                     continue
