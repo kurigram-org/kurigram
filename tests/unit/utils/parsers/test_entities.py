@@ -25,9 +25,9 @@ import pytest
 import pyrogram
 from pyrogram import raw
 from pyrogram.enums import MessageEntityType
-from pyrogram.parser.entities import SPECS
-from pyrogram.parser.html import HTML
-from pyrogram.parser.markdown import Markdown
+from pyrogram.utils.parsers.entities import SPECS
+from pyrogram.utils.parsers.html import HTML
+from pyrogram.utils.parsers.markdown import Markdown
 
 # One case per entity type that carries markup: the text, the entity a server would send,
 #  and the raw entity `parse` has to give back after `unparse` has written it out.

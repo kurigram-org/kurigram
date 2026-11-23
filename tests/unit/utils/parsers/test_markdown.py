@@ -21,7 +21,7 @@ from __future__ import annotations as _annotations
 import pytest
 
 import pyrogram
-from pyrogram.parser.markdown import Markdown
+from pyrogram.utils.parsers.markdown import Markdown
 
 
 # expected: the expected unparsed Markdown

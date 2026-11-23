@@ -22,7 +22,7 @@ import pytest
 
 import pyrogram
 from pyrogram.enums import ParseMode
-from pyrogram.parser.parser import Parser
+from pyrogram.utils.parsers.parser import Parser
 
 
 def _bold() -> pyrogram.raw.types.MessageEntityBold:

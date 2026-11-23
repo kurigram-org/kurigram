@@ -21,7 +21,7 @@ from __future__ import annotations as _annotations
 import pytest
 
 import pyrogram
-from pyrogram.parser.html import HTML
+from pyrogram.utils.parsers.html import HTML
 
 
 # expected: the expected unparsed HTML
