@@ -282,7 +282,14 @@ class Session:
         except (AuthKeyDuplicated, Unauthorized) as e:
             await self.stop()
             raise e
-        except (OSError, RPCError) as e:
+        except (OSError, RPCError, BadMsgNotification) as e:
+            if (
+                isinstance(e, BadMsgNotification)
+                and e.code not in BadMsgNotification.RESENDABLE_CODES
+            ):
+                await self.stop()
+                raise
+
             log.info("Restarting session due to - %s - %s", e.__class__.__name__, e)
             asyncio.create_task(self.restart())
             return
@@ -411,8 +418,23 @@ class Session:
         log.debug("Received: %s", data)
 
         for msg in messages:
-            if msg.seq_no == 0:
+            # A clock notification after the first message has `seq_no` above 0, and its
+            #  resend needs the corrected clock too.
+            #  https://core.telegram.org/mtproto/service_messages_about_messages#notice-of-ignored-error-message
+            #  https://github.com/LonamiWebs/Telethon/blob/afe900f45d74221df03e7fe6f176a1472f16afb4/telethon/network/mtprotosender.py#L775-L780
+            clock_is_off: bool = (
+                isinstance(msg.body, raw.types.BadMsgNotification)
+                and msg.body.error_code in BadMsgNotification.CLOCK_CODES
+            )
+
+            if msg.seq_no == 0 or clock_is_off:
                 self.client._set_server_time(msg.msg_id)
+
+            # The factory never goes below the rejected `msg_id`, so after code 17 the
+            #  resend stays as far ahead as the clock was.
+            #  https://github.com/LonamiWebs/Telethon/blob/afe900f45d74221df03e7fe6f176a1472f16afb4/telethon/network/mtprotostate.py#L254-L267
+            if clock_is_off:
+                self.msg_factory.reset_message_identity()
 
             if msg.seq_no % 2 != 0:
                 if msg.msg_id in self.pending_acks:
@@ -581,7 +603,7 @@ class Session:
             # Only logged: the current salt still has a minute of life, and a
             #  `BadServerSalt` recovers the session anyway. `send` reports an answer
             #  that never came as `TimeoutError`, which is an `OSError`.
-            except (OSError, RPCError) as e:
+            except (OSError, RPCError, BadMsgNotification) as e:
                 log.info("Could not get future salts - %s - %s", e.__class__.__name__, e)
 
         log.info("PingTask stopped")
@@ -683,9 +705,7 @@ class Session:
                 RPCError.raise_it(result, type(data))
 
             if isinstance(result, raw.types.BadMsgNotification):
-                log.warning(
-                    "%s: %s", BadMsgNotification.__name__, BadMsgNotification(result.error_code)
-                )
+                raise BadMsgNotification(result.error_code)
 
             # `handle_packet` has already taken the new salt, so this only re-sends.
             if isinstance(result, raw.types.BadServerSalt):
@@ -736,6 +756,17 @@ class Session:
                 )
 
                 await asyncio.sleep(amount)
+            except BadMsgNotification as e:
+                if e.code not in BadMsgNotification.RESENDABLE_CODES:
+                    raise
+
+                log.warning(
+                    '[%s] Resending "%s" (attempt %s) due to: %s',
+                    self.client.name,
+                    query_name,
+                    attempt,
+                    e,
+                )
             except (OSError, InternalServerError, ServiceUnavailable) as e:
                 # `TCP.send` raises a bare `TimeoutError`, an `OSError` whose `str()` is
                 #  empty, so without the `repr` fallback the line would end at "due to: ".

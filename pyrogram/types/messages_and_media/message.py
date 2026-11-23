@@ -36,7 +36,7 @@ from pyrogram.errors import (
     MessageIdsEmpty,
     PeerIdInvalid,
 )
-from pyrogram.parser import Parser
+from pyrogram.utils.parsers import Parser
 
 from ..object import Object
 from ..update import Update

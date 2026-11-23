@@ -41,7 +41,7 @@ class GetBotInfoDescription:
                 A two-letter ISO 639-1 language code or an empty string
 
             for_my_bot (``int`` | ``str``, *optional*):
-                Unique identifier (int) or username (str) of the bot for which profile photo has to be updated instead of the current user.
+                Unique identifier (int) or username (str) of the bot whose description is returned, instead of the current user's.
                 The bot should have ``can_be_edited`` property set to True.
 
         Returns:

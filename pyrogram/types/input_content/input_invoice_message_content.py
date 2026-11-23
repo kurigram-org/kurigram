@@ -168,7 +168,7 @@ class InputInvoiceMessageContent(InputMessageContent):
                 suggested_tip_amounts=self.suggested_tip_amounts,
             ),
             payload=self.payload.encode() if isinstance(self.payload, str) else self.payload,
-            provider=self.provider_token,
+            provider=self.provider_token or "",
             provider_data=raw.types.DataJSON(
                 data=self.provider_data if self.provider_data else "{}"
             ),
