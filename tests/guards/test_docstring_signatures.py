@@ -23,10 +23,11 @@ A documented parameter the signature does not carry sends the reader to a keywor
 these blocks, so whatever is missing here is missing everywhere. Neither Sphinx nor the type
 checker compares the two, because to both of them a docstring is an opaque string.
 
-On a function the `*optional*` marker is the same question asked of one entry: it is this tree's
-way of saying the parameter has a default, so a marker that disagrees with the signature is a
-promise the caller cannot keep either way round. On a type it says a received object may carry
-`None`, which no signature shows, so a class block is checked for its names only.
+On a function, a handler, a filter or a type the library writes, the `*optional*` marker is the
+same question asked of one entry: it is this tree's way of saying the caller may leave the
+argument out, so a marker that disagrees with the signature is a promise the caller cannot keep
+either way round. On a type the library only receives it says a parsed object may carry `None`,
+which the TL flags decide and no signature shows, so such a block is checked for its names only.
 """
 
 from __future__ import annotations as _annotations
@@ -75,7 +76,14 @@ _CHAT_ACTIONS: Final[str] = "in review: emoji-interaction chat actions"
 #  `test_every_exemption_still_names_a_module_that_drifts` fails on one with nothing to exempt.
 _EXEMPT: Final[dict[str, str]] = {
     "pyrogram/client.py": f"{_AIOFILES}; {_SESSION_HARDENING}",
+    "pyrogram/types/input_content/input_chat_photo.py": _AIOFILES,
+    "pyrogram/types/input_content/input_media_animation.py": _AIOFILES,
+    "pyrogram/types/input_content/input_media_audio.py": _AIOFILES,
+    "pyrogram/types/input_content/input_media_document.py": _AIOFILES,
     "pyrogram/types/input_content/input_media_live_photo.py": _AIOFILES,
+    "pyrogram/types/input_content/input_media_photo.py": _AIOFILES,
+    "pyrogram/types/input_content/input_media_video.py": _AIOFILES,
+    "pyrogram/types/input_content/input_media_voice_note.py": _AIOFILES,
     "pyrogram/types/messages_and_media/external_reply_info.py": _PARSE_REWRITE,
     "pyrogram/types/messages_and_media/media_area.py": _PARSE_REWRITE,
     "pyrogram/types/messages_and_media/message.py": f"{_AIOFILES}; {_CHAT_ACTIONS}; {_PARSE_REWRITE}",
@@ -103,7 +111,7 @@ class DocumentedFunction:
     module: str
     name: str
     line: int
-    is_class: bool
+    is_received_type: bool
     omittable: dict[str, bool]
     documented: list[DocumentedParameter]
 
@@ -219,6 +227,21 @@ def omittable_parameters(
     return omittable
 
 
+def is_received_type(
+    node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef,
+    *,
+    module: str,
+) -> bool:
+    """Whether `node` is a type the library builds from what it receives and never writes."""
+    if not isinstance(node, ast.ClassDef) or not module.startswith("pyrogram/types/"):
+        return False
+
+    methods = {
+        item.name for item in node.body if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+    return "write" not in methods
+
+
 def documented_blocks(*, module: str, source: list[str]) -> Generator[DocumentedFunction]:
     """Every function and class in `source` whose docstring carries a `Parameters:` block."""
     for node in ast.walk(ast.parse("\n".join(source), filename=module)):
@@ -241,7 +264,7 @@ def documented_blocks(*, module: str, source: list[str]) -> Generator[Documented
             module=module,
             name=node.name,
             line=node.lineno,
-            is_class=isinstance(node, ast.ClassDef),
+            is_received_type=is_received_type(node, module=module),
             omittable=omittable_parameters(
                 node=node,
                 module=module,
@@ -303,10 +326,8 @@ def name_drift() -> list[Drift]:
 
 
 def block_marker_drift(found_function: DocumentedFunction) -> list[Drift]:
-    """Every `*optional*` marker on a function that disagrees with whether the parameter has a default."""
-    # On a type the marker says a received object may carry `None`, which the TL flags decide;
-    #  every `__init__` defaults every field, so the default proves nothing there.
-    if found_function.is_class:
+    """Every `*optional*` marker that disagrees with whether the parameter has a default."""
+    if found_function.is_received_type:
         return []
 
     omittable = found_function.omittable
@@ -478,7 +499,7 @@ def test_a_class_block_is_held_against_its_constructor() -> None:
     ]
 
 
-def test_a_marker_is_held_against_the_default_on_a_function_only() -> None:
+def test_a_marker_is_held_against_the_default_except_on_a_received_type() -> None:
     block = [
         '    """Do it.',
         "",
@@ -497,6 +518,14 @@ def test_a_marker_is_held_against_the_default_on_a_function_only() -> None:
         "    def __init__(self, *, kind, title=None): ...",
         "",
         "",
+        "class InputOrigin:",
+        *block,
+        "",
+        "    def __init__(self, *, kind, title=None): ...",
+        "",
+        "    def write(self): ...",
+        "",
+        "",
         "def send(*, kind, title=None):",
         *block,
     ]
@@ -504,7 +533,7 @@ def test_a_marker_is_held_against_the_default_on_a_function_only() -> None:
     drifts = [
         drift
         for found in documented_blocks(
-            module="origin.py",
+            module="pyrogram/types/origin.py",
             source=source,
         )
         for drift in block_marker_drift(found)
@@ -512,14 +541,26 @@ def test_a_marker_is_held_against_the_default_on_a_function_only() -> None:
 
     assert drifts == [
         Drift(
-            module="origin.py",
+            module="pyrogram/types/origin.py",
             line=19,
+            function="InputOrigin",
+            complaint="`kind` is marked optional and has no default",
+        ),
+        Drift(
+            module="pyrogram/types/origin.py",
+            line=22,
+            function="InputOrigin",
+            complaint="`title` has a default and is not marked optional",
+        ),
+        Drift(
+            module="pyrogram/types/origin.py",
+            line=35,
             function="send",
             complaint="`kind` is marked optional and has no default",
         ),
         Drift(
-            module="origin.py",
-            line=22,
+            module="pyrogram/types/origin.py",
+            line=38,
             function="send",
             complaint="`title` has a default and is not marked optional",
         ),
