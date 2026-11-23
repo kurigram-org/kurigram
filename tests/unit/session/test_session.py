@@ -740,3 +740,18 @@ async def test_start_answered_with_a_bad_msg_notification_no_resend_can_fix_stop
 
     assert session.state is SessionState.STOPPED
     assert not restarted.is_set()
+
+
+async def test_a_clock_bad_msg_notification_syncs_the_time_after_the_first_message() -> None:
+    session = _started_session()
+    packet = await _server_packet(
+        session=session,
+        body=_bad_msg_notification(error_code=_MSG_ID_TOO_LOW),
+    )
+
+    # A clock this far off is what makes the server answer code 16.
+    session.client._server_time_offset = -_SALT_LIFETIME
+
+    await session.handle_packet(packet)
+
+    assert abs(session.client._server_time_offset) < _SALT_LEFT

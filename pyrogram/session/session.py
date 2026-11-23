@@ -418,7 +418,16 @@ class Session:
         log.debug("Received: %s", data)
 
         for msg in messages:
-            if msg.seq_no == 0:
+            # A clock notification after the first message has `seq_no` above 0, and its
+            #  resend needs the corrected clock too.
+            #  https://core.telegram.org/mtproto/service_messages_about_messages#notice-of-ignored-error-message
+            #  https://github.com/LonamiWebs/Telethon/blob/afe900f45d74221df03e7fe6f176a1472f16afb4/telethon/network/mtprotosender.py#L775-L780
+            clock_is_off: bool = (
+                isinstance(msg.body, raw.types.BadMsgNotification)
+                and msg.body.error_code in BadMsgNotification.CLOCK_CODES
+            )
+
+            if msg.seq_no == 0 or clock_is_off:
                 self.client._set_server_time(msg.msg_id)
 
             if msg.seq_no % 2 != 0:

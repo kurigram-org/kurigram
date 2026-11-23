@@ -45,6 +45,10 @@ class BadMsgNotification(Exception):
     #  https://core.telegram.org/mtproto/service_messages_about_messages#notice-of-ignored-error-message
     RESENDABLE_CODES: Final[frozenset[int]] = frozenset({16, 17, 32, 33})
 
+    # `msg_id` too low or too high: the client clock is off and has to be synchronized
+    #  before the resend.
+    CLOCK_CODES: Final[frozenset[int]] = frozenset({16, 17})
+
     def __init__(self, code):
         self.code = code
 
