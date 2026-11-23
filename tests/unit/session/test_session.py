@@ -58,13 +58,15 @@ _SALT_LEFT: Final[int] = 30
 #  https://core.telegram.org/mtproto/service_messages_about_messages#notice-of-ignored-error-message
 _INCORRECT_SERVER_SALT: Final[int] = 48
 
-# `bad_msg_notification` error codes: `msg_id` too low or too high, which a re-send
-#  with a new `msg_id` recovers, and "incorrect two lower order `msg_id` bits", a client
-#  bug no re-send can fix.
+# `bad_msg_notification` error codes: `msg_id` too low or too high and `msg_seqno` too
+#  low or too high, which a re-send with a new identity recovers, and "incorrect two
+#  lower order `msg_id` bits", a client bug no re-send can fix.
 #  https://core.telegram.org/mtproto/service_messages_about_messages#notice-of-ignored-error-message
 _MSG_ID_TOO_LOW: Final[int] = 16
 _MSG_ID_TOO_HIGH: Final[int] = 17
 _MSG_ID_NOT_DIVISIBLE_BY_FOUR: Final[int] = 18
+_MSG_SEQNO_TOO_LOW: Final[int] = 32
+_MSG_SEQNO_TOO_HIGH: Final[int] = 33
 
 # Long enough that a `stop()` which does not wait would have returned several times
 #  over, short enough to keep the suite quick.
@@ -660,7 +662,16 @@ async def test_a_bad_msg_notification_answer_is_raised_not_returned() -> None:
     assert raised.value.code == _MSG_ID_TOO_LOW
 
 
-async def test_invoke_resends_a_request_the_server_rejected_for_its_msg_id() -> None:
+@pytest.mark.parametrize(
+    "error_code",
+    [
+        pytest.param(_MSG_ID_TOO_LOW, id="msg-id-too-low"),
+        pytest.param(_MSG_ID_TOO_HIGH, id="msg-id-too-high"),
+        pytest.param(_MSG_SEQNO_TOO_LOW, id="msg-seqno-too-low"),
+        pytest.param(_MSG_SEQNO_TOO_HIGH, id="msg-seqno-too-high"),
+    ],
+)
+async def test_invoke_resends_a_request_the_server_rejected_for_its_identity(error_code: int) -> None:
     session = _started_session()
     pong = raw.types.Pong(
         msg_id=0,
@@ -668,7 +679,7 @@ async def test_invoke_resends_a_request_the_server_rejected_for_its_msg_id() -> 
     )
     session.connection = AnsweringConnection(
         session=session,
-        answers=[_bad_msg_notification(error_code=_MSG_ID_TOO_LOW), pong],
+        answers=[_bad_msg_notification(error_code=error_code), pong],
     )
 
     result = await session.invoke(
@@ -744,15 +755,26 @@ async def test_start_answered_with_a_bad_msg_notification_no_resend_can_fix_stop
     assert not restarted.is_set()
 
 
-async def test_a_clock_bad_msg_notification_syncs_the_time_after_the_first_message() -> None:
+@pytest.mark.parametrize(
+    ("error_code", "clock_offset"),
+    [
+        pytest.param(_MSG_ID_TOO_LOW, -_SALT_LIFETIME, id="clock-behind"),
+        pytest.param(_MSG_ID_TOO_HIGH, _SALT_LIFETIME, id="clock-ahead"),
+    ],
+)
+async def test_a_clock_bad_msg_notification_syncs_the_time_after_the_first_message(
+    *,
+    error_code: int,
+    clock_offset: int,
+) -> None:
     session = _started_session()
     packet = await _server_packet(
         session=session,
-        body=_bad_msg_notification(error_code=_MSG_ID_TOO_LOW),
+        body=_bad_msg_notification(error_code=error_code),
     )
 
-    # A clock this far off is what makes the server answer code 16.
-    session.client._server_time_offset = -_SALT_LIFETIME
+    # A clock this far off is what makes the server answer this code.
+    session.client._server_time_offset = clock_offset
 
     await session.handle_packet(packet)
 
