@@ -22,9 +22,10 @@ from pyrogram import enums, types
 
 
 def test_message_origin_import_takes_its_documented_type() -> None:
-    origin = types.MessageOriginImport(type=enums.MessageOriginType.IMPORT)
+    # Not the default, so a `type` taken and then dropped fails here.
+    origin = types.MessageOriginImport(type=enums.MessageOriginType.USER)
 
-    assert origin.type is enums.MessageOriginType.IMPORT
+    assert origin.type is enums.MessageOriginType.USER
 
 
 def test_message_origin_import_defaults_type_to_import() -> None:
