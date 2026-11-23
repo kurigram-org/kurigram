@@ -51,6 +51,9 @@ class MsgFactory:
 
             return base_msg_id
 
+    def reset_message_identity(self) -> None:
+        self._last_msg_id: int = 0
+
     async def allocate_message_sequence(self, is_content_related: bool) -> int:
         async with self._seq_no_lock:
             seq_no = (self._content_related_messages_sent * 2) + (1 if is_content_related else 0)
