@@ -137,7 +137,6 @@ class EditMessageText:
 
         message = ""
         input_rich_message = None
-        entities = None
 
         if text is not None:
             message, entities = (
