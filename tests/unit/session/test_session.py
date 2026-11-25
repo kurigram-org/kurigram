@@ -473,6 +473,20 @@ async def test_stop_fails_the_request_still_waiting_for_its_answer() -> None:
     assert session.results == {}
 
 
+async def test_a_cancelled_request_leaves_no_waiter_behind() -> None:
+    session = _started_session()
+
+    sending = asyncio.ensure_future(session.send(raw.functions.Ping(ping_id=0)))
+
+    while not session.results:
+        await asyncio.sleep(0)
+
+    sending.cancel()
+    await asyncio.gather(sending, return_exceptions=True)
+
+    assert session.results == {}
+
+
 async def test_a_restart_keeps_the_acks_the_session_still_owes() -> None:
     session = _started_session()
 
