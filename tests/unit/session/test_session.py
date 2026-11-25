@@ -1,20 +1,22 @@
-#  Pyrogram - Telegram MTProto API Client Library for Python
+#  Kurigram - Telegram MTProto API Client Library for Python
+#
 #  Copyright (C) 2017-present Dan <https://github.com/delivrance>
+#  Copyright (C) 2024-present KurimuzonAkuma <https://github.com/KurimuzonAkuma>
 #
-#  This file is part of Pyrogram.
+#  This file is part of Kurigram.
 #
-#  Pyrogram is free software: you can redistribute it and/or modify
+#  Kurigram is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Lesser General Public License as published
 #  by the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  Pyrogram is distributed in the hope that it will be useful,
+#  Kurigram is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 #  GNU Lesser General Public License for more details.
 #
 #  You should have received a copy of the GNU Lesser General Public License
-#  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
+#  along with Kurigram. If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations as _annotations
 
@@ -690,6 +692,44 @@ async def test_invoke_resends_a_request_the_server_rejected_for_its_identity(
     )
 
     assert result == pong
+
+
+async def test_invoke_waits_for_the_session_to_reconnect_before_retrying(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    session = _started_session()
+    waiting_for_reconnect = asyncio.Event()
+    wait_until_started = session.is_started.wait
+    sent = 0
+    pong = raw.types.Pong(msg_id=0, ping_id=0)
+
+    async def send(query, *, timeout):
+        nonlocal sent
+        assert session.is_started.is_set()
+        sent += 1
+        if sent == 1:
+            session.is_started.clear()
+            raise TimeoutError("Session stopped before an answer arrived")
+        return pong
+
+    async def wait():
+        if not session.is_started.is_set():
+            waiting_for_reconnect.set()
+        await wait_until_started()
+
+    monkeypatch.setattr(session.is_started, "wait", wait)
+    monkeypatch.setattr(session, "send", send)
+    request = asyncio.create_task(session.invoke(raw.functions.Ping(ping_id=0), retry_delay=0))
+    try:
+        await asyncio.wait_for(waiting_for_reconnect.wait(), timeout=1)
+        assert not request.done()
+        session.is_started.set()
+        assert await asyncio.wait_for(request, timeout=1) == pong
+    finally:
+        request.cancel()
+        await asyncio.gather(request, return_exceptions=True)
+
+    assert sent == 2
 
 
 async def test_invoke_raises_a_bad_msg_notification_no_resend_can_fix() -> None:
