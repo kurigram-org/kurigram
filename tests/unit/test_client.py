@@ -31,6 +31,7 @@ session, so what a progress callback raises provably ends the transfer.
 from __future__ import annotations as _annotations
 
 import asyncio
+import errno
 import logging
 from contextlib import aclosing
 from pathlib import Path
@@ -38,6 +39,7 @@ from typing import TYPE_CHECKING, Final, Protocol
 
 import pytest
 
+import pyrogram.client
 from pyrogram import Client, StopTransmission, filters, raw
 from pyrogram.client import _plugin_handlers
 from pyrogram.connection.proxy import HTTPProxy, SOCKS5Proxy
@@ -389,4 +391,24 @@ async def test_download_prefetches_in_parallel_and_yields_in_order(
             assert [chunk async for chunk in chunks] == [second, third]
 
     assert second_cancelled.is_set() == close_early
+    assert not downloader.get_file_semaphore.locked()
+
+
+class FullDisk:
+    """An in-memory download buffer that refuses every write."""
+
+    def write(self, data: bytes) -> int:
+        raise OSError(errno.ENOSPC, "No space left on device")
+
+
+async def test_a_failed_write_releases_the_download_slot_at_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(pyrogram.client, "BytesIO", FullDisk)
+    downloader = Downloader(b"x" * _PAYLOAD_SIZE)
+    packet = (_document_file_id(), "", "file", True, _PAYLOAD_SIZE, None, ())
+
+    with pytest.raises(OSError, match="No space left"):
+        await downloader.handle_download(packet)
+
     assert not downloader.get_file_semaphore.locked()
