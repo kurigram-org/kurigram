@@ -1,20 +1,22 @@
-#  Pyrogram - Telegram MTProto API Client Library for Python
+#  Kurigram - Telegram MTProto API Client Library for Python
+#
 #  Copyright (C) 2017-present Dan <https://github.com/delivrance>
+#  Copyright (C) 2024-present KurimuzonAkuma <https://github.com/KurimuzonAkuma>
 #
-#  This file is part of Pyrogram.
+#  This file is part of Kurigram.
 #
-#  Pyrogram is free software: you can redistribute it and/or modify
+#  Kurigram is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Lesser General Public License as published
 #  by the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  Pyrogram is distributed in the hope that it will be useful,
+#  Kurigram is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 #  GNU Lesser General Public License for more details.
 #
 #  You should have received a copy of the GNU Lesser General Public License
-#  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
+#  along with Kurigram. If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations as _annotations
 
@@ -28,7 +30,9 @@ import re
 import shutil
 import sys
 import time
+from collections import deque
 from concurrent.futures.thread import ThreadPoolExecutor
+from contextlib import aclosing
 from datetime import datetime, timedelta
 from hashlib import sha256
 from importlib import import_module
@@ -1305,8 +1309,11 @@ class Client(Methods):
         file = BytesIO() if in_memory else open(temp_file_path, "wb")
 
         try:
-            async for chunk in self.get_file(file_id, file_size, 0, 0, progress, progress_args):
-                file.write(chunk)
+            async with aclosing(
+                self.get_file(file_id, file_size, 0, 0, progress, progress_args)
+            ) as chunks:
+                async for chunk in chunks:
+                    file.write(chunk)
         except BaseException as e:
             if not in_memory:
                 file.close()
@@ -1391,45 +1398,70 @@ class Client(Methods):
             try:
                 session = await self.get_session(dc_id, is_media=True)
 
-                r = await session.invoke(
-                    raw.functions.upload.GetFile(
-                        location=location, offset=offset_bytes, limit=chunk_size
-                    ),
-                    sleep_threshold=30,
-                )
+                async def fetch_part(part_offset: int):
+                    return await session.invoke(
+                        raw.functions.upload.GetFile(
+                            location=location, offset=part_offset, limit=chunk_size
+                        ),
+                        sleep_threshold=30,
+                    )
+
+                r = await fetch_part(offset_bytes)
 
                 if isinstance(r, raw.types.upload.File):
-                    while True:
-                        chunk = r.bytes
+                    # Keep eight requests at most, and deliver their results in offset order.
+                    prefetch_end = offset_bytes + total * chunk_size
+                    if file_size:
+                        prefetch_end = min(prefetch_end, file_size)
+                    next_offset = offset_bytes + chunk_size
+                    pending = deque()
 
-                        yield chunk
+                    try:
+                        while True:
+                            chunk = r.bytes
+                            finished = len(chunk) < chunk_size or current + 1 >= total
 
-                        current += 1
-                        offset_bytes += chunk_size
+                            if not finished:
+                                while len(pending) < 8 and next_offset < prefetch_end:
+                                    pending.append(asyncio.create_task(fetch_part(next_offset)))
+                                    next_offset += chunk_size
 
-                        if progress:
-                            func = functools.partial(
-                                progress,
-                                min(offset_bytes, file_size) if file_size != 0 else offset_bytes,
-                                file_size,
-                                *progress_args,
+                            yield chunk
+
+                            current += 1
+                            offset_bytes += chunk_size
+
+                            if progress:
+                                func = functools.partial(
+                                    progress,
+                                    min(offset_bytes, file_size)
+                                    if file_size != 0
+                                    else offset_bytes,
+                                    file_size,
+                                    *progress_args,
+                                )
+
+                                if inspect.iscoroutinefunction(progress):
+                                    await func()
+                                else:
+                                    loop = asyncio.get_running_loop()
+                                    await loop.run_in_executor(self.executor, func)
+
+                            if finished:
+                                break
+
+                            # Keep probing in order if the reported size was too small or the
+                            # last full block needs a follow-up request to detect EOF.
+                            r = (
+                                await pending.popleft()
+                                if pending
+                                else await fetch_part(offset_bytes)
                             )
-
-                            if inspect.iscoroutinefunction(progress):
-                                await func()
-                            else:
-                                loop = asyncio.get_running_loop()
-                                await loop.run_in_executor(self.executor, func)
-
-                        if len(chunk) < chunk_size or current >= total:
-                            break
-
-                        r = await session.invoke(
-                            raw.functions.upload.GetFile(
-                                location=location, offset=offset_bytes, limit=chunk_size
-                            ),
-                            sleep_threshold=30,
-                        )
+                    finally:
+                        if pending:
+                            for task in pending:
+                                task.cancel()
+                            await asyncio.gather(*pending, return_exceptions=True)
 
                 elif isinstance(r, raw.types.upload.FileCdnRedirect):
                     cdn_session = await self.get_session(dc_id, is_cdn=True, temporary=True)

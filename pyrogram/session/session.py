@@ -1,20 +1,22 @@
-#  Pyrogram - Telegram MTProto API Client Library for Python
+#  Kurigram - Telegram MTProto API Client Library for Python
+#
 #  Copyright (C) 2017-present Dan <https://github.com/delivrance>
+#  Copyright (C) 2024-present KurimuzonAkuma <https://github.com/KurimuzonAkuma>
 #
-#  This file is part of Pyrogram.
+#  This file is part of Kurigram.
 #
-#  Pyrogram is free software: you can redistribute it and/or modify
+#  Kurigram is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Lesser General Public License as published
 #  by the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  Pyrogram is distributed in the hope that it will be useful,
+#  Kurigram is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 #  GNU Lesser General Public License for more details.
 #
 #  You should have received a copy of the GNU Lesser General Public License
-#  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
+#  along with Kurigram. If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations as _annotations
 
@@ -664,30 +666,27 @@ class Session:
 
         log.debug("Sent: %s", message)
 
-        payload = await asyncio.get_running_loop().run_in_executor(
-            self.connection.protocol.crypto_executor,
-            mtproto.pack,
-            message,
-            self._current_salt(self.client.server_time),
-            self.session_id,
-            self.auth_key,
-            self.auth_key_id,
-        )
-
         try:
+            payload = await asyncio.get_running_loop().run_in_executor(
+                self.connection.protocol.crypto_executor,
+                mtproto.pack,
+                message,
+                self._current_salt(self.client.server_time),
+                self.session_id,
+                self.auth_key,
+                self.auth_key_id,
+            )
             await self.connection.send(payload)
-        except OSError as e:
+
+            if pending_result is not None:
+                try:
+                    await asyncio.wait_for(pending_result.event.wait(), timeout)
+                except asyncio.TimeoutError:
+                    pass
+        finally:
             self.results.pop(msg_id, None)
-            raise e
 
         if pending_result is not None:
-            try:
-                await asyncio.wait_for(pending_result.event.wait(), timeout)
-            except asyncio.TimeoutError:
-                pass
-
-            self.results.pop(msg_id, None)
-
             if pending_result.exception is not None:
                 raise pending_result.exception
 
@@ -728,18 +727,15 @@ class Session:
 
         query_name = ".".join(inner_query.QUALNAME.split(".")[1:])
 
-        try:
-            await asyncio.wait_for(self.is_started.wait(), self.WAIT_TIMEOUT)
-
-        # Carrying on instead reaches `send()`, which reads `self.connection.protocol` on a
-        #  session whose `connection` is still `None`: `AttributeError: 'NoneType' object has
-        #  no attribute 'protocol'`, naming neither the session nor the query.
-        except asyncio.TimeoutError as e:
-            raise TimeoutError(
-                f'Waited {self.WAIT_TIMEOUT}s to invoke "{query_name}", and {self} is not started'
-            ) from e
-
         for attempt in range(1, retries + 1):
+            # A failed send can wake up while restart() is still reconnecting.
+            try:
+                await asyncio.wait_for(self.is_started.wait(), self.WAIT_TIMEOUT)
+            except asyncio.TimeoutError as e:
+                raise TimeoutError(
+                    f'Waited {self.WAIT_TIMEOUT}s to invoke "{query_name}", and {self} is not started'
+                ) from e
+
             try:
                 return await self.send(query, timeout=timeout)
             except (FloodWait, FloodPremiumWait) as e:

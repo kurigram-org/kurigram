@@ -1,20 +1,22 @@
-#  Pyrogram - Telegram MTProto API Client Library for Python
+#  Kurigram - Telegram MTProto API Client Library for Python
+#
 #  Copyright (C) 2017-present Dan <https://github.com/delivrance>
+#  Copyright (C) 2024-present KurimuzonAkuma <https://github.com/KurimuzonAkuma>
 #
-#  This file is part of Pyrogram.
+#  This file is part of Kurigram.
 #
-#  Pyrogram is free software: you can redistribute it and/or modify
+#  Kurigram is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Lesser General Public License as published
 #  by the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  Pyrogram is distributed in the hope that it will be useful,
+#  Kurigram is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 #  GNU Lesser General Public License for more details.
 #
 #  You should have received a copy of the GNU Lesser General Public License
-#  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
+#  along with Kurigram. If not, see <https://www.gnu.org/licenses/>.
 
 """What `Client` does without a network: plugin loading, the download path and proxy assignment.
 
@@ -29,12 +31,15 @@ session, so what a progress callback raises provably ends the transfer.
 from __future__ import annotations as _annotations
 
 import asyncio
+import errno
 import logging
+from contextlib import aclosing
 from pathlib import Path
 from typing import TYPE_CHECKING, Final, Protocol
 
 import pytest
 
+import pyrogram.client
 from pyrogram import Client, StopTransmission, filters, raw
 from pyrogram.client import _plugin_handlers
 from pyrogram.connection.proxy import HTTPProxy, SOCKS5Proxy
@@ -343,3 +348,67 @@ async def test_stop_transmission_from_a_progress_callback_ends_a_download(
 
     # The `.temp` file is deleted with the abort, so nothing at all is left behind.
     assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize("close_early", [False, True])
+async def test_download_prefetches_in_parallel_and_yields_in_order(
+    monkeypatch: pytest.MonkeyPatch, *, close_early: bool
+) -> None:
+    first = b"a" * _CHUNK_SIZE
+    second = b"b" * _CHUNK_SIZE
+    third = b"c"
+    payload = first + second + third
+    release_second = asyncio.Event()
+    second_started = asyncio.Event()
+    second_cancelled = asyncio.Event()
+    third_received = asyncio.Event()
+    invoke = MediaSession.invoke
+
+    async def delayed_invoke(self, query, *, sleep_threshold):
+        if query.offset == _CHUNK_SIZE:
+            second_started.set()
+            try:
+                await release_second.wait()
+            except asyncio.CancelledError:
+                second_cancelled.set()
+                raise
+
+        result = await invoke(self, query, sleep_threshold=sleep_threshold)
+        if query.offset == 2 * _CHUNK_SIZE:
+            third_received.set()
+        return result
+
+    monkeypatch.setattr(MediaSession, "invoke", delayed_invoke)
+    downloader = Downloader(payload)
+
+    async with aclosing(downloader.get_file(_document_file_id(), len(payload))) as chunks:
+        assert await anext(chunks) == first
+        await asyncio.wait_for(third_received.wait(), timeout=1)
+        assert second_started.is_set()
+
+        if not close_early:
+            release_second.set()
+            assert [chunk async for chunk in chunks] == [second, third]
+
+    assert second_cancelled.is_set() == close_early
+    assert not downloader.get_file_semaphore.locked()
+
+
+class FullDisk:
+    """An in-memory download buffer that refuses every write."""
+
+    def write(self, data: bytes) -> int:
+        raise OSError(errno.ENOSPC, "No space left on device")
+
+
+async def test_a_failed_write_releases_the_download_slot_at_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(pyrogram.client, "BytesIO", FullDisk)
+    downloader = Downloader(b"x" * _PAYLOAD_SIZE)
+    packet = (_document_file_id(), "", "file", True, _PAYLOAD_SIZE, None, ())
+
+    with pytest.raises(OSError, match="No space left"):
+        await downloader.handle_download(packet)
+
+    assert not downloader.get_file_semaphore.locked()
