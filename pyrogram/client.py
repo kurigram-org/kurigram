@@ -69,7 +69,7 @@ from .connection import Connection
 from .connection.transport import TCP, TCPAbridged
 from .dispatcher import Dispatcher
 from .file_id import FileId, FileType, ThumbnailSource
-from .parser import Parser
+from .utils.parsers import Parser
 from .session.internals import MsgId
 
 if TYPE_CHECKING:

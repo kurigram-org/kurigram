@@ -23,7 +23,7 @@ import pytest
 
 from pyrogram import raw, types
 from pyrogram.methods.messages.send_message import SendMessage
-from pyrogram.parser import Parser
+from pyrogram.utils.parsers import Parser
 
 
 class FakeClient(SendMessage):

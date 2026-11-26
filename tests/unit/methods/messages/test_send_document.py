@@ -25,7 +25,7 @@ import pytest
 
 from pyrogram import Client, raw
 from pyrogram.methods.messages.send_document import SendDocument
-from pyrogram.parser import Parser
+from pyrogram.utils.parsers import Parser
 
 if TYPE_CHECKING:
     from collections.abc import Callable

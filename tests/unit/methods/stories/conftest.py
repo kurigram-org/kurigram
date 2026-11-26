@@ -26,7 +26,7 @@ import pytest
 from pyrogram import Client, raw
 from pyrogram.methods.stories.edit_story_media import EditStoryMedia
 from pyrogram.methods.stories.send_story import SendStory
-from pyrogram.parser import Parser
+from pyrogram.utils.parsers import Parser
 
 if TYPE_CHECKING:
     from collections.abc import Callable
