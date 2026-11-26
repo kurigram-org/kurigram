@@ -51,7 +51,7 @@ class BusinessBotRights(Object):
         can_edit_username (``bool``, *optional*):
             True, if the bot can edit username of the business account.
 
-        can_view_gifts_and_stars (``bool``, *optional*):
+        can_view_gifts (``bool``, *optional*):
             True, if the bot can view gifts and amount of Telegram Stars owned by the business account.
 
         can_sell_gifts (``bool``, *optional*):

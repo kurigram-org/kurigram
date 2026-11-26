@@ -44,7 +44,7 @@ class PurchasedPaidMediaHandler(Handler[PurchasedPaidMediaCallbackType]):
             Pass a function that will be called when a paid media purchased. It takes *(client, update)*
             as positional arguments (look at the section below for a detailed description).
 
-        filters (:obj:`~pyrogram.filters.Filter`):
+        filters (:obj:`~pyrogram.filters.Filter`, *optional*):
             Pass one or more filters to allow only a subset of updates to be passed
             in your callback function.
 

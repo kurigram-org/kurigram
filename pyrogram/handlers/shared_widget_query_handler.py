@@ -46,7 +46,7 @@ class SharedWidgetQueryHandler(Handler[SharedWidgetQueryCallbackType]):
             Pass a function that will be called when a new SharedWidgetQuery arrives. It takes *(client, shared_widget_query)*
             as positional arguments (look at the section below for a detailed description).
 
-        filters (:obj:`~pyrogram.filters.Filter`):
+        filters (:obj:`~pyrogram.filters.Filter`, *optional*):
             Pass one or more filters to allow only a subset of shared widget queries to be passed
             in your callback function.
 

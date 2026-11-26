@@ -36,7 +36,7 @@ class KeyboardButtonRequestUsers(Object):
             Pass True to request premium users, pass False to request non-premium users.
             If not specified, no additional restrictions are applied.
 
-        max_quantity(``int``, *optional*):
+        max_quantity (``int``, *optional*):
             The maximum number of users to be selected; 1-10.
             Defaults to 1.
 

@@ -43,7 +43,7 @@ class UserStatusHandler(Handler[UserStatusCallbackType]):
             Pass a function that will be called when a new user status update arrives. It takes *(client, user)*
             as positional arguments (look at the section below for a detailed description).
 
-        filters (:obj:`~pyrogram.filters.Filter`):
+        filters (:obj:`~pyrogram.filters.Filter`, *optional*):
             Pass one or more filters to allow only a subset of users to be passed in your callback function.
 
     Other parameters:

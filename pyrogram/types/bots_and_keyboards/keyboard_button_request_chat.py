@@ -69,6 +69,10 @@ class KeyboardButtonRequestChat(Object):
         request_photo (``bool``, *optional*):
             Pass True to request the chats' photo
             If not specified, the photo won't be requested.
+
+        max_quantity (``int``, *optional*):
+            Ignored by Telegram for chats.
+            Defaults to 1.
     """
 
     def __init__(
