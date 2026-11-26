@@ -23,11 +23,11 @@ from typing import TYPE_CHECKING
 from ..object import Object
 
 if TYPE_CHECKING:
-    from pyrogram import raw
+    from pyrogram import raw, types
 
 
 class WriteAccessAllowed(Object):
-    """This object represents a service message about a user allowing a bot to write messages after adding it to the attachment menu, launching a Web App from a link, or accepting an explicit request from a Web App sent by the method `requestWriteAccess <https://core.telegram.org/bots/webapps#initializing-mini-apps>`__.
+    """This object represents a service message about a user allowing a bot to write messages after adding it to the attachment menu, launching a Web App from a link, being invited by the bot's owner, or accepting an explicit request from a Web App sent by the method `requestWriteAccess <https://core.telegram.org/bots/webapps#initializing-mini-apps>`__.
 
     Parameters:
         from_request (``bool``, *optional*):
@@ -39,6 +39,9 @@ class WriteAccessAllowed(Object):
         from_attachment_menu (``bool``, *optional*):
             True, if the access was granted when the bot was added to the attachment or side menu
 
+        inviter (:obj:`~pyrogram.types.User`, *optional*):
+            The bot's owner, if access was granted when the owner invited the user to the private chat with the bot
+
     """
 
     def __init__(
@@ -47,12 +50,14 @@ class WriteAccessAllowed(Object):
         from_request: bool | None = None,
         web_app_name: str | None = None,
         from_attachment_menu: bool | None = None,
+        inviter: types.User | None = None,
     ):
         super().__init__()
 
         self.from_request = from_request
         self.web_app_name = web_app_name
         self.from_attachment_menu = from_attachment_menu
+        self.inviter = inviter
 
     @staticmethod
     def _parse(action: raw.types.MessageActionBotAllowed):

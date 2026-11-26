@@ -1184,6 +1184,11 @@ class Message(Object, Update):
             else:
                 service_type = enums.MessageServiceType.WRITE_ACCESS_ALLOWED
                 write_access_allowed = types.WriteAccessAllowed._parse(action)
+        elif isinstance(action, raw.types.MessageActionBotInvite):
+            service_type = enums.MessageServiceType.WRITE_ACCESS_ALLOWED
+            write_access_allowed = types.WriteAccessAllowed(
+                inviter=await types.User._parse(client, users.get(action.inviter_id))
+            )
         elif isinstance(action, raw.types.MessageActionBoostApply):
             service_type = enums.MessageServiceType.CHAT_BOOST
             chat_boost = action.boosts

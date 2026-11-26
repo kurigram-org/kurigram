@@ -621,6 +621,7 @@ def pyrogram_api():
             get_managed_bot_token
             replace_managed_bot_token
             get_owned_bots
+            set_my_settings
             delete_ephemeral_message
             edit_ephemeral_message_text
             edit_ephemeral_message_media
