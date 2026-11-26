@@ -30,9 +30,9 @@ async def parse_messages(
     messages: raw.base.messages.Messages | raw.base.Updates,
     replies: int = 1,
 ) -> list[types.Message]:
-    users = {i.id: i for i in getattr(messages, "users", [])}
-    chats = {i.id: i for i in getattr(messages, "chats", [])}
-    topics = {i.id: i for i in getattr(messages, "topics", [])}
+    users = {i.id: i for i in getattr(messages, "users", None) or []}
+    chats = {i.id: i for i in getattr(messages, "chats", None) or []}
+    topics = {i.id: i for i in getattr(messages, "topics", None) or []}
 
     parsed_messages = []
 

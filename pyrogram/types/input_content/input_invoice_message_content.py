@@ -165,7 +165,9 @@ class InputInvoiceMessageContent(InputMessageContent):
                 phone_to_provider=self.send_phone_number_to_provider,
                 email_to_provider=self.send_email_to_provider,
                 max_tip_amount=self.max_tip_amount,
-                suggested_tip_amounts=self.suggested_tip_amounts,
+                suggested_tip_amounts=(self.suggested_tip_amounts or [])
+                if self.max_tip_amount is not None
+                else None,
             ),
             payload=self.payload.encode() if isinstance(self.payload, str) else self.payload,
             provider=self.provider_token or "",

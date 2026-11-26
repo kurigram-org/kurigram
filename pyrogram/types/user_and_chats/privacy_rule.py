@@ -55,13 +55,16 @@ class PrivacyRule(Object):
         return PrivacyRule(
             type=enums.PrivacyRuleType(type(rule)),
             users=types.List(
-                [await types.User._parse(client, users.get(i)) for i in getattr(rule, "users", [])]
+                [
+                    await types.User._parse(client, users.get(i))
+                    for i in getattr(rule, "users", None) or []
+                ]
             )
             or None,
             chats=types.List(
                 [
                     await types.Chat._parse_chat(client, chats.get(i))
-                    for i in getattr(rule, "chats", [])
+                    for i in getattr(rule, "chats", None) or []
                 ]
             )
             or None,

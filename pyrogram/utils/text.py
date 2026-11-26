@@ -51,7 +51,7 @@ async def parse_text_with_entities(client, message: raw.types.TextWithEntities, 
             lambda x: x is not None,
             [
                 await types.MessageEntity._parse(client, entity, users)
-                for entity in getattr(message, "entities", [])
+                for entity in getattr(message, "entities", None) or []
             ],
         )
     )

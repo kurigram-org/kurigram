@@ -114,7 +114,7 @@ class Invoke:
             retry_delay=retry_delay if retry_delay is not None else self.retry_delay,
         )
 
-        await self.fetch_peers(getattr(r, "users", []))
-        await self.fetch_peers(getattr(r, "chats", []))
+        await self.fetch_peers(getattr(r, "users", None) or [])
+        await self.fetch_peers(getattr(r, "chats", None) or [])
 
         return r

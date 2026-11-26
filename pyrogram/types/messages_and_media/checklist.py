@@ -80,7 +80,7 @@ class Checklist(Object):
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
     ) -> Checklist:
-        completions = {i.id: i for i in getattr(checklist, "completions", [])}
+        completions = {i.id: i for i in getattr(checklist, "completions", None) or []}
 
         checklist_tasks = []
 

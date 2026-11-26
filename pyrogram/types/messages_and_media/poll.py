@@ -241,7 +241,7 @@ class Poll(Object, Update):
             explanation=await types.FormattedText._parse(
                 client,
                 raw.types.TextWithEntities(
-                    text=poll_results.solution, entities=poll_results.solution_entities
+                    text=poll_results.solution, entities=poll_results.solution_entities or []
                 ),
             )
             if poll_results.solution
@@ -282,7 +282,7 @@ class Poll(Object, Update):
             if update.poll is not None:
                 return await Poll._parse(client, update, users=users, chats=chats)
 
-            results = update.results.results
+            results = update.results.results or []
             chosen_option_ids = []
             correct_option_ids = []
             options = []

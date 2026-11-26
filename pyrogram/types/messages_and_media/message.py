@@ -1829,7 +1829,7 @@ class Message(Object, Update):
                     media,
                     description=await types.FormattedText._parse(
                         client,
-                        raw.types.TextWithEntities(text=message.message, entities=message.entities),
+                        raw.types.TextWithEntities(text=message.message, entities=message.entities or []),
                     )
                     if message.message
                     else None,
@@ -1953,7 +1953,7 @@ class Message(Object, Update):
             pinned=message.pinned,
             restriction_reason=types.List(
                 types.RestrictionReason._parse(reason)
-                for reason in getattr(message, "restriction_reason", [])
+                for reason in getattr(message, "restriction_reason", None) or []
             )
             or None,
             fact_check=await types.FactCheck._parse(client, message.factcheck, users),
@@ -2255,7 +2255,7 @@ class Message(Object, Update):
                     media,
                     description=await types.FormattedText._parse(
                         client,
-                        raw.types.TextWithEntities(text=message.message, entities=message.entities),
+                        raw.types.TextWithEntities(text=message.message, entities=message.entities or []),
                     )
                     if message.message
                     else None,

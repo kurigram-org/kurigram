@@ -104,7 +104,7 @@ class Giveaway(Object):
             until_date=utils.timestamp_to_datetime(giveaway.until_date),
             description=getattr(giveaway, "prize_description", None) or None,
             only_new_subscribers=getattr(giveaway, "only_new_subscribers", None),
-            only_for_countries=types.List(getattr(giveaway, "countries_iso2", [])) or None,
+            only_for_countries=types.List(getattr(giveaway, "countries_iso2", None) or []) or None,
             winners_are_visible=getattr(giveaway, "winners_are_visible", None),
             stars=getattr(giveaway, "stars", None),
             client=client,
