@@ -37,7 +37,12 @@ from .file_ids import (
 from .gifts import get_input_stargift
 from .inline import pack_inline_message_id, unpack_inline_message_id
 from .json_values import jsonvalue_to_obj, obj_to_jsonvalue
-from .messages import get_reply_to, parse_deleted_messages, parse_messages
+from .messages import (
+    get_ephemeral_receiver,
+    get_reply_to,
+    parse_deleted_messages,
+    parse_messages,
+)
 from .parsing import require_parsed
 from .peers import (
     MAX_CHANNEL_ID,
@@ -87,6 +92,7 @@ __all__ = [
     "get_premium_duration_day_count",
     "get_premium_duration_month_count",
     "get_raw_peer_id",
+    "get_ephemeral_receiver",
     "get_reply_to",
     "itob",
     "jsonvalue_to_obj",

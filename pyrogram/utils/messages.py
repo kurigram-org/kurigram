@@ -183,6 +183,14 @@ async def parse_deleted_messages(client, update, users, chats) -> list[types.Mes
     return types.List(parsed_messages)
 
 
+async def get_ephemeral_receiver(
+    client: pyrogram.Client, receiver_user_id: int | str | None = None
+) -> raw.base.InputPeer | raw.types.InputUserEmpty:
+    """Get receiver_id argument of ephemeral messages, empty for callback query replies"""
+    # resolve_peer() returns None for None, which the required receiver_id can't take
+    return await client.resolve_peer(receiver_user_id) or raw.types.InputUserEmpty()
+
+
 async def get_reply_to(
     client: pyrogram.Client,
     reply_parameters: types.ReplyParameters | None = None,

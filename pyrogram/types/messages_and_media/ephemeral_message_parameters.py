@@ -25,9 +25,10 @@ class EphemeralMessageParameters(Object):
     """Describes reply parameters for the message that is being sent.
 
     Parameters:
-        receiver_user_id (``int`` | ``str``):
+        receiver_user_id (``int`` | ``str``, *optional*):
             Identifier (int) or username (str) of the user who will receive the message.
             It is not guaranteed that the user will receive the message, especially if they are offline.
+            Can be omitted if *callback_query_id* is passed.
             See `here <https://core.telegram.org/bots/api#ephemeral-messages-and-commands>`__ for more details.
 
         callback_query_id (``str``, *optional*):
@@ -41,7 +42,7 @@ class EphemeralMessageParameters(Object):
     def __init__(
         self,
         *,
-        receiver_user_id: int | str,
+        receiver_user_id: int | str | None = None,
         callback_query_id: str | None = None,
         replace_callback_query_message: bool | None = None,
     ):
