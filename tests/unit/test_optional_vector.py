@@ -2,14 +2,18 @@ from io import BytesIO
 
 import pytest
 
-from pyrogram import raw, types
+from pyrogram import Client, raw, types
 from pyrogram.raw.core import TLObject
 
 
 @pytest.mark.parametrize(
     "obj, field, element_type",
     [
-        (raw.types.InputPrivacyValueAllowUsers(users=[raw.types.InputUserSelf()]), "users", raw.types.InputUserSelf),
+        (
+            raw.types.InputPrivacyValueAllowUsers(users=[raw.types.InputUserSelf()]),
+            "users",
+            raw.types.InputUserSelf,
+        ),
         (
             raw.functions.messages.SendReaction(
                 peer=raw.types.InputPeerSelf(), msg_id=1, reaction=[raw.types.ReactionPaid()]
@@ -29,8 +33,12 @@ def test_vector_of_fieldless_objects(obj, field, element_type):
 @pytest.mark.parametrize("slots", [None, [], [1, 2]])
 def test_boost_status_optional_slots(slots):
     status = raw.types.premium.BoostsStatus(
-        level=1, current_level_boosts=1, boosts=1, boost_url="url",
-        my_boost=slots is not None, my_boost_slots=slots,
+        level=1,
+        current_level_boosts=1,
+        boosts=1,
+        boost_url="url",
+        my_boost=slots is not None,
+        my_boost_slots=slots,
     )
     decoded = TLObject.read(BytesIO(status.write()))
     assert decoded.my_boost_slots == slots
@@ -59,6 +67,7 @@ def test_replacing_an_absent_vector():
     restored.except_ids = []
     assert restored.write()[4] & 1
 
+
 @pytest.mark.asyncio
 async def test_poll_update_without_results():
     update = raw.types.UpdateMessagePoll(poll_id=1, results=raw.types.PollResults())
@@ -69,8 +78,6 @@ async def test_poll_update_without_results():
 @pytest.mark.asyncio
 @pytest.mark.parametrize("ephemeral", [False, True])
 async def test_plain_poll_description_without_entities(ephemeral):
-    from pyrogram import Client
-
     client = Client("test", api_id=1, api_hash="0" * 32, in_memory=True)
     peer = raw.types.PeerUser(user_id=1)
     media = raw.types.MessageMediaPoll(
@@ -79,7 +86,7 @@ async def test_plain_poll_description_without_entities(ephemeral):
         ),
         results=raw.types.PollResults(),
     )
-    fields = dict(id=1, peer_id=peer, date=1, message="Plain description", media=media)
+    fields = {"id": 1, "peer_id": peer, "date": 1, "message": "Plain description", "media": media}
     if ephemeral:
         message = raw.types.EphemeralMessage(from_id=peer, receiver_id=1, **fields)
     else:

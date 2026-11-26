@@ -1829,7 +1829,10 @@ class Message(Object, Update):
                     media,
                     description=await types.FormattedText._parse(
                         client,
-                        raw.types.TextWithEntities(text=message.message, entities=message.entities or []),
+                        raw.types.TextWithEntities(
+                            text=message.message,
+                            entities=message.entities or [],
+                        ),
                     )
                     if message.message
                     else None,
@@ -2255,7 +2258,10 @@ class Message(Object, Update):
                     media,
                     description=await types.FormattedText._parse(
                         client,
-                        raw.types.TextWithEntities(text=message.message, entities=message.entities or []),
+                        raw.types.TextWithEntities(
+                            text=message.message,
+                            entities=message.entities or [],
+                        ),
                     )
                     if message.message
                     else None,
