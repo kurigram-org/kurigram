@@ -55,7 +55,7 @@ class GetChatMember:
         if isinstance(chat, raw.types.InputPeerChat):
             r = await self.invoke(raw.functions.messages.GetFullChat(chat_id=chat.chat_id))
 
-            members = getattr(r.full_chat.participants, "participants", [])
+            members = getattr(r.full_chat.participants, "participants", None) or []
             users = {i.id: i for i in r.users}
 
             for raw_member in members:

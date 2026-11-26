@@ -970,7 +970,7 @@ class Chat(Object):
             return None
 
         peer_id = -chat.id
-        usernames = getattr(chat, "usernames", [])
+        usernames = getattr(chat, "usernames", None) or []
 
         if isinstance(chat, raw.types.ChatForbidden):
             return Chat(
@@ -1010,8 +1010,8 @@ class Chat(Object):
             return None
 
         peer_id = utils.get_channel_id(channel.id)
-        restriction_reason = getattr(channel, "restriction_reason", [])
-        usernames = getattr(channel, "usernames", [])
+        restriction_reason = getattr(channel, "restriction_reason", None) or []
+        usernames = getattr(channel, "usernames", None) or []
 
         if isinstance(channel, raw.types.ChannelForbidden):
             return Chat(
@@ -1514,7 +1514,7 @@ class Chat(Object):
             members_count=chat_invite.participants_count,
             members=[
                 await types.User._parse(client, user)
-                for user in getattr(chat_invite, "participants", [])
+                for user in getattr(chat_invite, "participants", None) or []
             ]
             or None,
             description=chat_invite.about or None,

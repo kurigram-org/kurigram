@@ -21,7 +21,7 @@ from __future__ import annotations as _annotations
 import logging
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 from .input_message_content import InputMessageContent
 
@@ -140,6 +140,11 @@ class InputInvoiceMessageContent(InputMessageContent):
         self.is_flexible = is_flexible
 
     async def write(self, client: pyrogram.Client, reply_markup):
+        max_tip_amount = utils.get_max_tip_amount(
+            self.max_tip_amount,
+            suggested_tip_amounts=self.suggested_tip_amounts,
+        )
+
         return raw.types.InputBotInlineMessageMediaInvoice(
             title=self.title,
             description=self.description,
@@ -164,8 +169,10 @@ class InputInvoiceMessageContent(InputMessageContent):
                 flexible=self.is_flexible,
                 phone_to_provider=self.send_phone_number_to_provider,
                 email_to_provider=self.send_email_to_provider,
-                max_tip_amount=self.max_tip_amount,
-                suggested_tip_amounts=self.suggested_tip_amounts,
+                max_tip_amount=max_tip_amount,
+                suggested_tip_amounts=(
+                    (self.suggested_tip_amounts or []) if max_tip_amount is not None else None
+                ),
             ),
             payload=self.payload.encode() if isinstance(self.payload, str) else self.payload,
             provider=self.provider_token or "",

@@ -19,7 +19,7 @@
 from __future__ import annotations as _annotations
 
 import pyrogram
-from pyrogram import raw, types
+from pyrogram import raw, types, utils
 
 
 class CreateInvoiceLink:
@@ -125,6 +125,11 @@ class CreateInvoiceLink:
             ``str``: On success, the invoice url is returned.
 
         """
+        max_tip_amount = utils.get_max_tip_amount(
+            max_tip_amount,
+            suggested_tip_amounts=suggested_tip_amounts,
+        )
+
         r = await self.invoke(
             raw.functions.payments.ExportInvoice(
                 invoice_media=raw.types.InputMediaInvoice(
@@ -152,7 +157,9 @@ class CreateInvoiceLink:
                         phone_to_provider=send_phone_number_to_provider,
                         email_to_provider=send_email_to_provider,
                         max_tip_amount=max_tip_amount,
-                        suggested_tip_amounts=suggested_tip_amounts,
+                        suggested_tip_amounts=(
+                            (suggested_tip_amounts or []) if max_tip_amount is not None else None
+                        ),
                         subscription_period=subscription_period,
                     ),
                     payload=payload.encode() if isinstance(payload, str) else payload,

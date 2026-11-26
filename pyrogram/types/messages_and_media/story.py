@@ -393,7 +393,7 @@ class Story(Object, Update):
             forwards = getattr(story.views, "forwards_count", None)
             reactions = [
                 types.Reaction._parse_count(client, reaction)
-                for reaction in getattr(story.views, "reactions", [])
+                for reaction in getattr(story.views, "reactions", None) or []
             ] or None
             reactions_count = getattr(story.views, "reactions_count", None)
 
@@ -415,7 +415,7 @@ class Story(Object, Update):
                     client,
                     doc,
                     video_attributes,
-                    alternative_videos=getattr(story.media, "alt_documents", []),
+                    alternative_videos=getattr(story.media, "alt_documents", None) or [],
                 )
                 media_type = enums.MessageMediaType.VIDEO
             else:
@@ -504,7 +504,7 @@ class Story(Object, Update):
             media_areas=types.List(
                 [
                     await types.MediaArea._parse(client, area, chats)
-                    for area in getattr(story, "media_areas", [])
+                    for area in getattr(story, "media_areas", None) or []
                 ]
             )
             or None,

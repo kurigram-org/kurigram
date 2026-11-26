@@ -85,5 +85,7 @@ class BoostsStatus(Object):
             my_boost=getattr(boosts_status, "my_boost", None),
             gift_boosts=getattr(boosts_status, "gift_boosts", None),
             next_level_boosts=getattr(boosts_status, "next_level_boosts", None),
-            my_boost_slots=types.List(boosts_status.my_boost_slots) or None,
+            my_boost_slots=types.List(boosts_status.my_boost_slots)
+            if boosts_status.my_boost_slots
+            else None,
         )

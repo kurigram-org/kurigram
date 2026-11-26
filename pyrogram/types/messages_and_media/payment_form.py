@@ -124,7 +124,7 @@ class PaymentForm(Object):
 
     @staticmethod
     async def _parse(client, form: raw.base.payments.PaymentForm) -> PaymentForm:
-        users = {i.id: i for i in getattr(form, "users", [])}
+        users = {i.id: i for i in getattr(form, "users", None) or []}
 
         if isinstance(form, raw.types.payments.PaymentForm):
             return PaymentForm(
@@ -146,7 +146,7 @@ class PaymentForm(Object):
                 additional_payment_options=types.List(
                     [
                         types.PaymentOption._parse(option)
-                        for option in getattr(form, "additional_methods", [])
+                        for option in getattr(form, "additional_methods", None) or []
                     ]
                 )
                 or None,
@@ -154,7 +154,7 @@ class PaymentForm(Object):
                 saved_credentials=types.List(
                     [
                         types.SavedCredentials._parse(credential)
-                        for credential in getattr(form, "saved_credentials", [])
+                        for credential in getattr(form, "saved_credentials", None) or []
                     ]
                 )
                 or None,

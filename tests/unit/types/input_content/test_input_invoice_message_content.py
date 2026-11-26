@@ -53,3 +53,53 @@ async def test_an_invoice_without_a_provider_token_writes_an_empty_provider() ->
     written = raw.core.TLObject.read(io.BytesIO(message.write()))
 
     assert written.provider == ""
+
+
+@pytest.mark.parametrize(
+    ("max_tip_amount", "suggested_tip_amounts", "expected_maximum", "expected_tips"),
+    [
+        # `invoice` puts both on `flags.8`, so one without the other left a request the
+        #  server misread; tips alone must keep the tips and send the documented 0.
+        pytest.param(None, [100], 0, [100], id="tips-only"),
+        pytest.param(500, [100], 500, [100], id="both"),
+        pytest.param(500, None, 500, [], id="maximum-only"),
+        pytest.param(None, None, None, None, id="neither"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_the_tip_maximum_and_the_tips_are_written_together(
+    *,
+    max_tip_amount: int | None,
+    suggested_tip_amounts: list[int] | None,
+    expected_maximum: int | None,
+    expected_tips: list[int] | None,
+) -> None:
+    content = types.InputInvoiceMessageContent(
+        title="Title",
+        description="Description",
+        payload="payload",
+        currency="USD",
+        prices=[
+            types.LabeledPrice(
+                label="Item",
+                amount=100,
+            ),
+        ],
+        max_tip_amount=max_tip_amount,
+        suggested_tip_amounts=suggested_tip_amounts,
+    )
+    client = pyrogram.Client(
+        "test",
+        api_id=1,
+        api_hash="0" * 32,
+        in_memory=True,
+    )
+
+    message = await content.write(client, None)
+
+    written = raw.core.TLObject.read(io.BytesIO(message.write()))
+
+    assert (written.invoice.max_tip_amount, written.invoice.suggested_tip_amounts) == (
+        expected_maximum,
+        expected_tips,
+    )
