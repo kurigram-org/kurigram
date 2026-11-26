@@ -50,12 +50,17 @@ def monoforum_chat():
     )
 
 
-def message(*, saved_peer_id=None):
+def message(*, id=1, saved_peer_id=None, reply_to_msg_id=None):
     return raw.types.Message(
-        id=1,
+        id=id,
         peer_id=raw.types.PeerChannel(channel_id=CHANNEL_ID),
         from_id=raw.types.PeerUser(user_id=USER_ID),
         saved_peer_id=saved_peer_id,
+        reply_to=(
+            raw.types.MessageReplyHeader(reply_to_msg_id=reply_to_msg_id)
+            if reply_to_msg_id is not None
+            else None
+        ),
         date=DATE,
         message="hi",
         entities=[],
@@ -84,6 +89,61 @@ async def test_a_direct_message_with_a_topic_keeps_its_id():
     )
 
     assert parsed.direct_messages_topic_id == USER_ID
+
+
+# The chat is missing from `chats` when Telegram sends an update without the peer it
+#  happened in (a "min" or otherwise unresolved peer), so `Message.chat` comes out None.
+#  Parsing must still produce a message instead of raising `AttributeError`.
+
+
+@pytest.mark.asyncio
+async def test_a_message_whose_chat_is_missing_parses_without_a_chat():
+    parsed = await types.Message._parse(client(), message(), users={}, chats={})
+
+    assert parsed.chat is None
+    assert parsed.text == "hi"
+
+
+@pytest.mark.asyncio
+async def test_a_reply_whose_chat_is_missing_keeps_the_reply_id():
+    parsed = await types.Message._parse(
+        client(), message(id=2, reply_to_msg_id=1), users={}, chats={}
+    )
+
+    assert parsed.chat is None
+    assert parsed.reply_to_message_id == 1
+    assert parsed.reply_to_message is None
+
+
+@pytest.mark.asyncio
+async def test_a_service_reply_whose_chat_is_missing_parses():
+    service = raw.types.MessageService(
+        id=2,
+        peer_id=raw.types.PeerChannel(channel_id=CHANNEL_ID),
+        date=DATE,
+        action=raw.types.MessageActionPinMessage(),
+        reply_to=raw.types.MessageReplyHeader(reply_to_msg_id=1),
+    )
+
+    parsed = await types.Message._parse(client(), service, users={}, chats={})
+
+    assert parsed.chat is None
+    assert parsed.service == enums.MessageServiceType.PINNED_MESSAGE
+    assert parsed.reply_to_message_id == 1
+
+
+@pytest.mark.asyncio
+async def test_a_reply_in_a_known_chat_is_still_taken_from_the_message_cache():
+    shared_client = client()
+    chats = {CHANNEL_ID: monoforum_chat()}
+
+    await types.Message._parse(shared_client, message(id=1), users={}, chats=chats)
+    parsed = await types.Message._parse(
+        shared_client, message(id=2, reply_to_msg_id=1), users={}, chats=chats
+    )
+
+    assert parsed.reply_to_message is not None
+    assert parsed.reply_to_message.id == 1
 
 
 def message_with_url_button(label: str) -> types.Message:
