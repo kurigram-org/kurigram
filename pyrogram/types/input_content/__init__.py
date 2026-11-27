@@ -16,6 +16,27 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
+from .chat_action import (
+    ChatAction,
+    ChatActionCancel,
+    ChatActionChooseContact,
+    ChatActionChooseSticker,
+    ChatActionEmojiInteraction,
+    ChatActionEmojiInteractionSeen,
+    ChatActionFindLocation,
+    ChatActionImportHistory,
+    ChatActionPlaying,
+    ChatActionRecordAudio,
+    ChatActionRecordVideo,
+    ChatActionRecordVideoNote,
+    ChatActionSpeaking,
+    ChatActionTyping,
+    ChatActionUploadAudio,
+    ChatActionUploadDocument,
+    ChatActionUploadPhoto,
+    ChatActionUploadVideo,
+    ChatActionUploadVideoNote,
+)
 from .input_chat_photo import (
     InputChatPhoto,
     InputChatPhotoAnimation,
@@ -102,6 +123,25 @@ from .input_shared_widget_message_content import InputSharedWidgetMessageContent
 from .input_widget_message_content import InputWidgetMessageContent
 
 __all__ = [
+    "ChatAction",
+    "ChatActionCancel",
+    "ChatActionChooseContact",
+    "ChatActionChooseSticker",
+    "ChatActionEmojiInteraction",
+    "ChatActionEmojiInteractionSeen",
+    "ChatActionFindLocation",
+    "ChatActionImportHistory",
+    "ChatActionPlaying",
+    "ChatActionRecordAudio",
+    "ChatActionRecordVideo",
+    "ChatActionRecordVideoNote",
+    "ChatActionSpeaking",
+    "ChatActionTyping",
+    "ChatActionUploadAudio",
+    "ChatActionUploadDocument",
+    "ChatActionUploadPhoto",
+    "ChatActionUploadVideo",
+    "ChatActionUploadVideoNote",
     "InputChatPhoto",
     "InputChatPhotoAnimation",
     "InputChatPhotoPrevious",
