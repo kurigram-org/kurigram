@@ -227,6 +227,9 @@ class User(Object, Update):
         has_topics (``bool``, *optional*):
             True, if the bot has topics.
 
+        has_topic_sidebar (``bool``, *optional*):
+            True, if topics in private chats with the bot are shown in a sidebar.
+
         allows_users_to_create_topics (``bool``, *optional*):
             True, if users can create and delete topics in the chat with the bot.
 
@@ -492,6 +495,7 @@ class User(Object, Update):
         can_manage_bots: bool | None = None,
         has_main_web_app: bool | None = None,
         has_topics: bool | None = None,
+        has_topic_sidebar: bool | None = None,
         allows_users_to_create_topics: bool | None = None,
         paid_message_star_count: int | None = None,
         settings: types.ChatSettings | None = None,
@@ -594,6 +598,7 @@ class User(Object, Update):
         self.can_manage_bots = can_manage_bots
         self.has_main_web_app = has_main_web_app
         self.has_topics = has_topics
+        self.has_topic_sidebar = has_topic_sidebar
         self.allows_users_to_create_topics = allows_users_to_create_topics
         self.paid_message_star_count = paid_message_star_count
         self.settings = settings
@@ -758,6 +763,7 @@ class User(Object, Update):
             can_manage_bots=user.bot_can_manage_bots,
             has_main_web_app=user.bot_has_main_app,
             has_topics=user.bot_forum_view,
+            has_topic_sidebar=user.bot_forum_sidebar,
             allows_users_to_create_topics=user.bot_forum_can_manage_topics,
             paid_message_star_count=user.send_paid_messages_stars,
             supports_guest_queries=user.bot_guestchat,

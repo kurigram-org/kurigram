@@ -60,6 +60,7 @@ from .set_bot_name import SetBotName
 from .set_chat_menu_button import SetChatMenuButton
 from .set_game_score import SetGameScore
 from .set_managed_bot_access_settings import SetManagedBotAccessSettings
+from .set_my_settings import SetMySettings
 
 
 class Bots(
@@ -107,5 +108,6 @@ class Bots(
     CheckBotUsername,
     CreateBot,
     SetManagedBotAccessSettings,
+    SetMySettings,
 ):
     pass
