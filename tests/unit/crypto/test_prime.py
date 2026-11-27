@@ -27,7 +27,7 @@ import pytest
 from pyrogram.crypto import prime
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Generator
 
 # Seeds pinned with a line trace over `decompose` on 2026-09-20. Under
 #  `_BRENT_LOOP_SEED` every semiprime below is factored inside the main Brent
@@ -40,7 +40,7 @@ _RECOVERY_SEED: Final[int] = 2
 
 
 @contextmanager
-def _seeded(seed: int) -> Iterator[None]:
+def _seeded(seed: int) -> Generator[None]:
     state = random.getstate()
     random.seed(seed)
 

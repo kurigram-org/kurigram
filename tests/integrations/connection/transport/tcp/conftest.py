@@ -40,7 +40,7 @@ from pyrogram.connection.connection import transport_class_for
 from pyrogram.connection.proxy import MTProxy, Proxy, WebProxy, normalize_proxy
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator, AsyncIterator
+    from collections.abc import AsyncGenerator
 
     from pyrogram.connection.transport.tcp import TCP
 
@@ -200,7 +200,7 @@ def _unauthorized_client(proxy: Proxy) -> Client:
 
 
 @asynccontextmanager
-async def _started_client(session_copy: Path, *, proxy: Proxy) -> AsyncIterator[Client]:
+async def _started_client(session_copy: Path, *, proxy: Proxy) -> AsyncGenerator[Client, None]:
     # No api_id/api_hash: `Client.load_session` reads them only when the stored
     #  session is empty and a new authorization has to be created, and this one
     #  is not.

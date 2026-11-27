@@ -41,7 +41,7 @@ from tests.guards.name_resolution import (
 
 if TYPE_CHECKING:
     import pathlib
-    from collections.abc import Iterator, Sequence
+    from collections.abc import Generator, Sequence
     from types import ModuleType
 
 
@@ -66,7 +66,7 @@ def module_name_of(path: pathlib.Path) -> str:
     return ".".join(parts)
 
 
-def annotations_of(tree: ast.Module) -> Iterator[ast.expr]:
+def annotations_of(tree: ast.Module) -> Generator[ast.expr]:
     """Every annotation a module writes: on a parameter, on a return, on an assignment."""
     for node in ast.walk(tree):
         if isinstance(node, ast.AnnAssign):
@@ -109,7 +109,7 @@ def dotted_name(node: ast.expr) -> tuple[str, ...] | None:
     return tuple(reversed(parts))
 
 
-def names_in(node: ast.expr, *, line: int) -> Iterator[tuple[tuple[str, ...], int]]:
+def names_in(node: ast.expr, *, line: int) -> Generator[tuple[tuple[str, ...], int]]:
     """Every name an annotation mentions, with the line it was written on.
 
     A string annotation holds a whole type expression rather than a bare name, so it is
@@ -195,7 +195,7 @@ def namespace_of(module: ModuleType, *, tree: ast.Module) -> dict[str, Any]:
     return namespace
 
 
-def annotations_in(path: pathlib.Path) -> Iterator[tuple[Annotation, dict[str, Any]]]:
+def annotations_in(path: pathlib.Path) -> Generator[tuple[Annotation, dict[str, Any]]]:
     module = importlib.import_module(module_name_of(path))
     tree = ast.parse(source_of(path))
     namespace = namespace_of(module, tree=tree)
