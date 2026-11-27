@@ -386,13 +386,7 @@ def _write_module(
     (_DEST / f"{table.module_name}.py").write_text(module, encoding="utf-8")
 
 
-def start() -> None:
-    shutil.rmtree(_DEST, ignore_errors=True)
-    _DEST.mkdir(parents=True)
-
-    notice = _read_notice()
-    templates = _read_templates()
-
+def _load_errors() -> list[_Error]:
     # Every table is read before a single class is written. The name an error compiles to is not
     # its own to take - 52 of them are claimed by more than one error - and which claimant keeps
     # the plain name is only known once they all are.
@@ -401,10 +395,28 @@ def start() -> None:
     for path in sorted((_HOME / "source").iterdir()):
         rows.extend(_read_rows(_read_table(path)))
 
-    tables = _by_table(_name_errors(rows))
+    return _name_errors(rows)
+
+
+def get_exception_names() -> dict[int, dict[str, str]]:
+    return {
+        table.code: {"_": table.super_class}
+        | {error.row.error_id: error.class_name for error in errors}
+        for table, errors in _by_table(_load_errors()).items()
+    }
+
+
+def start() -> None:
+    shutil.rmtree(_DEST, ignore_errors=True)
+    _DEST.mkdir(parents=True)
+
+    notice = _read_notice()
+    templates = _read_templates()
+    errors = _load_errors()
+    tables = _by_table(errors)
 
     _write_init(list(tables), notice=notice)
-    _write_all(tables, notice=notice, count=len(rows))
+    _write_all(tables, notice=notice, count=len(errors))
 
     for table, errors in tables.items():
         _write_module(table, errors=errors, notice=notice, templates=templates)

@@ -70,12 +70,6 @@ namespaces_to_types = {}
 namespaces_to_constructors = {}
 namespaces_to_functions = {}
 
-try:
-    with open("docs.json", encoding="utf-8") as f:
-        docs = json.load(f)
-except FileNotFoundError:
-    docs = {"type": {}, "constructor": {}, "method": {}}
-
 
 class Combinator(NamedTuple):
     section: str
@@ -259,6 +253,12 @@ def indent_desc(desc: str, indent: str = "    ") -> str:
 
 # noinspection PyShadowingBuiltins
 def start(format: bool = False):
+    try:
+        with (HOME_PATH / "docs.json").open(encoding="utf-8") as f:
+            docs = json.load(f)
+    except FileNotFoundError:
+        docs = {"type": {}, "constructor": {}, "method": {}}
+
     shutil.rmtree(DESTINATION_PATH / "types", ignore_errors=True)
     shutil.rmtree(DESTINATION_PATH / "functions", ignore_errors=True)
     shutil.rmtree(DESTINATION_PATH / "base", ignore_errors=True)
@@ -452,23 +452,18 @@ def start(format: bool = False):
         docstring_args = []
 
         if c.section == "functions":
-            combinator_docs = docs["method"]
+            combinator_doc = docs["method"].get(c.qualname, {})
         else:
-            combinator_docs = docs["constructor"]
+            combinator_doc = docs["constructor"].get(c.qualname, {})
 
         for arg in sorted_args:
             arg_name, arg_type = arg
             is_optional = FLAGS_RE.match(arg_type)
             arg_type = arg_type.split("?")[-1]
 
-            arg_docs = combinator_docs.get(c.qualname, None)
-
-            if arg_docs:
-                arg_docs = indent_desc(
-                    arg_docs["params"].get(arg_name, "N/A"), indent="            "
-                )
-            else:
-                arg_docs = "N/A"
+            arg_docs = indent_desc(
+                combinator_doc.get("params", {}).get(arg_name, "N/A"), indent="            "
+            )
 
             docstring_args.append(
                 "{} ({}{}):\n            {}\n".format(
@@ -480,17 +475,11 @@ def start(format: bool = False):
             )
 
         if c.section == "types":
-            constructor_docs = docs["constructor"].get(c.qualname, None)
-
-            if constructor_docs:
-                constructor_docs = constructor_docs["desc"]
-            else:
-                constructor_docs = "Telegram API type."
-
+            constructor_docs = combinator_doc.get("desc", "Telegram API type.")
             docstring += indent_desc(constructor_docs) + "\n"
             docstring += f"\n    Constructor of :obj:`~pyrogram.raw.base.{c.qualtype}`."
         else:
-            function_docs = docs["method"].get(c.qualname, None)
+            function_docs = combinator_doc
 
             if function_docs:
                 docstring += indent_desc(function_docs.get("desc", "").strip()) + "\n"
@@ -522,6 +511,16 @@ def start(format: bool = False):
         )
 
         if c.section == "functions":
+            if errors := combinator_doc.get("errors"):
+                docstring += "\n    Raises:\n"
+                for error in errors:
+                    description = (
+                        error["description"].replace("\\", "\\\\").replace('"""', '\\"\\"\\"')
+                    )
+                    docstring += (
+                        f"        :obj:`~pyrogram.errors.{error['exception']}`: {description}\n"
+                    )
+
             docstring += "\n    Returns:\n        " + get_docstring_arg_type(c.qualtype)
         else:
             references, count = get_references(c.qualname, "constructors")
